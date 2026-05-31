@@ -53,13 +53,14 @@ function resizeCanvas(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   if(!isRolling) drawScene(0, 0);
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
 let animationId = null;
 let physDist = 0, physVel = 0;
 let isRolling = false;
 let prevTime = 0;
 const SLOPE_LENGTH_M = 5;
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 function reset() {
   physDist = 0; physVel = 0;

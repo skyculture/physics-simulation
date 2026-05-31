@@ -52,8 +52,6 @@ function resizeCanvas(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   init();
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
 let animationId;
 let bodies = [];
 let trails = [[], [], []];
@@ -62,6 +60,9 @@ const G = 500;
 const SOFTENING = 15;
 const DT = 0.02;
 const SUB_STEPS = 4;
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 function init() {
   const cx = getW() / 2, cy = getH() / 2;

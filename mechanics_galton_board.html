@@ -53,8 +53,6 @@ function resizeCanvas(){
   buildPegs();
   render();
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
 let slots = [];
 let balls = [];
 let pegs = [];
@@ -66,6 +64,9 @@ const RESTITUTION = 0.3;
 const FRICTION = 0.8;
 
 let ballRadius;
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 function initSlots() {
   const rows = parseInt(document.getElementById('rows').value);
