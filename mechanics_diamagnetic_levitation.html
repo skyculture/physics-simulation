@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抗磁悬浮 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>磁场强度B(T):</label><input type="range" id="bField" min="1" max="10" step="1" value="5"><input type="number" id="bFieldVal" value="5"></div>
+      <div class="ctrl-group"><label>抗磁化率χ:</label><input type="range" id="chi" min="-0.001" max="-0.0001" step="0.0001" value="-0.0004"><input type="number" id="chiVal" value="-0.0004"></div>
+      <div class="ctrl-group"><label>物体体积V(m³):</label><input type="range" id="volume" min="0.001" max="0.01" step="0.001" value="0.005"><input type="number" id="volumeVal" value="0.005"></div>
+      <div class="ctrl-group"><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">抗磁悬浮：抗磁材料在磁场中被排斥。悬浮条件：磁场梯度产生的浮力 ≥ 重力。B·∇B ≥ μ₀ρg/|χ|。抗磁体的磁化率χ为负值。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let time = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const B = parseFloat(document.getElementById('bField').value);
+  const chi = parseFloat(document.getElementById('chi').value);
+  const V = parseFloat(document.getElementById('volume').value);
+  const rho = 2700;
+  const g = 9.8;
+  const mu0 = 4 * Math.PI * 1e-7;
+
+  const dBdz = B * 100;
+  const F_mag = 0.5 * mu0 * V * Math.abs(chi) * (B * dBdz) / B;
+  const F_gravity = rho * V * g;
+  const equilibrium = F_mag >= F_gravity;
+
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy + canvas.height * 0.15, canvas.height * 0.2, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(247,129,102,0.1)';
+  ctx.beginPath();
+  ctx.arc(cx, cy + canvas.height * 0.15, canvas.height * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(88,166,255,0.3)';
+  ctx.lineWidth = 1;
+  for(let i = -3; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx + i * canvas.width * 0.08, cy + canvas.height * 0.15 - canvas.height * 0.2);
+    ctx.lineTo(cx + i * canvas.width * 0.08, cy + canvas.height * 0.15 + canvas.height * 0.2);
+    ctx.stroke();
+  }
+
+  const levitateY = equilibrium ? cy - canvas.height * 0.15 : cy + canvas.height * 0.05;
+  ctx.fillStyle = '#58a6ff';
+  ctx.beginPath();
+  ctx.arc(cx, levitateY, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  if(equilibrium) {
+    ctx.beginPath();
+    ctx.moveTo(cx - 25, levitateY - 10);
+    ctx.lineTo(cx - 25, levitateY - 35);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 28, levitateY - 35);
+    ctx.lineTo(cx - 22, levitateY - 35);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx + 25, levitateY + 10);
+  ctx.lineTo(cx + 25, levitateY + 35);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 22, levitateY + 35);
+  ctx.lineTo(cx + 28, levitateY + 35);
+  ctx.stroke();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`磁场强度 B = ${B} T`, 10, 20);
+  ctx.fillText(`抗磁化率 χ = ${chi}`, 10, 40);
+  ctx.fillText(`物体体积 V = ${V} m³`, 10, 60);
+  ctx.fillText(`磁浮力 F_m = ${F_mag.toFixed(2)} N`, 10, 80);
+  ctx.fillText(`重力 F_g = ${F_gravity.toFixed(2)} N`, 10, 100);
+
+  ctx.fillStyle = equilibrium ? '#3fb950' : '#f78166';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(equilibrium ? '✓ 悬浮成功' : '✗ 悬浮失败', cx - 60, canvas.height - 20);
+
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('bField').addEventListener('input', e => { document.getElementById('bFieldVal').value = e.target.value; });
+document.getElementById('chi').addEventListener('input', e => { document.getElementById('chiVal').value = e.target.value; });
+document.getElementById('volume').addEventListener('input', e => { document.getElementById('volumeVal').value = e.target.value; });
+document.getElementById('resetBtn').addEventListener('click', () => { draw(); });
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

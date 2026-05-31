@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔴 趋肤效应</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(247,129,102,0.1); border:1px solid rgba(247,129,102,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔴 趋肤效应</h1>
+  <p>交流电流在导体表面附近的指数衰减</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>频率 f (MHz): <span id="fVal">1</span></label>
+      <input type="range" id="frequency" min="0.1" max="1000" step="1" value="1">
+    </div>
+    <div class="control-group">
+      <label>材料:</label>
+      <select id="material" style="background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:6px; color:var(--text); font-size:0.8em;">
+        <option value="cu">铜 (Cu)</option>
+        <option value="al">铝 (Al)</option>
+        <option value="ag">银 (Ag)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <button id="pauseBtn">⏸️ 暂停</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">趋肤深度 δ:</span><span class="value" id="depth">0 μm</span></div>
+      <div class="item"><span class="label">电阻率 ρ:</span><span class="value" id="resist">0 nΩ·m</span></div>
+      <div class="item"><span class="label">电导率 σ:</span><span class="value" id="sigma">0 S/m</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let f = 1e6;
+let paused = false;
+
+const materials = {
+  cu: { sigma: 59.6e6, color: '#fbbf24', name: '铜' },
+  al: { sigma: 37.7e6, color: '#c4c4c4', name: '铝' },
+  ag: { sigma: 63.0e6, color: '#e0e0e0', name: '银' }
+};
+
+let mat = materials.cu;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = 120;
+  const conductorX = 150;
+  const conductorY = 80;
+  const conductorW = 300;
+  const conductorH = 100;
+
+  ctx.fillStyle = mat.color + '88';
+  ctx.fillRect(conductorX, conductorY, conductorW, conductorH);
+  ctx.strokeStyle = mat.color;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(conductorX, conductorY, conductorW, conductorH);
+
+  const delta = Math.sqrt(2 / (2 * Math.PI * f * mat.sigma * 4 * Math.PI * 1e-7));
+  const max_depth = delta * 5;
+  const pixels_per_mm = 100;
+
+  const time = paused ? 0 : Date.now() * 0.003;
+
+  for (let d = 0; d < 50; d++) {
+    const depth = d / 50 * max_depth * 1000;
+    const depth_px = depth * pixels_per_mm / 1000;
+    const x = conductorX + depth_px;
+    const decay = Math.exp(-depth / (delta * 1000));
+    const curr = decay * Math.sin(time + d / 10);
+
+    ctx.strokeStyle = decay < 0.01 ? 'transparent' :
+                      d < 10 ? 'rgba(247,129,102,' + decay + ')' :
+                      d < 25 ? 'rgba(251,191,36,' + decay + ')' :
+                      'rgba(88,166,255,' + decay + ')';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, conductorY + conductorH / 2 - 30);
+    ctx.lineTo(x, conductorY + conductorH / 2 + 30);
+    ctx.stroke();
+
+    if (Math.abs(curr) > 0.2) {
+      ctx.beginPath();
+      const arrowY = conductorY + conductorH / 2 + curr * 25;
+      const dir = curr > 0 ? 1 : -1;
+      ctx.moveTo(x, arrowY);
+      ctx.lineTo(x + dir * 8, arrowY);
+      ctx.stroke();
+    }
+  }
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  const delta_px = delta * 1000 * pixels_per_mm / 1000;
+  ctx.beginPath();
+  ctx.moveTo(conductorX + delta_px, conductorY - 10);
+  ctx.lineTo(conductorX + delta_px, conductorY + conductorH + 10);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#f78166';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('δ', conductorX + delta_px, conductorY - 20);
+
+  const graphY = 220;
+  const graphHeight = 160;
+  const graphWidth = canvas.width - 40;
+
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(20, graphY, graphWidth, graphHeight);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20, graphY + graphHeight / 2);
+  ctx.lineTo(canvas.width - 20, graphY + graphHeight / 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const x = 20 + (i / 100) * graphWidth;
+    const depth = (i / 100) * 5 * delta * 1000;
+    const y = graphY + graphHeight / 2 - Math.exp(-depth / (delta * 1000)) * (graphHeight / 2 - 10);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('J(d) = J0 exp(-d/δ)', 25, graphY + 20);
+  ctx.fillText('深度 d (μm)', canvas.width - 100, graphY + graphHeight - 5);
+
+  document.getElementById('depth').textContent = (delta * 1e6).toFixed(2) + ' μm';
+  document.getElementById('resist').textContent = (1 / mat.sigma * 1e9).toFixed(1) + ' nΩ·m';
+  document.getElementById('sigma').textContent = (mat.sigma / 1e6).toFixed(1) + ' MS/m';
+}
+
+function animate() {
+  draw();
+  requestAnimationFrame(animate);
+}
+
+document.getElementById('frequency').addEventListener('input', (e) => {
+  f = parseFloat(e.target.value) * 1e6;
+  document.getElementById('fVal').textContent = e.target.value;
+});
+
+document.getElementById('material').addEventListener('change', (e) => {
+  mat = materials[e.target.value];
+});
+
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶️ 继续' : '⏸️ 暂停';
+});
+
+animate();
+</script>
+</body>
+</html>

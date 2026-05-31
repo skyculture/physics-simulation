@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>克拉尼板 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>振动模式 m:</label><input type="range" id="modeM" min="1" max="6" step="1" value="2"><span id="modeMVal">2</span></div>
+    <div class="ctrl-group"><label>振动模式 n:</label><input type="range" id="modeN" min="1" max="6" step="1" value="3"><span id="modeNVal">3</span></div>
+    <div class="ctrl-group"><label>振幅:</label><input type="range" id="amplitude" min="0.5" max="2" step="0.1" value="1"><span id="amplitudeVal">1</span></div>
+    <div class="ctrl-group"><label>动画速度:</label><input type="range" id="speed" min="0.2" max="2" step="0.1" value="1"><span id="speedVal">1</span></div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">克拉尼板：金属板在特定频率下振动时，撒在板上的沙子会聚集在节点线上，形成对称的图案。不同的振动模式产生不同的克拉尼图案。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const m = parseInt(document.getElementById('modeM').value);
+  const n = parseInt(document.getElementById('modeN').value);
+  const amplitude = parseFloat(document.getElementById('amplitude').value);
+  const speed = parseFloat(document.getElementById('speed').value);
+  const size = S * 0.8;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = 'rgba(210,168,255,0.15)';
+  ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
+  ctx.strokeStyle = '#d2a8ff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - size / 2, cy - size / 2, size, size);
+
+  const resolution = 300;
+  const step = size / resolution;
+
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = 'rgba(247,129,102,0.8)';
+  ctx.beginPath();
+
+  for (let i = 0; i <= resolution; i++) {
+    for (let j = 0; j <= resolution; j++) {
+      const x = -0.5 + i / resolution;
+      const y = -0.5 + j / resolution;
+      const z = amplitude * Math.sin(m * Math.PI * (x + 0.5)) * Math.sin(n * Math.PI * (y + 0.5)) * Math.cos(t * speed);
+      
+      if (Math.abs(z) < 0.05) {
+        const px = cx + x * size;
+        const py = cy + y * size;
+        if (Math.random() > 0.9) {
+          ctx.moveTo(px, py);
+          ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+        }
+      }
+    }
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${S * 0.035}px sans-serif`;
+  ctx.fillText(`模式: (${m},${n})`, w * 0.05, h * 0.08);
+  
+  t += 0.03;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('modeM').addEventListener('input', e => {
+  document.getElementById('modeMVal').textContent = e.target.value;
+});
+document.getElementById('modeN').addEventListener('input', e => {
+  document.getElementById('modeNVal').textContent = e.target.value;
+});
+document.getElementById('amplitude').addEventListener('input', e => {
+  document.getElementById('amplitudeVal').textContent = e.target.value;
+});
+document.getElementById('speed').addEventListener('input', e => {
+  document.getElementById('speedVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  t = 0;
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>超声波位移传感器测速原理 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>目标距离:</label><input type="range" id="distance" min="0.1" max="2" step="0.05" value="1"><span id="distanceVal">1</span> m</div>
+    <div class="ctrl-group"><label>目标速度:</label><input type="range" id="speed" min="-10" max="10" step="0.5" value="0"><span id="speedVal">0</span> m/s</div>
+    <div class="ctrl-group"><label>声速:</label><input type="range" id="soundSpeed" min="300" max="400" step="5" value="343"><span id="soundSpeedVal">343</span> m/s</div>
+    <div class="ctrl-group"><button id="sendBtn">发射脉冲</button><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">超声波位移传感器：发射超声波脉冲，测量回波时间来计算距离 d = c × t / 2。多普勒测速原理：通过测量移动物体反射波的频移计算速度。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let pulse = null;
+let distance = 1;
+let echo = false;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function sendPulse() {
+  if (pulse) return;
+  const w = canvas.width;
+  const S = Math.min(w, canvas.height);
+  const sensorX = w * 0.15;
+  pulse = {
+    x: sensorX + S * 0.04,
+    goingToTarget: true,
+    done: false
+  };
+}
+
+function reset() {
+  pulse = null;
+  echo = false;
+  t = 0;
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const targetDist = parseFloat(document.getElementById('distance').value);
+  const targetSpeed = parseFloat(document.getElementById('speed').value);
+  const soundSpeed = parseFloat(document.getElementById('soundSpeed').value);
+
+  distance += targetSpeed * 0.02;
+  distance = Math.max(0.1, Math.min(2.5, distance));
+  if (Math.abs(targetSpeed) > 0.1) {
+    document.getElementById('distance').value = distance.toFixed(2);
+    document.getElementById('distanceVal').textContent = distance.toFixed(2);
+  }
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const sensorX = w * 0.15;
+  ctx.fillStyle = '#f78166';
+  ctx.fillRect(sensorX - S * 0.04, cy - S * 0.04, S * 0.08, S * 0.08);
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(sensorX + S * 0.04, cy, S * 0.02, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.stroke();
+
+  const targetX = w * 0.15 + distance / 2.5 * w * 0.7;
+  ctx.fillStyle = '#3fb950';
+  ctx.fillRect(targetX - S * 0.05, cy - S * 0.06, S * 0.1, S * 0.12);
+  ctx.fillStyle = '#8b949e';
+  const fs = S * 0.035;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText('目标', targetX - S * 0.03, cy + S * 0.12);
+
+  if (pulse) {
+    if (pulse.goingToTarget) {
+      pulse.x += soundSpeed * 0.0005;
+      if (pulse.x >= targetX - S * 0.05) {
+        pulse.goingToTarget = false;
+      }
+    } else {
+      pulse.x -= soundSpeed * 0.0005;
+      if (pulse.x <= sensorX + S * 0.04) {
+        pulse.done = true;
+        echo = true;
+        setTimeout(() => echo = false, 500);
+      }
+    }
+
+    const pulsePhase = t * 8;
+    ctx.strokeStyle = pulse.goingToTarget ? '#d2a8ff' : '#ffa657';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i < 20; i++) {
+      const px = pulse.x - (pulse.goingToTarget ? 1 : -1) * i * 3;
+      const py = cy + Math.sin(pulsePhase + i * 0.8) * S * 0.03;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    if (pulse.done) pulse = null;
+  }
+
+  if (echo) {
+    ctx.fillStyle = 'rgba(63,185,90,0.3)';
+    ctx.fillRect(sensorX - S * 0.05, cy - S * 0.05, S * 0.1, S * 0.1);
+  }
+
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText(`距离 d = ${distance.toFixed(2)} m`, w * 0.05, fs + 5);
+  ctx.fillText(`速度 v = ${targetSpeed.toFixed(1)} m/s`, w * 0.05, fs * 2 + 5);
+
+  if (Math.abs(targetSpeed) > 0.01) {
+    const expectedFShift = (2 * targetSpeed / soundSpeed) * 40000;
+    ctx.fillStyle = '#d2a8ff';
+    ctx.fillText(`多普勒频移 Δf = ${expectedFShift.toFixed(0)} Hz`, w * 0.05, fs * 3 + 5);
+  }
+
+  t += 0.03;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('distance').addEventListener('input', e => {
+  document.getElementById('distanceVal').textContent = e.target.value;
+  distance = parseFloat(e.target.value);
+});
+document.getElementById('speed').addEventListener('input', e => {
+  document.getElementById('speedVal').textContent = e.target.value;
+});
+document.getElementById('soundSpeed').addEventListener('input', e => {
+  document.getElementById('soundSpeedVal').textContent = e.target.value;
+});
+document.getElementById('sendBtn').addEventListener('click', sendPulse);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

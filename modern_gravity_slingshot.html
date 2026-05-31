@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>引力弹弓 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>行星质量(地球质量):</label><input type="range" id="planetMass" min="1" max="300" step="10" value="300"><span id="planetMassVal">300</span></div>
+    <div class="ctrl-group"><label>飞船速度(km/s):</label><input type="range" id="shipSpeed" min="10" max="50" step="5" value="20"><span id="shipSpeedVal">20</span></div>
+    <div class="ctrl-group"><label>瞄准距离(行星半径):</label><input type="range" id="aimDist" min="1.5" max="5" step="0.5" value="2.5"><span id="aimDistVal">2.5</span></div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">引力弹弓：利用行星的引力场改变飞船的速度和方向。当飞船靠近行星时，行星的引力会加速飞船，相当于飞船从行星"偷取"了一点动量。这是深空探测中常用的加速技术，可以节省大量燃料。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let ship = {};
+let trail = [];
+let showSlingshot = false;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  if (animationId) cancelAnimationFrame(animationId);
+  t = 0;
+  trail = [];
+  showSlingshot = false;
+  
+  const planetMass = parseFloat(document.getElementById('planetMass').value);
+  const shipSpeed = parseFloat(document.getElementById('shipSpeed').value) * 1000;
+  const aimDist = parseFloat(document.getElementById('aimDist').value);
+  
+  const R_PLANET = 6.99e7;
+  ship = {
+    x: -R_PLANET * 8,
+    y: R_PLANET * aimDist,
+    vx: shipSpeed,
+    vy: 0,
+    ax: 0,
+    ay: 0,
+    initialSpeed: shipSpeed
+  };
+  draw();
+}
+
+function step() {
+  const planetMass = parseFloat(document.getElementById('planetMass').value);
+  const GM = 3.986e14 * planetMass;
+  const R_PLANET = 6.99e7;
+  
+  const dx = -ship.x;
+  const dy = -ship.y;
+  const r2 = dx * dx + dy * dy;
+  const r = Math.sqrt(r2);
+  const r3 = r2 * r;
+  
+  ship.ax = GM * dx / r3;
+  ship.ay = GM * dy / r3;
+  
+  ship.x += ship.vx * 1000 + 0.5 * ship.ax * 1000 * 1000;
+  ship.y += ship.vy * 1000 + 0.5 * ship.ay * 1000 * 1000;
+  
+  const oldAx = ship.ax, oldAy = ship.ay;
+  const dx2 = -ship.x;
+  const dy2 = -ship.y;
+  const r2_2 = dx2 * dx2 + dy2 * dy2;
+  const r_2 = Math.sqrt(r2_2);
+  const r3_2 = r2_2 * r_2;
+  
+  ship.ax = GM * dx2 / r3_2;
+  ship.ay = GM * dy2 / r3_2;
+  
+  ship.vx += 0.5 * (oldAx + ship.ax) * 1000;
+  ship.vy += 0.5 * (oldAy + ship.ay) * 1000;
+  
+  const currentSpeed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
+  if (currentSpeed > ship.initialSpeed * 1.1 && !showSlingshot) {
+    showSlingshot = true;
+  }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const R_PLANET = 6.99e7;
+
+  const maxR = R_PLANET * 10;
+  const scale = S * 0.4 / maxR;
+
+  for (let i = 0; i < 4; i++) {
+    step();
+    trail.push({ x: ship.x, y: ship.y });
+    if (trail.length > 2000) trail.shift();
+  }
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = '#ffa657';
+  const planetScreen = { x: cx, y: cy };
+  const planetR = Math.max(R_PLANET * scale, S * 0.08);
+  ctx.beginPath();
+  ctx.arc(planetScreen.x, planetScreen.y, planetR, 0, Math.PI * 2);
+  ctx.fill();
+
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, planetR * 1.5);
+  glow.addColorStop(0, 'rgba(255,166,87,0.3)');
+  glow.addColorStop(1, 'rgba(255,166,87,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, planetR * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(210,168,255,0.3)';
+  ctx.lineWidth = S * 0.002;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, R_PLANET * scale * 3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (trail.length > 1) {
+    ctx.strokeStyle = showSlingshot ? 'rgba(59,185,80,0.6)' : 'rgba(88,166,255,0.6)';
+    ctx.lineWidth = S * 0.003;
+    ctx.beginPath();
+    const p0 = { x: cx + trail[0].x * scale, y: cy - trail[0].y * scale };
+    ctx.moveTo(p0.x, p0.y);
+    for (let i = 1; i < trail.length; i++) {
+      const p = { x: cx + trail[i].x * scale, y: cy - trail[i].y * scale };
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+
+  const shipScreen = { x: cx + ship.x * scale, y: cy - ship.y * scale };
+  ctx.fillStyle = showSlingshot ? '#3fb950' : '#58a6ff';
+  ctx.beginPath();
+  ctx.arc(shipScreen.x, shipScreen.y, S * 0.015, 0, Math.PI * 2);
+  ctx.fill();
+
+  const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy) / 1000;
+  const angle = Math.atan2(-ship.vy, ship.vx);
+  ctx.strokeStyle = showSlingshot ? '#3fb950' : '#58a6ff';
+  ctx.lineWidth = S * 0.003;
+  ctx.beginPath();
+  ctx.moveTo(shipScreen.x, shipScreen.y);
+  ctx.lineTo(shipScreen.x + Math.cos(angle) * S * 0.06, shipScreen.y + Math.sin(angle) * S * 0.06);
+  ctx.stroke();
+
+  const fs = S * 0.025;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'left';
+  const infoX = S * 0.03, infoY = fs + 5;
+
+  ctx.fillStyle = '#ffa657';
+  ctx.fillText(`行星质量: ${document.getElementById('planetMass').value} M⊕`, infoX, infoY);
+  ctx.fillText(`初始速度: ${document.getElementById('shipSpeed').value} km/s`, infoX, infoY + fs * 1.3);
+  ctx.fillText(`瞄准距离: ${document.getElementById('aimDist').value} R⊕`, infoX, infoY + fs * 2.6);
+
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText(`当前速度: ${speed.toFixed(2)} km/s`, infoX, infoY + fs * 3.9);
+
+  const deltaV = speed - parseFloat(document.getElementById('shipSpeed').value);
+  ctx.fillStyle = deltaV > 0.5 ? '#3fb950' : deltaV < -0.5 ? '#f78166' : '#8b949e';
+  ctx.fillText(`速度变化: ${deltaV.toFixed(2)} km/s`, infoX, infoY + fs * 5.2);
+
+  if (showSlingshot) {
+    ctx.fillStyle = '#3fb950';
+    ctx.font = `bold ${fs}px sans-serif`;
+    ctx.fillText('引力弹弓加速中!', infoX, infoY + fs * 6.8);
+  }
+
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('planetMass').addEventListener('input', e => {
+  document.getElementById('planetMassVal').textContent = e.target.value;
+});
+document.getElementById('shipSpeed').addEventListener('input', e => {
+  document.getElementById('shipSpeedVal').textContent = e.target.value;
+});
+document.getElementById('aimDist').addEventListener('input', e => {
+  document.getElementById('aimDistVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+</script>
+</body>
+</html>

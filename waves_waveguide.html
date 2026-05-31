@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>波导管 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>波导宽度 a:</label><input type="range" id="width" min="50" max="200" step="5" value="100"><span id="widthVal">100</span></div>
+    <div class="ctrl-group"><label>工作频率 f:</label><input type="range" id="freq" min="0.5" max="3" step="0.1" value="1.5"><span id="freqVal">1.5</span> f_c</div>
+    <div class="ctrl-group"><label>模式 TE:</label><input type="range" id="mode" min="1" max="3" step="1" value="1"><span id="modeVal">1</span></div>
+    <div class="ctrl-group"><label>动画速度:</label><input type="range" id="speed" min="0.5" max="3" step="0.1" value="1"><span id="speedVal">1</span></div>
+  </div>
+  <div id="info">波导管：传输微波的金属矩形/圆波导。只有当工作频率大于截止频率f_c时，电磁波才能在波导中传输。TE₁₀是矩形波导的主模。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const a = parseFloat(document.getElementById('width').value);
+  const fRatio = parseFloat(document.getElementById('freq').value);
+  const mode = parseInt(document.getElementById('mode').value);
+  const speed = parseFloat(document.getElementById('speed').value);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const guideLength = S * 0.8;
+  const guideWidth = S * (a / 150);
+  const guideX = cx - guideLength / 2;
+  const guideY = cy - guideWidth / 2;
+
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(guideX, guideY, guideLength, guideWidth);
+  ctx.fillStyle = 'rgba(139,148,158,0.1)';
+  ctx.fillRect(guideX, guideY, guideLength, guideWidth);
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(guideX, cy, S * 0.05, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.stroke();
+
+  const cutOffProp = fRatio < 1 ? 0.2 : 1;
+
+  for (let x = 0; x < guideLength; x += 3) {
+    const physicalX = guideX + x;
+    const phase = (x / guideLength) * Math.PI * 10 + t * speed;
+    const envelope = mode === 1 ? 1 : (mode === 2 ? (x < guideLength * 0.5 ? 1 : 0.5) : 0.7);
+    const amp = envelope * (cutOffProp + 0.1) * S * 0.08;
+
+    for (let y = 0; y < guideWidth; y += 5) {
+      const physicalY = guideY + y;
+      const yNorm = y / guideWidth;
+      const field = Math.sin(mode * Math.PI * yNorm) * Math.cos(phase) * amp;
+
+      ctx.fillStyle = `rgba(247,129,102,${Math.abs(field) / (S * 0.08) * 0.8})`;
+      ctx.fillRect(physicalX - 1, physicalY - 1, 3, 3);
+    }
+
+    ctx.strokeStyle = 'rgba(210,168,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(physicalX, cy);
+    ctx.lineTo(physicalX, cy + amp * Math.cos(phase));
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#8b949e';
+  const fs = S * 0.035;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText(`模式 TE${mode}0`, w * 0.05, fs + 5);
+  ctx.fillText(`f / f_c = ${fRatio.toFixed(1)}`, w * 0.05, fs * 2 + 5);
+  if (fRatio < 1) {
+    ctx.fillStyle = '#f78166';
+    ctx.fillText('截止！无法传输', w * 0.05, fs * 3 + 5);
+  } else {
+    ctx.fillStyle = '#3fb950';
+    const beta = Math.sqrt(fRatio * fRatio - 1);
+    ctx.fillText(`β = ${beta.toFixed(2)} * k₀`, w * 0.05, fs * 3 + 5);
+  }
+
+  t += 0.03;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('width').addEventListener('input', e => {
+  document.getElementById('widthVal').textContent = e.target.value;
+});
+document.getElementById('freq').addEventListener('input', e => {
+  document.getElementById('freqVal').textContent = e.target.value;
+});
+document.getElementById('mode').addEventListener('input', e => {
+  document.getElementById('modeVal').textContent = e.target.value;
+});
+document.getElementById('speed').addEventListener('input', e => {
+  document.getElementById('speedVal').textContent = e.target.value;
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

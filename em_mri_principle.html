@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MRI核磁共振原理 - 物理数值仿真平台</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
+#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#30363d}
+header h1{margin:0;font-size:18px;font-weight:600}
+#info{margin-left:auto;color:#8b949e;font-size:13px}
+main{flex:1;display:flex;overflow:hidden}
+#canvasWrap{flex:1;position:relative}
+canvas{display:block;width:100%;height:100%}
+#sidebar{width:280px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0}
+.row label{flex:0 0 120px;font-size:13px}
+.row input[type=range]{flex:1}
+.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<main>
+<div id="canvasWrap"><canvas id="c"></canvas></div>
+<div id="sidebar">
+<div class="sec">
+<h3>参数设置</h3>
+<div class="row"><label>主磁场 B0</label><input id="p1" type="range" min="0.5" max="3" step="0.1" value="1.5"><input id="p1n" type="number" value="1.5"></div>
+<div class="row"><label>射频脉冲 B1</label><input id="p2" type="range" min="0" max="0.5" step="0.05" value="0"><input id="p2n" type="number" value="0"></div>
+<div class="row"><label>翻转角 θ (deg)</label><input id="p3" type="range" min="0" max="180" value="90"><input id="p3n" type="number" value="90"></div>
+</div>
+<div class="sec">
+<h3>弛豫</h3>
+<div class="row"><label>T1 恢复时间</label><input id="p4" type="range" min="100" max="3000" value="1000"><input id="p4n" type="number" value="1000"></div>
+<div class="row"><label>T2 衰减时间</label><input id="p5" type="range" min="50" max="1000" value="200"><input id="p5n" type="number" value="200"></div>
+</div>
+</div>
+</main>
+</div>
+<script>
+const canvas=document.getElementById('c');const ctx=canvas.getContext('2d');
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+window.addEventListener('resize',resize);
+let inited=false;
+const p1=document.getElementById('p1'),p1n=document.getElementById('p1n');
+const p2=document.getElementById('p2'),p2n=document.getElementById('p2n');
+const p3=document.getElementById('p3'),p3n=document.getElementById('p3n');
+const p4=document.getElementById('p4'),p4n=document.getElementById('p4n');
+const p5=document.getElementById('p5'),p5n=document.getElementById('p5n');
+function link(a,b){a.oninput=()=>{b.value=a.value;draw()};b.oninput=()=>{a.value=b.value;draw()}}
+link(p1,p1n);link(p2,p2n);link(p3,p3n);link(p4,p4n);link(p5,p5n);
+let t=0,spinM={x:0,y:0,z:1};
+function draw(){
+if(!inited){resize();inited=true;}
+const W=canvas.clientWidth,H=canvas.clientHeight;
+ctx.clearRect(0,0,W,H);
+const B0=+p1.value,B1=+p2.value,flip=+p3.value/180*Math.PI,T1=+p4.value,T2=+p5.value;
+t+=0.016;
+const margin=60,top=margin,bottom=H-margin,left=margin,right=W-margin;
+const cx=(left+right)/2,cy=(top+bottom)/2;
+ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+// coordinate axes
+ctx.strokeStyle='#21262d';ctx.lineWidth=1;
+ctx.beginPath();ctx.moveTo(cx-150,cy);ctx.lineTo(cx+150,cy);ctx.moveTo(cx,cy-150);ctx.lineTo(cx,cy+150);ctx.stroke();
+ctx.fillStyle='#8b949e';ctx.font='12px system-ui';ctx.fillText('x',cx+155,cy+4);ctx.fillText('y',cx+10,cy-155);
+// precession
+const omega=2*Math.PI*B0;
+// spin dynamics
+if(B1>0){const s=Math.sin(omega*t),c=Math.cos(omega*t);const nx=spinM.x*c-spinM.y*s;const ny=spinM.x*s+spinM.y*c;const nz=spinM.z;spinM.x=nx;spinM.y=ny;spinM.z=nz*Math.cos(B1)-nx*Math.sin(B1);spinM.x=nz*Math.sin(B1)+nx*Math.cos(B1);}
+else{const s=Math.sin(omega*t),c=Math.cos(omega*t);const nx=spinM.x*c-spinM.y*s;const ny=spinM.x*s+spinM.y*c;spinM.x=nx;spinM.y=ny;spinM.z=spinM.z+(1-spinM.z)*(0.016/T1*1000);spinM.x*=(1-0.016/T2*1000);spinM.y*=(1-0.016/T2*1000);}
+const L=120;
+// Bloch sphere
+ctx.beginPath();ctx.arc(cx,cy,L,0,Math.PI*2);ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.stroke();
+// magnetization vector
+ctx.beginPath();ctx.moveTo(cx,cy);const vx=cx+spinM.x*L,vy=cy-spinM.z*L;ctx.lineTo(vx,vy);ctx.strokeStyle='#58a6ff';ctx.lineWidth=3;ctx.stroke();
+ctx.beginPath();ctx.arc(vx,vy,6,0,Math.PI*2);ctx.fillStyle='#58a6ff';ctx.fill();
+// FID signal
+ctx.strokeStyle='#f78166';ctx.lineWidth=1.5;
+ctx.beginPath();
+for(let i=0;i<200;i++){const tt=i/200*2;const s=Math.exp(-tt*1000/T2)*Math.cos(omega*tt);const x=left+i/200*(right-left);const y=cy+180+s*40;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+ctx.stroke();
+ctx.fillStyle='#8b949e';ctx.fillText('自由感应衰减 FID',left,cy+240);
+}
+function loop(){draw();requestAnimationFrame(loop)}
+loop();
+</script>
+</body>
+</html>

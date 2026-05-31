@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚛️ 超导约瑟夫森结</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚛️ 超导约瑟夫森结</h1>
+  <p>约瑟夫森效应：库珀对隧穿与直流/交流约瑟夫森效应</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>结电压 V (μV): <span id="vVal">0</span></label>
+      <input type="range" id="voltage" min="0" max="500" step="1" value="0">
+    </div>
+    <div class="control-group">
+      <label>临界电流 Ic (μA): <span id="icVal">100</span></label>
+      <input type="range" id="ic" min="10" max="500" step="10" value="100">
+    </div>
+    <div class="control-group">
+      <button id="pauseBtn">⏸️ 暂停</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">相位差 φ:</span><span class="value" id="phase">0 rad</span></div>
+      <div class="item"><span class="label">隧穿电流 I:</span><span class="value" id="current">0 μA</span></div>
+      <div class="item"><span class="label">频率 f:</span><span class="value" id="freq">0 GHz</span></div>
+      <div class="item"><span class="label">状态:</span><span class="value" id="state">直流</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let V = 0;
+let Ic = 100e-6;
+let paused = false;
+
+let phi = 0;
+
+const hbar = 1.0546e-34;
+const e = 1.602e-19;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = 100;
+  const sc1X = 100, sc1Y = 120;
+  const sc1W = 120, sc1H = 100;
+  const sc2X = 380, sc2Y = 120;
+  const sc2W = 120, sc2H = 100;
+  const barrierX = sc1X + sc1W;
+  const barrierW = sc2X - sc1X - sc1W;
+
+  ctx.fillStyle = '#3fb95088';
+  ctx.fillRect(sc1X, sc1Y, sc1W, sc1H);
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(sc1X, sc1Y, sc1W, sc1H);
+
+  ctx.fillStyle = '#3fb95088';
+  ctx.fillRect(sc2X, sc2Y, sc2W, sc2H);
+  ctx.strokeStyle = '#3fb950';
+  ctx.strokeRect(sc2X, sc2Y, sc2W, sc2H);
+
+  ctx.fillStyle = '#71809644';
+  ctx.fillRect(barrierX, sc1Y, barrierW, sc1H);
+  ctx.strokeStyle = '#718096';
+  ctx.strokeRect(barrierX, sc1Y, barrierW, sc1H);
+
+  if (!paused) {
+    const dphi_dt = (2 * e * V * 1e-6) / hbar;
+    phi += dphi_dt * 0.001 * 50;
+  }
+
+  const time = Date.now() * 0.002;
+
+  for (let i = 0; i < 50; i++) {
+    const t = (i / 50) * 4;
+    const phase = t * Math.PI * 2 + time + (V > 0 ? phi : 0);
+
+    const leftPhase = Math.sin(phase);
+    const rightPhase = Math.sin(phase + phi);
+
+    let y1 = sc1Y + sc1H / 2 + leftPhase * 30;
+    let y2 = sc2Y + sc2H / 2 + rightPhase * 30;
+
+    const x1 = sc1X + sc1W * 0.3 + i * 0.8;
+    const x2 = sc2X + sc2W * 0.7 + i * 0.8;
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 2;
+    ctx.moveTo(x1, y1);
+    
+    const barrierT = (t % 1);
+    for (let b = 0; b <= 1; b += 0.1) {
+      const bx = sc1X + sc1W + b * barrierW;
+      const decay = Math.exp(-b * 2) * (1 + 0.5 * Math.sin((t + b) * 5));
+      const by = sc1Y + sc1H / 2 + (leftPhase * (1 - b) + rightPhase * b) * 30 * decay;
+      ctx.lineTo(bx, by);
+    }
+    
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  const I = Ic * Math.sin(phi) * 1e6;
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('S1 (SC)', sc1X + sc1W / 2, sc1Y - 10);
+  ctx.fillText('S2 (SC)', sc2X + sc2W / 2, sc2Y - 10);
+  ctx.fillText('绝缘势垒', sc1X + sc1W + barrierW / 2, sc1Y - 10);
+
+  const graphY = 260;
+  const graphHeight = 120;
+  const graphWidth = canvas.width - 40;
+
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(20, graphY, graphWidth, graphHeight);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20, graphY + graphHeight / 2);
+  ctx.lineTo(canvas.width - 20, graphY + graphHeight / 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const x = 20 + (i / 100) * graphWidth;
+    const dphi = (i / 100) * 4 * Math.PI;
+    const y = graphY + graphHeight / 2 - (Math.sin(dphi) * graphHeight / 2.2);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  const curX = 20 + ((phi % (2 * Math.PI)) / (2 * Math.PI)) * graphWidth;
+  ctx.moveTo(curX, graphY + 10);
+  ctx.lineTo(curX, graphY + graphHeight - 10);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('I = Ic sin(φ)', 25, graphY + 18);
+
+  const f = V > 0 ? (2 * e * V * 1e-6) / (h * 1e9) : 0;
+
+  document.getElementById('phase').textContent = (phi % (2 * Math.PI)).toFixed(2) + ' rad';
+  document.getElementById('current').textContent = I.toFixed(1) + ' μA';
+  document.getElementById('freq').textContent = f.toFixed(2) + ' GHz';
+  document.getElementById('state').textContent = V === 0 ? '直流约瑟夫森' : '交流约瑟夫森';
+  document.getElementById('state').style.color = V === 0 ? '#4ade80' : '#fbbf24';
+}
+
+let h = 6.626e-34;
+
+function animate() {
+  draw();
+  requestAnimationFrame(animate);
+}
+
+document.getElementById('voltage').addEventListener('input', (e) => {
+  V = parseFloat(e.target.value);
+  document.getElementById('vVal').textContent = V;
+});
+
+document.getElementById('ic').addEventListener('input', (e) => {
+  Ic = parseFloat(e.target.value) * 1e-6;
+  document.getElementById('icVal').textContent = e.target.value;
+});
+
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶️ 继续' : '⏸️ 暂停';
+});
+
+animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>碳纳米管扬声器 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>温度波动频率:</label><input type="range" id="freq" min="50" max="1000" step="10" value="200"><span id="freqVal">200</span> Hz</div>
+    <div class="ctrl-group"><label>功率:</label><input type="range" id="power" min="0.1" max="2" step="0.1" value="1"><span id="powerVal">1</span></div>
+    <div class="ctrl-group"><label>碳纳米管数:</label><input type="range" id="tubes" min="1" max="5" step="1" value="3"><span id="tubesVal">3</span></div>
+    <div class="ctrl-group"><button id="playBtn">播放声音</button><button id="stopBtn">停止</button></div>
+  </div>
+  <div id="info">碳纳米管扬声器：利用热声效应，通过快速加热和冷却碳纳米管薄膜来产生声波。无需传统振膜，能发出全向均匀地发出声音。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let audioContext = null;
+let oscillator = null;
+let gain = null;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const freq = parseFloat(document.getElementById('freq').value);
+  const power = parseFloat(document.getElementById('power').value);
+  const numTubes = parseInt(document.getElementById('tubes').value);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = '#3fb950';
+  const substrateWidth = S * 0.5;
+  const substrateHeight = S * 0.08;
+  ctx.fillRect(cx - substrateWidth / 2, cy + S * 0.15, substrateWidth, substrateHeight);
+
+  ctx.strokeStyle = '#d2a8ff';
+  ctx.lineWidth = 2;
+  const tubeSpacing = substrateWidth / (numTubes + 1);
+  for (let i = 0; i < numTubes; i++) {
+    const tubeX = cx - substrateWidth / 2 + (i + 1) * tubeSpacing;
+    const tubeTop = cy + S * 0.15;
+    const tubeLength = S * 0.4;
+
+    const heat = Math.sin(t * freq * 0.1) * power;
+    const glow = 0.5 + 0.5 * heat;
+
+    ctx.strokeStyle = `rgba(247,129,102,${0.5 + glow * 0.5})`;
+    ctx.lineWidth = S * 0.008;
+    ctx.beginPath();
+    ctx.moveTo(tubeX, tubeTop);
+    ctx.lineTo(tubeX, tubeTop - tubeLength);
+    ctx.stroke();
+
+    if (Math.abs(heat) > 0.1) {
+      ctx.strokeStyle = `rgba(255,166,87,${0.3 + glow * 0.3})`;
+      ctx.lineWidth = S * 0.003;
+      for (let j = 0; j < 8; j++) {
+        const angle = (j / 8) * Math.PI * 2 + t * 2;
+        const radius = S * 0.05 + Math.sin(t * 3 + j) * S * 0.02;
+        ctx.beginPath();
+        ctx.arc(tubeX, tubeTop - tubeLength / 2, radius, angle, angle + 0.5);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.strokeStyle = 'rgba(210,168,255,0.3)';
+  ctx.lineWidth = 1.5;
+  for (let r = 0; r < 5; r++) {
+    const radius = S * (0.25 + r * 0.08);
+    const phase = t * freq * 0.05;
+    const wave = Math.sin(phase) * S * 0.03;
+    ctx.beginPath();
+    ctx.arc(cx, cy - S * 0.1, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#8b949e';
+  const fs = S * 0.035;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText(`频率 f = ${freq} Hz`, w * 0.05, fs + 5);
+  ctx.fillText(`功率 P = ${power}`, w * 0.05, fs * 2 + 5);
+  ctx.fillText(`碳纳米管数 = ${numTubes}`, w * 0.05, fs * 3 + 5);
+
+  t += 0.03;
+  animationId = requestAnimationFrame(draw);
+}
+
+function playSound() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  const freq = parseFloat(document.getElementById('freq').value);
+  const power = parseFloat(document.getElementById('power').value);
+
+  oscillator = audioContext.createOscillator();
+  gain = audioContext.createGain();
+  gain.gain.value = 0.3 * power;
+  oscillator.type = 'sine';
+  oscillator.frequency.value = freq;
+  oscillator.connect(gain).connect(audioContext.destination);
+  oscillator.start();
+}
+
+function stopSound() {
+  if (oscillator) {
+    oscillator.stop();
+    oscillator.disconnect();
+    oscillator = null;
+  }
+}
+
+document.getElementById('freq').addEventListener('input', e => {
+  document.getElementById('freqVal').textContent = e.target.value;
+  if (oscillator) oscillator.frequency.value = parseFloat(e.target.value);
+});
+document.getElementById('power').addEventListener('input', e => {
+  document.getElementById('powerVal').textContent = e.target.value;
+  if (gain) gain.gain.value = 0.3 * parseFloat(e.target.value);
+});
+document.getElementById('tubes').addEventListener('input', e => {
+  document.getElementById('tubesVal').textContent = e.target.value;
+});
+document.getElementById('playBtn').addEventListener('click', playSound);
+document.getElementById('stopBtn').addEventListener('click', stopSound);
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ 多点电荷电场分布</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚡ 多点电荷电场分布</h1>
+  <p>模拟多个点电荷产生的电场线和电势分布</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>电荷配置</label>
+      <select id="config" style="background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:6px; color:var(--text); font-size:0.8em;">
+        <option value="dipole">电偶极子</option>
+        <option value="quadrupole">电四极子</option>
+        <option value="ring">带电圆环</option>
+        <option value="random">随机分布</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>电荷大小 (nC): <span id="chargeVal">1</span></label>
+      <input type="range" id="charge" min="0.5" max="5" step="0.5" value="1">
+    </div>
+    <div class="control-group">
+      <button id="addChargeBtn">➕ 添加电荷</button>
+      <button id="clearBtn">🗑️ 清除所有</button>
+    </div>
+    <div class="control-group">
+      <label style="color:#8b949e; font-size:0.75em;">点击画布添加电荷</label>
+      <label style="color:#f78166; font-size:0.75em;">红色=正电荷 | 蓝色=负电荷</label>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let charges = [];
+let chargeMagnitude = 1e-9;
+let config = 'dipole';
+
+function setConfig(cfg) {
+  charges = [];
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  
+  switch(cfg) {
+    case 'dipole':
+      charges.push({ x: cx - 80, y: cy, q: chargeMagnitude });
+      charges.push({ x: cx + 80, y: cy, q: -chargeMagnitude });
+      break;
+    case 'quadrupole':
+      charges.push({ x: cx - 60, y: cy - 60, q: chargeMagnitude });
+      charges.push({ x: cx + 60, y: cy - 60, q: -chargeMagnitude });
+      charges.push({ x: cx - 60, y: cy + 60, q: -chargeMagnitude });
+      charges.push({ x: cx + 60, y: cy + 60, q: chargeMagnitude });
+      break;
+    case 'ring':
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        charges.push({ 
+          x: cx + 70 * Math.cos(angle), 
+          y: cy + 70 * Math.sin(angle), 
+          q: chargeMagnitude 
+        });
+      }
+      break;
+    case 'random':
+      for (let i = 0; i < 5; i++) {
+        charges.push({
+          x: 80 + Math.random() * (canvas.width - 160),
+          y: 80 + Math.random() * (canvas.height - 160),
+          q: (Math.random() > 0.5 ? 1 : -1) * chargeMagnitude
+        });
+      }
+      break;
+  }
+}
+
+function calculateField(x, y) {
+  let Ex = 0, Ey = 0;
+  const k = 9e9;
+  
+  charges.forEach(ch => {
+    const dx = x - ch.x;
+    const dy = y - ch.y;
+    const r = Math.hypot(dx, dy);
+    if (r < 10) return;
+    
+    const E = k * ch.q / (r * r);
+    Ex += E * (dx / r);
+    Ey += E * (dy / r);
+  });
+  
+  return { Ex, Ey };
+}
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // 绘制电势等高线
+  const gridSize = 20;
+  for (let x = 0; x < canvas.width; x += gridSize) {
+    for (let y = 0; y < canvas.height; y += gridSize) {
+      let V = 0;
+      const k = 9e9;
+      
+      charges.forEach(ch => {
+        const dx = x - ch.x;
+        const dy = y - ch.y;
+        const r = Math.hypot(dx, dy);
+        if (r > 5) V += k * ch.q / r;
+      });
+      
+      const absV = Math.abs(V);
+      if (absV > 0 && absV < 1e5) {
+        const alpha = Math.min(absV / 5e4, 0.3);
+        ctx.fillStyle = V > 0 ? `rgba(247,129,102,${alpha})` : `rgba(88,166,255,${alpha})`;
+        ctx.fillRect(x, y, gridSize, gridSize);
+      }
+    }
+  }
+  
+  // 绘制电场线
+  const fieldLinesPerCharge = 8;
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 1;
+  
+  charges.forEach(ch => {
+    for (let i = 0; i < fieldLinesPerCharge; i++) {
+      const angle = (i / fieldLinesPerCharge) * Math.PI * 2;
+      let x = ch.x;
+      let y = ch.y;
+      const step = 5;
+      
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      
+      for (let j = 0; j < 200; j++) {
+        const field = calculateField(x, y);
+        const E = Math.hypot(field.Ex, field.Ey);
+        if (E < 1e-6 || E > 1e6) break;
+        
+        const dir = ch.q > 0 ? 1 : -1;
+        x += dir * step * field.Ex / E;
+        y += dir * step * field.Ey / E;
+        
+        if (x < 10 || x > canvas.width - 10 || y < 10 || y > canvas.height - 10) break;
+        
+        let tooClose = false;
+        charges.forEach(other => {
+          if (Math.hypot(x - other.x, y - other.y) < 15) tooClose = true;
+        });
+        if (tooClose) break;
+        
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  });
+  
+  // 绘制电荷
+  charges.forEach(ch => {
+    ctx.beginPath();
+    ctx.arc(ch.x, ch.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = ch.q > 0 ? '#f78166' : '#58a6ff';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(ch.q > 0 ? '+' : '−', ch.x, ch.y + 5);
+  });
+  
+  ctx.textAlign = 'left';
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  let tooClose = false;
+  charges.forEach(ch => {
+    if (Math.hypot(x - ch.x, y - ch.y) < 20) tooClose = true;
+  });
+  
+  if (!tooClose) {
+    charges.push({ x, y, q: chargeMagnitude });
+    draw();
+  }
+});
+
+document.getElementById('config').addEventListener('change', (e) => {
+  config = e.target.value;
+  setConfig(config);
+  draw();
+});
+
+document.getElementById('charge').addEventListener('input', (e) => {
+  chargeMagnitude = parseFloat(e.target.value) * 1e-9;
+  document.getElementById('chargeVal').textContent = e.target.value;
+  setConfig(config);
+  draw();
+});
+
+document.getElementById('addChargeBtn').addEventListener('click', () => {
+  charges.push({
+    x: 80 + Math.random() * (canvas.width - 160),
+    y: 80 + Math.random() * (canvas.height - 160),
+    q: (Math.random() > 0.5 ? 1 : -1) * chargeMagnitude
+  });
+  draw();
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  charges = [];
+  draw();
+});
+
+setConfig(config);
+draw();
+</script>
+</body>
+</html>

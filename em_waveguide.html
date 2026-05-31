@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📡 波导管</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📡 波导管</h1>
+  <p>矩形波导 TE10 模的电场分布与截止频率</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>波导宽度 a (cm): <span id="aVal">5</span></label>
+      <input type="range" id="aWidth" min="2" max="15" step="0.5" value="5">
+    </div>
+    <div class="control-group">
+      <label>频率 f (GHz): <span id="fVal">4</span></label>
+      <input type="range" id="frequency" min="1" max="30" step="0.5" value="4">
+    </div>
+    <div class="control-group">
+      <button id="pauseBtn">⏸️ 暂停</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">截止频率 fc:</span><span class="value" id="fc">0 GHz</span></div>
+      <div class="item"><span class="label">归一化 f/fc:</span><span class="value" id="ffc">0</span></div>
+      <div class="item"><span class="label">波导波长 λg:</span><span class="value" id="lg">0 cm</span></div>
+      <div class="item"><span class="label">状态:</span><span class="value" id="state">传播</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let a = 0.05;
+let f = 4e9;
+let paused = false;
+
+const c = 3e8;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = 100;
+  const wgX = 100;
+  const wgY = 120;
+  const wgW = 400;
+  const wgH = 120;
+
+  ctx.strokeStyle = '#718096';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(wgX, wgY, wgW, wgH);
+  ctx.fillStyle = '#2d3748';
+  ctx.fillRect(wgX + 2, wgY + 2, wgW - 4, wgH - 4);
+
+  const fc = c / (2 * a);
+  const f_ratio = f / fc;
+  const can_propagate = f > fc;
+  const k0 = 2 * Math.PI * f / c;
+  const beta = can_propagate ? Math.sqrt(k0 * k0 - (Math.PI / a) * (Math.PI / a)) : 0;
+  const lambda_g = can_propagate ? 2 * Math.PI / beta : Infinity;
+
+  document.getElementById('fc').textContent = (fc / 1e9).toFixed(2) + ' GHz';
+  document.getElementById('ffc').textContent = f_ratio.toFixed(2);
+  document.getElementById('lg').textContent = can_propagate ? (lambda_g * 100).toFixed(2) + ' cm' : '∞';
+  document.getElementById('state').textContent = can_propagate ? '传播' : '截止';
+  document.getElementById('state').style.color = can_propagate ? '#4ade80' : '#f87171';
+
+  const time = paused ? 0 : Date.now() * 0.002;
+  const pixels_per_cm = wgW / (a * 100);
+
+  for (let z = 0; z < wgW; z += 10) {
+    const z_norm = z / wgW;
+    const phase = beta * z_norm * a * 10 - time;
+    const x = wgX + z;
+
+    for (let y_seg = 0; y_seg <= 20; y_seg++) {
+      const y_norm = y_seg / 20;
+      const y = wgY + y_seg * (wgH / 20);
+
+      const Ey = Math.sin(y_norm * Math.PI) * Math.cos(phase);
+      const amp = Math.abs(Ey);
+      const sign = Ey >= 0 ? 1 : -1;
+
+      if (amp > 0.1) {
+        ctx.strokeStyle = can_propagate ? 'rgba(88,166,255,' + amp + ')' : 'rgba(147,197,253,0.2)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y - sign * amp * 25);
+        ctx.stroke();
+
+        if (sign > 0) {
+          ctx.beginPath();
+          ctx.moveTo(x - 3, y - sign * amp * 20);
+          ctx.lineTo(x, y - sign * amp * 25);
+          ctx.lineTo(x + 3, y - sign * amp * 20);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  for (let y = 0; y <= 10; y++) {
+    const y_norm = y / 10;
+    const y_pos = wgY + y * (wgH / 10);
+    const amp = Math.sin(y_norm * Math.PI);
+    if (amp > 0.1) {
+      ctx.strokeStyle = 'rgba(63,185,80,' + amp * 0.5 + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(wgX, y_pos);
+      ctx.lineTo(wgX + wgW, y_pos);
+      ctx.stroke();
+    }
+  }
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('a = ' + (a * 100).toFixed(0) + ' cm', cx, wgY + wgH + 20);
+
+  const graphY = 270;
+  const graphHeight = 110;
+  const graphWidth = canvas.width - 40;
+
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(20, graphY, graphWidth, graphHeight);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20 + (fc / 30e9) * graphWidth, graphY);
+  ctx.lineTo(20 + (fc / 30e9) * graphWidth, graphY + graphHeight);
+  ctx.stroke();
+
+  ctx.fillStyle = '#f87171';
+  ctx.fillRect(20, graphY, (fc / 30e9) * graphWidth, graphHeight);
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(20 + (f / 30e9) * graphWidth, graphY + graphHeight / 2, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('频率分布', 25, graphY + 15);
+  ctx.textAlign = 'center';
+  ctx.fillText('fc', 20 + (fc / 30e9) * graphWidth, graphY + graphHeight - 5);
+}
+
+function animate() {
+  draw();
+  requestAnimationFrame(animate);
+}
+
+document.getElementById('aWidth').addEventListener('input', (e) => {
+  a = parseFloat(e.target.value) / 100;
+  document.getElementById('aVal').textContent = e.target.value;
+});
+
+document.getElementById('frequency').addEventListener('input', (e) => {
+  f = parseFloat(e.target.value) * 1e9;
+  document.getElementById('fVal').textContent = e.target.value;
+});
+
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶️ 继续' : '⏸️ 暂停';
+});
+
+animate();
+</script>
+</body>
+</html>

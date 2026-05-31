@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>带电粒子在磁场中的运动 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; overflow:hidden; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; min-height:0; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; align-items:center; }
+  .ctrl-group { display:flex; align-items:center; gap:6px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; white-space:nowrap; }
+  .ctrl-group input[type="range"] { width:110px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:55px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 5px; color:var(--text); font-size:0.9em; text-align:center; }
+  button { background:var(--accent); color:#0d1117; border:none; border-radius:4px; padding:4px 14px; cursor:pointer; font-size:0.76em; font-weight:600; }
+  button:hover { opacity:0.85; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>磁场 B:</label><input type="range" id="bField" min="0.1" max="3" step="0.1" value="1"><input type="number" id="bFieldVal" value="1"></div>
+      <div class="ctrl-group"><label>初速度 v₀:</label><input type="range" id="velocity" min="0.5" max="5" step="0.1" value="2"><input type="number" id="velocityVal" value="2"></div>
+      <div class="ctrl-group"><label>电荷 q:</label><input type="range" id="charge" min="-2" max="2" step="0.5" value="1"><input type="number" id="chargeVal" value="1"></div>
+      <div class="ctrl-group"><label>质量 m:</label><input type="range" id="mass" min="0.5" max="3" step="0.1" value="1"><input type="number" id="massVal" value="1"></div>
+      <button id="resetBtn">重置</button>
+      <button id="pauseBtn">暂停</button>
+    </div>
+    <div id="info">带电粒子在匀强磁场中受洛伦兹力 F = qv×B 作用，做匀速圆周运动。回旋半径 r = mv/(|q|B)，回旋角频率 ω = |q|B/m。正负电荷旋转方向相反。使用 Boris 算法进行数值积分，精确保持粒子速率守恒。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let paused = false;
+
+const DT = 0.02;
+const SUBSTEPS = 5;
+const MAX_TRAIL = 3000;
+
+let px, py, vx, vy;
+let trail = [];
+
+function getParams() {
+  return {
+    B: parseFloat(document.getElementById('bField').value),
+    v0: parseFloat(document.getElementById('velocity').value),
+    q: parseFloat(document.getElementById('charge').value),
+    m: parseFloat(document.getElementById('mass').value)
+  };
+}
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function init() {
+  const p = getParams();
+  px = 0;
+  py = 0;
+  vx = p.v0;
+  vy = 0;
+  trail = [];
+}
+
+function borisStep(dt, q, m, Bz, Ex, Ey) {
+  var qdt2m = q * dt / (2 * m);
+  var vmx = vx + Ex * qdt2m;
+  var vmy = vy + Ey * qdt2m;
+  var t = q * Bz * dt / (2 * m);
+  var s = 2 * t / (1 + t * t);
+  var vpx = vmx + vmy * t;
+  var vpy = vmy - vmx * t;
+  var vplusx = vmx + vpy * s;
+  var vplusy = vmy - vpx * s;
+  vx = vplusx + Ex * qdt2m;
+  vy = vplusy + Ey * qdt2m;
+  px += vx * dt;
+  py += vy * dt;
+}
+
+function getScale() {
+  var p = getParams();
+  var absq = Math.abs(p.q);
+  if (absq < 0.01 || p.B < 0.01) return 50;
+  var theoreticalR = p.m * p.v0 / (absq * p.B);
+  var minDim = Math.min(canvas.width, canvas.height);
+  var scale = minDim / (5 * Math.max(theoreticalR, 0.3));
+  return Math.max(15, Math.min(scale, 120));
+}
+
+function toScreen(x, y) {
+  var SCALE = getScale();
+  return [canvas.width / 2 + x * SCALE, canvas.height / 2 - y * SCALE];
+}
+
+function drawArrow(x1, y1, x2, y2, color, lw) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = lw;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  var angle = Math.atan2(y2 - y1, x2 - x1);
+  var hl = 8;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hl * Math.cos(angle - 0.4), y2 - hl * Math.sin(angle - 0.4));
+  ctx.lineTo(x2 - hl * Math.cos(angle + 0.4), y2 - hl * Math.sin(angle + 0.4));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  var p = getParams();
+  var SCALE = getScale();
+
+  if (!paused) {
+    for (var i = 0; i < SUBSTEPS; i++) {
+      borisStep(DT, p.q, p.m, p.B, 0, 0);
+      trail.push([px, py]);
+      if (trail.length > MAX_TRAIL) trail.shift();
+    }
+  }
+
+  var cx = canvas.width / 2, cy = canvas.height / 2;
+
+  ctx.strokeStyle = 'rgba(88,166,255,0.06)';
+  ctx.lineWidth = 1;
+  for (var gi = -30; gi <= 30; gi++) {
+    var sx = cx + gi * SCALE;
+    if (sx >= 0 && sx <= canvas.width) {
+      ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, canvas.height); ctx.stroke();
+    }
+    var sy = cy - gi * SCALE;
+    if (sy >= 0 && sy <= canvas.height) {
+      ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(canvas.width, sy); ctx.stroke();
+    }
+  }
+
+  ctx.fillStyle = 'rgba(88,166,255,0.12)';
+  var bStep = Math.max(2, Math.round(2 * SCALE / 50));
+  for (var bx = -20; bx <= 20; bx += bStep) {
+    for (var by = -15; by <= 15; by += bStep) {
+      var bsx = cx + bx * SCALE;
+      var bsy = cy - by * SCALE;
+      if (bsx > 5 && bsx < canvas.width - 5 && bsy > 5 && bsy < canvas.height - 5) {
+        ctx.beginPath();
+        ctx.arc(bsx, bsy, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  if (trail.length > 1) {
+    var chunkSize = 30;
+    for (var ci = 0; ci < trail.length - 1; ci += chunkSize) {
+      var alpha = ((ci + chunkSize / 2) / trail.length) * 0.85;
+      ctx.strokeStyle = 'rgba(247,129,102,' + alpha.toFixed(3) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      var pt0 = toScreen(trail[ci][0], trail[ci][1]);
+      ctx.moveTo(pt0[0], pt0[1]);
+      var end = Math.min(ci + chunkSize + 1, trail.length);
+      for (var ti = ci + 1; ti < end; ti++) {
+        var pt = toScreen(trail[ti][0], trail[ti][1]);
+        ctx.lineTo(pt[0], pt[1]);
+      }
+      ctx.stroke();
+    }
+  }
+
+  var absq = Math.abs(p.q);
+  if (absq > 0.01 && p.B > 0.01) {
+    var currentSpeed = Math.sqrt(vx * vx + vy * vy);
+    if (currentSpeed > 0.001) {
+      var r = p.m * currentSpeed / (absq * p.B);
+      var centerPhysX = px + p.m * vy / (p.q * p.B);
+      var centerPhysY = py - p.m * vx / (p.q * p.B);
+      var cc = toScreen(centerPhysX, centerPhysY);
+      var rPx = r * SCALE;
+      ctx.strokeStyle = 'rgba(88,166,255,0.25)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(cc[0], cc[1], rPx, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(88,166,255,0.3)';
+      ctx.beginPath();
+      ctx.arc(cc[0], cc[1], 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  var sp = toScreen(px, py);
+  ctx.fillStyle = '#f78166';
+  ctx.shadowColor = '#f78166';
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.arc(sp[0], sp[1], 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  var speed = Math.sqrt(vx * vx + vy * vy);
+  if (speed > 0.01) {
+    var vArrowLen = Math.min(40, 10 + speed * 6);
+    var vax = sp[0] + (vx / speed) * vArrowLen;
+    var vay = sp[1] - (vy / speed) * vArrowLen;
+    drawArrow(sp[0], sp[1], vax, vay, '#3fb950', 2);
+  }
+
+  if (absq > 0.01 && p.B > 0.01) {
+    var Fx = p.q * vy * p.B;
+    var Fy = -p.q * vx * p.B;
+    var Fmag = Math.sqrt(Fx * Fx + Fy * Fy);
+    if (Fmag > 0.001) {
+      var fArrowLen = Math.min(35, 8 + Fmag * 5);
+      var fax = sp[0] + (Fx / Fmag) * fArrowLen;
+      var fay = sp[1] - (Fy / Fmag) * fArrowLen;
+      drawArrow(sp[0], sp[1], fax, fay, '#58a6ff', 2);
+    }
+  }
+
+  var currentSpeed2 = Math.sqrt(vx * vx + vy * vy);
+  var rVal = (absq > 0.01 && p.B > 0.01) ? p.m * currentSpeed2 / (absq * p.B) : Infinity;
+  var omega = (absq > 0.01) ? absq * p.B / p.m : 0;
+  var T = omega > 0 ? 2 * Math.PI / omega : Infinity;
+  var rTheory = (absq > 0.01 && p.B > 0.01) ? p.m * p.v0 / (absq * p.B) : Infinity;
+  var KE = 0.5 * p.m * currentSpeed2 * currentSpeed2;
+
+  ctx.font = '12px "Segoe UI",sans-serif';
+  var iy = canvas.height - 12;
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText('回旋半径 r = ' + (rVal === Infinity ? '∞' : rVal.toFixed(3)), 15, iy - 32);
+  ctx.fillText('速率 |v| = ' + currentSpeed2.toFixed(4), 15, iy - 16);
+  ctx.fillText('动能 KE = ' + KE.toFixed(4), 15, iy);
+
+  ctx.fillText('回旋频率 ω = ' + omega.toFixed(3) + ' rad/s', 260, iy - 32);
+  ctx.fillText('周期 T = ' + (T === Infinity ? '∞' : T.toFixed(3)) + ' s', 260, iy - 16);
+  ctx.fillText('理论半径 r₀ = ' + (rTheory === Infinity ? '∞' : rTheory.toFixed(3)), 260, iy);
+
+  ctx.fillText('电荷 q = ' + (p.q > 0 ? '+' : '') + p.q, 500, iy - 32);
+  ctx.fillText('质量 m = ' + p.m.toFixed(1), 500, iy - 16);
+  ctx.fillText('磁场 B = ' + p.B.toFixed(1) + ' (⊙ 出屏)', 500, iy);
+
+  var lx = canvas.width - 145, ly = 18;
+  drawArrow(lx, ly, lx + 25, ly, '#3fb950', 2);
+  ctx.fillStyle = '#3fb950';
+  ctx.font = '11px "Segoe UI",sans-serif';
+  ctx.fillText('速度 v', lx + 30, ly + 4);
+
+  drawArrow(lx, ly + 18, lx + 25, ly + 18, '#58a6ff', 2);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText('洛伦兹力 F', lx + 30, ly + 22);
+
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = 'rgba(88,166,255,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(lx, ly + 36); ctx.lineTo(lx + 25, ly + 36); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(88,166,255,0.6)';
+  ctx.fillText('理论轨道', lx + 30, ly + 40);
+
+  animationId = requestAnimationFrame(draw);
+}
+
+function syncSlider(sliderId, valId) {
+  var slider = document.getElementById(sliderId);
+  var val = document.getElementById(valId);
+  slider.addEventListener('input', function() { val.value = slider.value; });
+  val.addEventListener('change', function() {
+    var v = parseFloat(val.value);
+    if (!isNaN(v)) {
+      v = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), v));
+      slider.value = v;
+      val.value = v;
+    }
+  });
+}
+
+syncSlider('bField', 'bFieldVal');
+syncSlider('velocity', 'velocityVal');
+syncSlider('charge', 'chargeVal');
+syncSlider('mass', 'massVal');
+
+document.getElementById('resetBtn').addEventListener('click', function() {
+  cancelAnimationFrame(animationId);
+  init();
+  draw();
+});
+document.getElementById('pauseBtn').addEventListener('click', function() {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '继续' : '暂停';
+});
+
+resize();
+window.addEventListener('resize', resize);
+init();
+draw();
+</script>
+</body>
+</html>

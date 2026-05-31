@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>缪子望远镜 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>缪子能量:</label><input type="range" id="energy" min="1" max="20" step="1" value="5"><span id="energyVal">5</span> GeV</div>
+    <div class="ctrl-group"><label>大气密度:</label><input type="range" id="density" min="50" max="150" step="10" value="100"><span id="densityVal">100</span>%</div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">缪子望远镜：利用宇宙射线与大气相互作用产生的缪子来探测物体内部结构。缪子穿透能力极强，可穿透数百米岩石，用于无损检测和考古研究。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let muons = [];
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const energy = parseFloat(document.getElementById('energy').value);
+  const density = parseFloat(document.getElementById('density').value) / 100;
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = 'rgba(63,185,80,0.2)';
+  ctx.fillRect(0, 0, w, S * 0.4);
+
+  const boxX = (w - S * 0.5) / 2;
+  const boxY = h * 0.55;
+  const boxW = S * 0.5;
+  const boxH = S * 0.35;
+  ctx.fillStyle = '#8b949e';
+  ctx.fillRect(boxX, boxY, boxW, boxH);
+
+  ctx.strokeStyle = '#d2a8ff';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 7; i++) {
+    const x = boxX + S * 0.05 + i * S * 0.07;
+    ctx.beginPath();
+    ctx.moveTo(x, boxY + S * 0.05);
+    ctx.lineTo(x, boxY + S * 0.3);
+    ctx.stroke();
+  }
+
+  if (Math.random() < 0.02 * density) {
+    const angle = (Math.random() - 0.5) * 0.4;
+    muons.push({
+      x: Math.random() * w,
+      y: 0,
+      vx: Math.sin(angle) * 2,
+      vy: Math.cos(angle) * 3 + 1
+    });
+  }
+
+  for (let i = muons.length - 1; i >= 0; i--) {
+    const m = muons[i];
+    m.x += m.vx;
+    m.y += m.vy * (energy / 5);
+
+    ctx.strokeStyle = 'rgba(247,129,102,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(m.x - m.vx * 5, m.y - m.vy * 5);
+    ctx.lineTo(m.x, m.y);
+    ctx.stroke();
+
+    ctx.fillStyle = '#f78166';
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, S * 0.006, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (m.y > boxY && m.y < boxY + boxH) {
+      ctx.fillStyle = 'rgba(247,129,102,0.3)';
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, S * 0.05, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (m.y > h || m.x < 0 || m.x > w) {
+      muons.splice(i, 1);
+    }
+  }
+
+  const fs = S * 0.03;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'left';
+  ctx.fillText(`缪子能量: ${energy} GeV`, w * 0.02, fs + 5);
+  ctx.fillText(`大气密度: ${(density * 100).toFixed(0)}%`, w * 0.02, fs * 2 + 5);
+  ctx.fillText(`探测计数: ${muons.length}`, w * 0.02, fs * 3 + 5);
+
+  const range = energy * 2;
+  ctx.fillStyle = '#ffa657';
+  ctx.fillText(`穿透深度: ${range.toFixed(1)} 米`, w * 0.02, fs * 4 + 5);
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('energy').addEventListener('input', e => {
+  document.getElementById('energyVal').textContent = e.target.value;
+});
+document.getElementById('density').addEventListener('input', e => {
+  document.getElementById('densityVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('energy').value = 5;
+  document.getElementById('energyVal').textContent = '5';
+  document.getElementById('density').value = 100;
+  document.getElementById('densityVal').textContent = '100';
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

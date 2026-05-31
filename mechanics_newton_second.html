@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>牛顿第二定律探究实验室 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; align-items:center; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; white-space:nowrap; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  .ctrl-group button { padding:5px 14px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer; font-size:1em; }
+  .ctrl-group button:hover { background:var(--border); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>质量 m(kg):</label><input type="range" id="mass" min="1" max="10" step="0.5" value="2"><input type="number" id="massVal" value="2"></div>
+      <div class="ctrl-group"><label>力 F(N):</label><input type="range" id="force" min="1" max="50" step="1" value="10"><input type="number" id="forceVal" value="10"></div>
+      <div class="ctrl-group"><label>倾角 θ(°):</label><input type="range" id="angle" min="0" max="45" step="1" value="15"><input type="number" id="angleVal" value="15"></div>
+      <div class="ctrl-group"><button id="startBtn">▶ 开始</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">牛顿第二定律：F = ma。沿斜面方向：F - mgsinθ = ma，即 a = (F - mgsinθ)/m。调整参数观察物体沿斜面的运动。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const G = 9.8;
+const DT = 1 / 60;
+const SLOPE_LEN = 10;
+
+let animationId = null;
+let s = 0;
+let v = 0;
+let a = 0;
+let simTime = 0;
+let isRunning = false;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function getParams() {
+  const m = parseFloat(document.getElementById('mass').value) || 2;
+  const F = parseFloat(document.getElementById('force').value) || 10;
+  const angleDeg = parseFloat(document.getElementById('angle').value) || 15;
+  const angle = angleDeg * Math.PI / 180;
+  return { m: m, F: F, angle: angle, angleDeg: angleDeg };
+}
+
+function calcAccel(m, F, angle) {
+  return (F - m * G * Math.sin(angle)) / m;
+}
+
+function reset() {
+  s = 0;
+  v = 0;
+  a = 0;
+  simTime = 0;
+  isRunning = false;
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = null;
+  document.getElementById('startBtn').textContent = '▶ 开始';
+  draw();
+}
+
+function drawArrow(x1, y1, x2, y2, color, lw) {
+  var dx = x2 - x1, dy = y2 - y1;
+  var len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 3) return;
+  var headLen = Math.min(12, len * 0.35);
+  var ux = dx / len, uy = dy / len;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = lw || 2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * ux + headLen * 0.35 * uy, y2 - headLen * uy - headLen * 0.35 * ux);
+  ctx.lineTo(x2 - headLen * ux - headLen * 0.35 * uy, y2 - headLen * uy + headLen * 0.35 * ux);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function draw() {
+  var params = getParams();
+  var m = params.m, F = params.F, angle = params.angle, angleDeg = params.angleDeg;
+
+  if (isRunning) {
+    var a_old = a;
+    s += v * DT + 0.5 * a_old * DT * DT;
+    a = calcAccel(m, F, angle);
+    v += 0.5 * (a_old + a) * DT;
+    if (s < 0) { s = 0; v = Math.max(v, 0); }
+    if (s > SLOPE_LEN + 5) { s = 0; v = 0; }
+    simTime += DT;
+  } else {
+    a = calcAccel(m, F, angle);
+  }
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  var startX = canvas.width * 0.1;
+  var startY = canvas.height * 0.85;
+
+  var maxDx = canvas.width * 0.85 - startX;
+  var maxDy = startY - canvas.height * 0.05;
+  var slopeCanvasLen = angle > 0.001
+    ? Math.min(maxDx / Math.cos(angle), maxDy / Math.sin(angle))
+    : maxDx;
+
+  var endX = startX + slopeCanvasLen * Math.cos(angle);
+  var endY = startY - slopeCanvasLen * Math.sin(angle);
+  var ppm = slopeCanvasLen / SLOPE_LEN;
+
+  ctx.fillStyle = '#1c2333';
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(endX, endY);
+  ctx.lineTo(endX, startY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(endX + 20, startY);
+  ctx.stroke();
+
+  if (startY - endY > 5) {
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(endX, endY);
+    ctx.lineTo(endX, startY);
+    ctx.stroke();
+  }
+
+  if (startY - endY > 20) {
+    var ra = 12;
+    ctx.strokeStyle = '#8b949e';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(endX - ra, startY);
+    ctx.lineTo(endX - ra, startY - ra);
+    ctx.lineTo(endX, startY - ra);
+    ctx.stroke();
+  }
+
+  if (angle > 0.01) {
+    ctx.strokeStyle = '#8b949e';
+    ctx.lineWidth = 1;
+    var arcR = Math.min(50, slopeCanvasLen * 0.12);
+    ctx.beginPath();
+    ctx.arc(startX, startY, arcR, -angle, 0, false);
+    ctx.stroke();
+    var midA = -angle / 2;
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(angleDeg + '°', startX + (arcR + 8) * Math.cos(midA), startY + (arcR + 8) * Math.sin(midA) + 4);
+  }
+
+  var boxW = 40, boxH = 30;
+  var contactX = startX + s * ppm * Math.cos(angle);
+  var contactY = startY - s * ppm * Math.sin(angle);
+  var normX = -Math.sin(angle);
+  var normY = -Math.cos(angle);
+  var centerX = contactX + (boxH / 2) * normX;
+  var centerY = contactY + (boxH / 2) * normY;
+
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.rotate(-angle);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
+  ctx.strokeStyle = '#79c0ff';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(-boxW / 2, -boxH / 2, boxW, boxH);
+  ctx.fillStyle = '#0d1117';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(m + 'kg', 0, 0);
+  ctx.textAlign = 'start';
+  ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+
+  var forceScale = 2.5;
+  var upX = Math.cos(angle), upY = -Math.sin(angle);
+  var downX = -Math.cos(angle), downY = Math.sin(angle);
+
+  var fLen = F * forceScale;
+  var fFromX = centerX + (boxW / 2 + 4) * upX;
+  var fFromY = centerY + (boxW / 2 + 4) * upY;
+  drawArrow(fFromX, fFromY, fFromX + fLen * upX, fFromY + fLen * upY, '#f78166', 2.5);
+  ctx.fillStyle = '#f78166';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('F', fFromX + fLen * upX + 6, fFromY + fLen * upY - 6);
+
+  var gravComp = m * G * Math.sin(angle);
+  var gLen = gravComp * forceScale;
+  if (gLen > 3) {
+    var gFromX = centerX + (boxW / 2 + 4) * downX;
+    var gFromY = centerY + (boxW / 2 + 4) * downY;
+    drawArrow(gFromX, gFromY, gFromX + gLen * downX, gFromY + gLen * downY, '#d29922', 2.5);
+    ctx.fillStyle = '#d29922';
+    ctx.font = 'bold 11px sans-serif';
+    var gTipX = gFromX + gLen * downX;
+    var gTipY = gFromY + gLen * downY;
+    ctx.fillText('mgsinθ', gTipX - 25, gTipY + 16);
+  }
+
+  var netForce = F - gravComp;
+  var infoX = canvas.width * 0.02;
+  var infoY = canvas.height * 0.06;
+  var lh = 20;
+
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#c9d1d9';
+  ctx.fillText('质量 m = ' + m + ' kg', infoX, infoY);
+  ctx.fillText('外力 F = ' + F + ' N (沿斜面向上)', infoX, infoY + lh);
+  ctx.fillStyle = '#d29922';
+  ctx.fillText('重力沿斜面分量 mgsinθ = ' + gravComp.toFixed(2) + ' N (沿斜面向下)', infoX, infoY + lh * 2);
+  ctx.fillStyle = '#c9d1d9';
+  ctx.fillText('合力 F_net = ' + netForce.toFixed(2) + ' N', infoX, infoY + lh * 3);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText('加速度 a = ' + a.toFixed(3) + ' m/s²', infoX, infoY + lh * 4);
+  ctx.fillText('速度 v = ' + v.toFixed(3) + ' m/s', infoX, infoY + lh * 5);
+  ctx.fillText('位移 s = ' + s.toFixed(3) + ' m', infoX, infoY + lh * 6);
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText('时间 t = ' + simTime.toFixed(2) + ' s', infoX, infoY + lh * 7);
+
+  if (s <= 0.001 && v <= 0.001 && a < 0) {
+    ctx.fillStyle = '#f78166';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('⚠ 合力沿斜面向下，物体受地面约束保持静止', infoX, infoY + lh * 8);
+  }
+
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 13px sans-serif';
+  var formulaY = canvas.height * 0.96;
+  ctx.fillText('a = (F - mgsinθ)/m = (' + F + ' - ' + m + '×9.8×sin' + angleDeg + '°)/' + m + ' = ' + a.toFixed(3) + ' m/s²', canvas.width * 0.2, formulaY);
+
+  if (isRunning) {
+    animationId = requestAnimationFrame(draw);
+  }
+}
+
+function start() {
+  if (isRunning) {
+    isRunning = false;
+    if (animationId) cancelAnimationFrame(animationId);
+    animationId = null;
+    document.getElementById('startBtn').textContent = '▶ 继续';
+  } else {
+    isRunning = true;
+    document.getElementById('startBtn').textContent = '⏸ 暂停';
+    draw();
+  }
+}
+
+function onParamChange() {
+  if (!isRunning) draw();
+}
+
+document.getElementById('mass').addEventListener('input', function(e) {
+  document.getElementById('massVal').value = e.target.value;
+  onParamChange();
+});
+document.getElementById('massVal').addEventListener('input', function(e) {
+  var val = Math.max(1, Math.min(10, parseFloat(e.target.value) || 1));
+  document.getElementById('mass').value = val;
+  onParamChange();
+});
+document.getElementById('force').addEventListener('input', function(e) {
+  document.getElementById('forceVal').value = e.target.value;
+  onParamChange();
+});
+document.getElementById('forceVal').addEventListener('input', function(e) {
+  var val = Math.max(1, Math.min(50, parseFloat(e.target.value) || 1));
+  document.getElementById('force').value = val;
+  onParamChange();
+});
+document.getElementById('angle').addEventListener('input', function(e) {
+  document.getElementById('angleVal').value = e.target.value;
+  onParamChange();
+});
+document.getElementById('angleVal').addEventListener('input', function(e) {
+  var val = Math.max(0, Math.min(45, parseFloat(e.target.value) || 0));
+  document.getElementById('angle').value = val;
+  onParamChange();
+});
+
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', function() { resize(); draw(); });
+reset();
+</script>
+</body>
+</html>

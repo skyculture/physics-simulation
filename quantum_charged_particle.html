@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>带电粒子运动 - 量子与核物理</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
+  .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
+  .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
+  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
+  .back-link:hover { background:#1f2937; }
+  .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
+  .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
+  canvas { display:block; border-radius:4px; background:#0d1117; }
+  .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
+  .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; }
+  .control-row label { font-size:0.82rem; color:var(--text); white-space:nowrap; }
+  .control-row input[type="range"] { flex:1; accent-color:var(--accent4); }
+  .control-row .val { font-size:0.78rem; color:var(--accent4); min-width:36px; text-align:right; font-weight:600; }
+  .btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
+  .btn:hover { background:#30363d; }
+  .btn.primary { border-color:var(--accent4); color:var(--accent4); }
+  .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
+  .stat-item:last-child { border-bottom:none; }
+  .stat-label { color:#8b949e; }
+  .stat-value { color:var(--accent4); font-weight:600; }
+  @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>⚡ 带电粒子在电磁场中的运动</h1>
+    <div class="subtitle">核物理 — 洛伦兹力、回旋运动与漂移行为</div>
+  </div>
+
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 场参数</h3>
+      <div class="control-row">
+        <label>磁场 B (T)</label>
+        <input type="range" id="bField" min="0.1" max="5" step="0.1" value="2">
+        <span class="val" id="bVal">2.0</span>
+      </div>
+      <div class="control-row">
+        <label>电场 E (V/m)</label>
+        <input type="range" id="eField" min="0" max="500" step="10" value="100">
+        <span class="val" id="eVal">100</span>
+      </div>
+      <div class="control-row">
+        <label>初速度 v₀ (m/s)</label>
+        <input type="range" id="v0Slider" min="1" max="20" step="0.5" value="8">
+        <span class="val" id="v0Val">8.0</span>
+      </div>
+      <div class="control-row">
+        <label>发射角度 θ</label>
+        <input type="range" id="angle" min="0" max="360" step="5" value="45">
+        <span class="val" id="angleVal">45°</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnFire">🚀 发射粒子</button>
+        <button class="btn" id="btnClear">🗑 清除轨迹</button>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h3>📊 运动参数</h3>
+      <div class="stat-item"><span class="stat-label">回旋半径 r_L</span><span class="stat-value" id="statRL">0.00</span></div>
+      <div class="stat-item"><span class="stat-label">回旋频率 ω_c</span><span class="stat-value" id="statOmega">0.00</span></div>
+      <div class="stat-item"><span class="stat-label">漂移速度 v_d</span><span class="stat-value" id="statVd">0.00</span></div>
+      <div class="stat-item"><span class="stat-label">动能 E_k</span><span class="stat-value" id="statEk">0.00 keV</span></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const canvas=document.getElementById('simCanvas');
+  const ctx=canvas.getContext('2d');
+  let W=680,H=480;
+  function resize(){const dpr=window.devicePixelRatio||1;canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+
+  let B=2,E=100,v0=8,angle=45;
+  let particles=[];
+  let trails=[];
+
+  function drawGrid(){
+    ctx.strokeStyle='#1a1f2e';ctx.lineWidth=0.5;
+    const gs=40;
+    for(let x=gs;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=gs;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  }
+
+  function drawFields(){
+    ctx.strokeStyle='rgba(210,168,255,0.3)';ctx.lineWidth=0.8;ctx.setLineDash([3,3]);
+    for(let x=30;x<W;x+=35){for(let y=30;y<H;y+=35){
+      ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.stroke();
+    }}
+    ctx.setLineDash([]);
+
+    if(E>0){
+      ctx.strokeStyle='rgba(247,129,102,0.4)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
+      for(let x=50;x<W;x+=50){for(let y=50;y<H;y+=50){
+        ctx.beginPath();ctx.moveTo(x,y-10);ctx.lineTo(x,y+10);
+        ctx.moveTo(x-3,y+5);ctx.lineTo(x,y+10);ctx.lineTo(x+3,y+5);ctx.stroke();
+      }}
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawParticles(){
+    particles.forEach((p,i)=>{
+      ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=0.5;ctx.stroke();
+      if(trails[i]&&trails[i].length>1){
+        ctx.strokeStyle=p.color+'66';ctx.lineWidth=1.5;ctx.beginPath();
+        ctx.moveTo(trails[i][0].x,trails[i][0].y);
+        for(let j=1;j<trails[i].length;j++)ctx.lineTo(trails[i][j].x,trails[i][j].y);
+        ctx.stroke();
+      }
+    });
+  }
+
+  function update(){
+    const dt=0.05;
+    particles.forEach((p,i)=>{
+      const d=p.data;
+      const fx=d.charge*E+d.charge*p.vy*B*0.1;
+      const fy=-d.charge*p.vx*B*0.1;
+      p.vx+=fx/d.mass*dt*1e-3;
+      p.vy+=fy/d.mass*dt*1e-3;
+      p.x+=p.vx*dt;p.y+=p.vy*dt;
+      if(trails[i])trails[i].push({x:p.x,y:p.y});
+      if(trails[i]&&trails[i].length>800)trails[i].shift();
+    });
+    particles=particles.filter(p=>p.x>0&&p.x<W&&p.y>0&&p.y<H);
+    trails=trails.slice(0,particles.length);
+
+    if(particles.length>0){
+      const p=particles[0],d=p.data;
+      const v=Math.hypot(p.vx,p.vy);
+      const rL=(d.mass*v)/(d.charge*B*0.1)/10;
+      const omega=(d.charge*B*0.1)/d.mass;
+      const vd=E/(B*0.1);
+      document.getElementById('statRL').textContent=rL.toFixed(2);
+      document.getElementById('statOmega').textContent=(omega*1e3).toFixed(2)+' kHz';
+      document.getElementById('statVd').textContent=vd.toFixed(2);
+      document.getElementById('statEk').textContent=(0.5*d.mass*v*v/1.602e-16).toFixed(2);
+    }
+  }
+
+  function draw(){
+    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    drawGrid();drawFields();drawParticles();
+
+    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('B ⊗ 垂直纸面向内',W-80,20);
+    ctx.fillText('E ↓ 向下',W-80,36);
+
+    ctx.fillStyle='#d2a8ff';ctx.font='9px sans-serif';ctx.textAlign='left';
+    ctx.fillText('⊙ = B场线',10,20);
+    ctx.fillStyle='#f78166';ctx.fillText('↓ = E场线',10,36);
+  }
+
+  let animId=null;
+  function animate(){update();draw();animId=requestAnimationFrame(animate);}
+
+  document.getElementById('bField').addEventListener('input',e=>{B=parseFloat(e.target.value);document.getElementById('bVal').textContent=B.toFixed(1);});
+  document.getElementById('eField').addEventListener('input',e=>{E=parseFloat(e.target.value);document.getElementById('eVal').textContent=E;});
+  document.getElementById('v0Slider').addEventListener('input',e=>{v0=parseFloat(e.target.value);document.getElementById('v0Val').textContent=v0.toFixed(1);});
+  document.getElementById('angle').addEventListener('input',e=>{angle=parseFloat(e.target.value);document.getElementById('angleVal').textContent=angle+'°';});
+
+  const particleTypes=[
+    {mass:1.67e-27,charge:1.6e-19,color:'#3fb950',name:'质子'},
+    {mass:9.11e-31,charge:-1.6e-19,color:'#f78166',name:'电子'},
+    {mass:6.68e-27,charge:3.2e-19,color:'#58a6ff',name:'α粒子'},
+  ];
+
+  function fireParticle(){
+    const typeIdx=particles.length%3;
+    const d=particleTypes[typeIdx];
+    const rad=angle*Math.PI/180;
+    particles.push({x:W/2,y:H/2,vx:v0*Math.cos(rad)*10,vy:v0*Math.sin(rad)*10,color:d.color,data:d});
+    trails.push([]);
+  }
+
+  document.getElementById('btnFire').addEventListener('click',fireParticle);
+  document.getElementById('btnClear').addEventListener('click',()=>{particles=[];trails=[];});
+
+  function init(){resize();draw();}
+  window.addEventListener('resize',()=>{resize();draw();});
+  init();
+  animate();
+})();
+</script>
+</body>
+</html>

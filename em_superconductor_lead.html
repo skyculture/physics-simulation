@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ 超导电流引线</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚡ 超导电流引线</h1>
+  <p>高温超导线材电流传输与热耗散</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>传输电流 I (kA): <span id="iVal">1</span></label>
+      <input type="range" id="current" min="0.1" max="10" step="0.1" value="1">
+    </div>
+    <div class="control-group">
+      <label>环境温度 T (K): <span id="tVal">77</span></label>
+      <input type="range" id="temperature" min="4.2" max="300" step="1" value="77">
+    </div>
+    <div class="control-group">
+      <label>临界电流 Ic (kA): <span id="icVal">5</span></label>
+      <input type="range" id="ic" min="1" max="20" step="1" value="5">
+    </div>
+    <div class="control-group">
+      <button id="startBtn">▶️ 运行</button>
+      <button id="resetBtn">🔄 重置</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">工作点 I/Ic:</span><span class="value" id="ratio">0.2</span></div>
+      <div class="item"><span class="label">电压 V:</span><span class="value" id="voltage">0 μV</span></div>
+      <div class="item"><span class="label">焦耳热:</span><span class="value" id="power">0 mW</span></div>
+      <div class="item"><span class="label">状态:</span><span class="value" id="state">超导态</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let I = 1000;
+let T_env = 77;
+let Ic = 5000;
+let running = true;
+
+let T = T_env;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = 100;
+  const wireY = 150;
+  const wireWidth = 400;
+  const wireHeight = 40;
+
+  ctx.fillStyle = '#4a5568';
+  ctx.fillRect(cx - wireWidth / 2, wireY, wireWidth, wireHeight);
+  ctx.strokeStyle = '#718096';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - wireWidth / 2, wireY, wireWidth, wireHeight);
+
+  ctx.fillStyle = '#2d4a7a';
+  ctx.fillRect(cx - wireWidth / 2 + 20, wireY + 10, wireWidth - 40, wireHeight - 20);
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - wireWidth / 2 + 20, wireY + 10, wireWidth - 40, wireHeight - 20);
+
+  const ratio = I / Ic;
+  const segments = 50;
+  const segWidth = (wireWidth - 40) / segments;
+
+  for (let i = 0; i < segments; i++) {
+    const x = cx - wireWidth / 2 + 20 + i * segWidth;
+    const hotFactor = Math.sin((i / segments) * Math.PI * 2) * 0.5 + 0.5;
+    const temp = T_env + hotFactor * Math.max(0, ratio - 0.5) * 50;
+
+    let color;
+    if (temp > T_env + 30) color = '#ef4444';
+    else if (temp > T_env + 10) color = '#f97316';
+    else if (ratio > 0.9) color = '#fbbf24';
+    else color = '#3fb950';
+
+    ctx.fillStyle = color + '66';
+    ctx.fillRect(x, wireY + 10, segWidth - 1, wireHeight - 20);
+  }
+
+  ctx.strokeStyle = ratio > 0.9 ? '#f78166' : '#58a6ff';
+  ctx.lineWidth = 3;
+  if (running) {
+    const time = Date.now() * 0.002;
+    const dir = 1;
+    for (let i = 0; i < 5; i++) {
+      const offset = ((time + i / 5) % 1) * wireWidth;
+      const x = cx - wireWidth / 2 + offset;
+      ctx.beginPath();
+      ctx.moveTo(x, wireY + 10);
+      ctx.lineTo(x, wireY + wireHeight - 10);
+      ctx.stroke();
+    }
+  }
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Cu', cx - 180, wireY + wireHeight + 20);
+  ctx.fillText('YBCO', cx, wireY + wireHeight + 20);
+  ctx.fillText('Cu', cx + 180, wireY + wireHeight + 20);
+
+  const graphY = 230;
+  const graphHeight = 140;
+  const graphWidth = canvas.width - 40;
+
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(20, graphY, graphWidth, graphHeight);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20, graphY + graphHeight / 2);
+  ctx.lineTo(canvas.width - 20, graphY + graphHeight / 2);
+  ctx.stroke();
+
+  const points = 100;
+  ctx.beginPath();
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < points; i++) {
+    const x = 20 + (i / points) * graphWidth;
+    const t_rel = i / points;
+    let y;
+    if (t_rel < 0.3) y = graphY + graphHeight - 10;
+    else if (t_rel < 0.7) y = graphY + 10 + (1 - ratio) * 50;
+    else y = graphY + 10 + ratio * 60;
+
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('温度分布', 25, graphY + 15);
+
+  const V = ratio > 0.95 ? (ratio - 0.95) * 1e-3 * I : 0;
+  const power = I * V * 1e-6;
+
+  document.getElementById('ratio').textContent = ratio.toFixed(2);
+  document.getElementById('voltage').textContent = (V * 1e6).toFixed(1) + ' μV';
+  document.getElementById('power').textContent = power.toFixed(1) + ' mW';
+  document.getElementById('state').textContent = ratio > 0.95 ? '失超' : '超导态';
+  document.getElementById('state').style.color = ratio > 0.95 ? '#f87171' : '#4ade80';
+}
+
+function animate() {
+  draw();
+  requestAnimationFrame(animate);
+}
+
+document.getElementById('current').addEventListener('input', (e) => {
+  I = parseFloat(e.target.value) * 1000;
+  document.getElementById('iVal').textContent = e.target.value;
+});
+
+document.getElementById('temperature').addEventListener('input', (e) => {
+  T_env = parseFloat(e.target.value);
+  document.getElementById('tVal').textContent = T_env;
+  Ic = 5000 * Math.sqrt((Tc - T_env) / (Tc - 77));
+  document.getElementById('icVal').textContent = (Ic / 1000).toFixed(1);
+});
+
+document.getElementById('ic').addEventListener('input', (e) => {
+  Ic = parseFloat(e.target.value) * 1000;
+  document.getElementById('icVal').textContent = e.target.value;
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  running = !running;
+  document.getElementById('startBtn').textContent = running ? '⏸️ 暂停' : '▶️ 运行';
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  T = T_env;
+});
+
+let Tc = 92;
+
+animate();
+</script>
+</body>
+</html>

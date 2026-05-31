@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚛️ 加速器与重离子治疗</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚛️ 回旋加速器与重离子治疗</h1>
+  <p>模拟带电粒子在磁场中回旋加速过程，用于癌症治疗的重离子束</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>磁场强度 (T): <span id="bVal">1.5</span></label>
+      <input type="range" id="bField" min="0.5" max="3" step="0.1" value="1.5">
+    </div>
+    <div class="control-group">
+      <label>加速电压 (kV): <span id="vVal">50</span></label>
+      <input type="range" id="voltage" min="10" max="200" step="10" value="50">
+    </div>
+    <div class="control-group">
+      <label>粒子类型</label>
+      <select id="particle" style="background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:6px; color:var(--text); font-size:0.8em;">
+        <option value="proton">质子 (H+)</option>
+        <option value="carbon">碳离子 (C6+)</option>
+        <option value="helium">氦离子 (He2+)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <button id="startBtn">▶️ 开始加速</button>
+      <button id="stopBtn">⏸️ 暂停</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span style="color:#8b949e">粒子能量:</span><span style="color:#a855f7; font-weight:600" id="energy">0 MeV</span></div>
+      <div class="item"><span style="color:#8b949e">轨道半径:</span><span style="color:#a855f7; font-weight:600" id="radius">0 m</span></div>
+      <div class="item"><span style="color:#8b949e">回旋频率:</span><span style="color:#a855f7; font-weight:600" id="freq">0 MHz</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+
+let B = 1.5;
+let V = 50000;
+let particleType = 'proton';
+let particles = [];
+let isRunning = false;
+
+const particlesData = {
+  proton: { mass: 1.67e-27, charge: 1.6e-19, color: '#3fb950', name: '质子' },
+  carbon: { mass: 12 * 1.67e-27, charge: 6 * 1.6e-19, color: '#f78166', name: '碳离子' },
+  helium: { mass: 4 * 1.67e-27, charge: 2 * 1.6e-19, color: '#58a6ff', name: '氦离子' }
+};
+
+function createParticle() {
+  const data = particlesData[particleType];
+  return {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    vx: 100,
+    vy: 0,
+    energy: 0,
+    color: data.color,
+    mass: data.mass,
+    charge: data.charge
+  };
+}
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  
+  // 磁场方向指示
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    const r = 120;
+    ctx.beginPath();
+    ctx.moveTo(centerX + Math.cos(angle) * r, centerY + Math.sin(angle) * r);
+    ctx.lineTo(centerX + Math.cos(angle) * (r + 20), centerY + Math.sin(angle) * (r + 20));
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  
+  // D形盒电极
+  ctx.fillStyle = '#2d3748';
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 100, -Math.PI / 2, Math.PI / 2);
+  ctx.lineTo(centerX, centerY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#4a5568';
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 100, Math.PI / 2, -Math.PI / 2);
+  ctx.lineTo(centerX, centerY);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 100, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  // 粒子轨道
+  particles.forEach(p => {
+    const r = Math.hypot(p.x - centerX, p.y - centerY);
+    ctx.strokeStyle = p.color + '40';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  
+  // 粒子
+  particles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // 速度方向
+    const speed = Math.hypot(p.vx, p.vy);
+    if (speed > 0) {
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + p.vx / speed * 15, p.y + p.vy / speed * 15);
+      ctx.stroke();
+    }
+  });
+  
+  // 中心标记
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 出口通道
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(centerX + 100, centerY);
+  ctx.lineTo(canvas.width - 30, centerY);
+  ctx.stroke();
+  
+  // 靶区（癌细胞）
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(canvas.width - 20, centerY, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('靶', canvas.width - 20, centerY + 4);
+}
+
+function update() {
+  if (!isRunning) return;
+  
+  const dt = 0.001;
+  
+  particles.forEach(p => {
+    const data = particlesData[particleType];
+    const q = data.charge;
+    const m = data.mass;
+    
+    const forceX = q * (p.vy * B);
+    const forceY = -q * (p.vx * B);
+    
+    p.vx += (forceX / m) * dt * 1e10;
+    p.vy += (forceY / m) * dt * 1e10;
+    
+    p.x += p.vx * dt * 50;
+    p.y += p.vy * dt * 50;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const r = Math.hypot(p.x - centerX, p.y - centerY);
+    
+    if (r > 95) {
+      p.energy += q * V;
+      
+      const speed = Math.hypot(p.vx, p.vy);
+      const factor = Math.sqrt(1 + (q * V) / (0.5 * m * speed * speed));
+      p.vx *= factor;
+      p.vy *= factor;
+    }
+    
+    if (p.x > canvas.width - 30) {
+      p.x = centerX;
+      p.y = centerY;
+    }
+  });
+  
+  if (particles.length > 0) {
+    const p = particles[0];
+    const data = particlesData[particleType];
+    const energy = 0.5 * data.mass * (p.vx * p.vx + p.vy * p.vy) * 1e-13;
+    const radius = Math.hypot(p.x - canvas.width/2, p.y - canvas.height/2) / 100;
+    const freq = (data.charge * B) / (2 * Math.PI * data.mass) / 1e6;
+    
+    document.getElementById('energy').textContent = energy.toFixed(2) + ' MeV';
+    document.getElementById('radius').textContent = radius.toFixed(3) + ' m';
+    document.getElementById('freq').textContent = freq.toFixed(2) + ' MHz';
+  }
+}
+
+function animate() {
+  update();
+  draw();
+  animationId = requestAnimationFrame(animate);
+}
+
+document.getElementById('bField').addEventListener('input', (e) => {
+  B = parseFloat(e.target.value);
+  document.getElementById('bVal').textContent = B;
+});
+
+document.getElementById('voltage').addEventListener('input', (e) => {
+  V = parseInt(e.target.value) * 1000;
+  document.getElementById('vVal').textContent = e.target.value;
+});
+
+document.getElementById('particle').addEventListener('change', (e) => {
+  particleType = e.target.value;
+  particles = [];
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  if (particles.length === 0) {
+    particles.push(createParticle());
+  }
+  isRunning = true;
+});
+
+document.getElementById('stopBtn').addEventListener('click', () => {
+  isRunning = false;
+});
+
+draw();
+animate();
+</script>
+</body>

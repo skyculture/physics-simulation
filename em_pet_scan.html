@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>正电子发射断层扫描 PET - 物理数值仿真平台</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
+#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#30363d}
+header h1{margin:0;font-size:18px;font-weight:600}
+#info{margin-left:auto;color:#8b949e;font-size:13px}
+main{flex:1;display:flex;overflow:hidden}
+#canvasWrap{flex:1;position:relative}
+canvas{display:block;width:100%;height:100%}
+#sidebar{width:280px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0}
+.row label{flex:0 0 120px;font-size:13px}
+.row input[type=range]{flex:1}
+.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<main>
+<div id="canvasWrap"><canvas id="c"></canvas></div>
+<div id="sidebar">
+<div class="sec">
+<h3>参数设置</h3>
+<div class="row"><label>源活度</label><input id="p1" type="range" min="0.1" max="2" step="0.1" value="1"><input id="p1n" type="number" value="1"></div>
+<div class="row"><label>时间常数</label><input id="p2" type="range" min="50" max="500" value="200"><input id="p2n" type="number" value="200"></div>
+</div>
+<div class="sec">
+<h3>重建</h3>
+<div class="row"><label>网格分辨率</label><input id="p3" type="range" min="10" max="50" value="30"><input id="p3n" type="number" value="30"></div>
+<div class="row"><label>累积帧数</label><input id="p4" type="range" min="1" max="30" value="10"><input id="p4n" type="number" value="10"></div>
+</div>
+</div>
+</main>
+</div>
+<script>
+const canvas=document.getElementById('c');const ctx=canvas.getContext('2d');
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+window.addEventListener('resize',resize);
+let inited=false;
+const p1=document.getElementById('p1'),p1n=document.getElementById('p1n');
+const p2=document.getElementById('p2'),p2n=document.getElementById('p2n');
+const p3=document.getElementById('p3'),p3n=document.getElementById('p3n');
+const p4=document.getElementById('p4'),p4n=document.getElementById('p4n');
+function link(a,b){a.oninput=()=>{b.value=a.value};b.oninput=()=>{a.value=b.value}}
+link(p1,p1n);link(p2,p2n);link(p3,p3n);link(p4,p4n);
+const phantoms=[{x:0,y:0,r:0.4},{x:0.3,y:0.2,r:0.15},{x:-0.25,y:-0.2,r:0.12}];
+let events=[];
+let frameCount=0;
+let accumGrid=null;
+
+function resetGrid(sz){
+  accumGrid=new Float32Array(sz*sz);
+  events=[];
+  frameCount=0;
+}
+
+function draw(){
+if(!inited){resize();inited=true;}
+const W=canvas.clientWidth,H=canvas.clientHeight;
+ctx.clearRect(0,0,W,H);
+const act=+p1.value,tau=+p2.value,sz=+p3.value,accFrames=+p4.value;
+const margin=60,top=margin,bottom=H-margin,left=margin,right=W-margin;
+const cx=(left+right)/2,cy=(top+bottom)/2;
+const R=Math.min(right-left,bottom-top)/2-20;
+ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+
+// init grid on resolution change
+if(!accumGrid||accumGrid.length!==sz*sz)resetGrid(sz);
+
+// phantom
+ctx.fillStyle='#161b22';ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#21262d';
+for(const ph of phantoms){ctx.beginPath();ctx.arc(cx+ph.x*R,cy+ph.y*R,ph.r*R,0,Math.PI*2);ctx.fill();}
+
+// generate events
+if(Math.random()<act*0.05){
+const ph=phantoms[Math.floor(Math.random()*phantoms.length)];
+const x=ph.x+(Math.random()-0.5)*ph.r*1.5;
+const y=ph.y+(Math.random()-0.5)*ph.r*1.5;
+const theta=Math.random()*Math.PI*2;
+events.push({x,y,theta,life:tau,cos:Math.cos(theta),sin:Math.sin(theta)});
+}
+
+// draw LORs & cleanup
+for(let i=events.length-1;i>=0;i--){
+const e=events[i];
+const a1=cx+e.x*R, b1=cy+e.y*R;
+const a2=a1+e.cos*R*2, b2=b1+e.sin*R*2;
+const a3=a1-e.cos*R*2, b3=b1-e.sin*R*2;
+ctx.strokeStyle='rgba(247,129,102,0.15)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a2,b2);ctx.lineTo(a3,b3);ctx.stroke();
+e.life-=16;
+if(e.life<=0)events.splice(i,1);
+}
+
+// lightweight backprojection (every N frames, only new events)
+frameCount++;
+const framesPerRebuild=Math.max(1,Math.floor(30/accFrames));
+if(frameCount%framesPerRebuild===0){
+for(const e of events){
+const dsize=2/sz;
+for(let i=0;i<sz;i++){
+const xx=(i/sz-0.5)*2;
+const cx0=xx-e.x;
+for(let j=0;j<sz;j++){
+const yy=(j/sz-0.5)*2;
+const d=Math.abs(cx0*e.cos+(yy-e.y)*e.sin);
+if(d<dsize*2)accumGrid[i+j*sz]+=0.05*Math.exp(-d*d/(dsize*dsize));
+}
+}
+}
+}
+
+// draw image
+ctx.globalAlpha=0.5;
+const cellW=R*2/sz,cellH=R*2/sz;
+for(let i=0;i<sz;i++){
+for(let j=0;j<sz;j++){
+const v=accumGrid[i+j*sz];
+if(v>0.001){
+ctx.fillStyle=`rgba(63,185,80,${Math.min(0.8,v*0.05)})`;
+ctx.fillRect(cx+(i/sz-0.5)*R*2,cy+(j/sz-0.5)*R*2,cellW,cellH);
+}
+}
+}
+ctx.globalAlpha=1;
+
+// info
+ctx.fillStyle='#8b949e';ctx.font='14px system-ui';
+ctx.fillText(`事件数: ${events.length} | 帧: ${frameCount}`,left,bottom+20);
+ctx.fillText('左侧=模体 | 右侧=重建图像',left,bottom+40);
+}
+
+function loop(){draw();requestAnimationFrame(loop)}
+loop();
+</script>
+</body>
+</html>

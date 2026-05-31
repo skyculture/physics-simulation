@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>受迫阻尼振动与共振</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.header h1 { font-size: 1.4rem; color: #58a6ff; }
+
+.back-link {
+    color: #8b949e;
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 6px 14px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.back-link:hover { color: #58a6ff; border-color: #58a6ff; }
+
+.main-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.controls {
+    width: 280px;
+    flex-shrink: 0;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.control-group { display: flex; flex-direction: column; gap: 3px; }
+
+.control-group label {
+    font-size: 0.82rem;
+    color: #8b949e;
+    display: flex;
+    justify-content: space-between;
+}
+
+.control-group label span { color: #c9d1d9; font-weight: 600; }
+
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #30363d;
+    outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #58a6ff;
+    cursor: pointer;
+}
+
+.btn-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 7px 14px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    background: #21262d;
+    color: #c9d1d9;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+button:hover { background: #30363d; }
+button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+button.primary:hover { background: #388bfd; }
+button.sweep { background: #6e40c9; border-color: #6e40c9; color: #fff; }
+button.sweep:hover { background: #7c4dff; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.info-panel {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.8rem;
+}
+
+.info-item { display: flex; flex-direction: column; gap: 1px; }
+.info-item .info-label { color: #8b949e; font-size: 0.7rem; }
+.info-item .info-value { color: #d2a8ff; font-weight: 600; font-size: 0.88rem; }
+
+.canvas-container {
+    flex: 1;
+    min-width: 500px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas { display: block; max-width: 100%; }
+
+.plots-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.plot-box {
+    flex: 1;
+    min-width: 420px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>受迫阻尼振动与共振</h1>
+    <a class="back-link" href="index.html">← 返回首页</a>
+</div>
+
+<div class="main-row">
+    <div class="controls">
+        <div class="control-group">
+            <label>质量 m <span id="massVal">1.00</span> kg</label>
+            <input type="range" id="sliderM" min="0.1" max="5" step="0.01" value="1">
+        </div>
+        <div class="control-group">
+            <label>弹性系数 k <span id="springVal">10.0</span> N/m</label>
+            <input type="range" id="sliderK" min="0.5" max="50" step="0.1" value="10">
+        </div>
+        <div class="control-group">
+            <label>阻尼系数 b <span id="dampVal">0.50</span> N·s/m</label>
+            <input type="range" id="sliderB" min="0" max="5" step="0.01" value="0.5">
+        </div>
+        <div class="control-group">
+            <label>驱动力幅值 F₀ <span id="f0Val">1.00</span> N</label>
+            <input type="range" id="sliderF0" min="0" max="10" step="0.01" value="1">
+        </div>
+        <div class="control-group">
+            <label>驱动频率 ω <span id="omegaVal">3.00</span> rad/s</label>
+            <input type="range" id="sliderOmega" min="0.1" max="30" step="0.01" value="3">
+        </div>
+        <div class="btn-row">
+            <button class="primary" id="btnStart">▶ 开始</button>
+            <button id="btnPause" disabled>⏸ 暂停</button>
+            <button id="btnReset">↺ 重置</button>
+        </div>
+        <button class="sweep" id="btnSweep">🔍 扫描频率</button>
+        <div class="info-panel" id="infoPanel">
+            <div class="info-item"><span class="info-label">固有频率 ω₀</span><span class="info-value" id="infoOmega0">3.162 rad/s</span></div>
+            <div class="info-item"><span class="info-label">品质因数 Q</span><span class="info-value" id="infoQ">6.325</span></div>
+            <div class="info-item"><span class="info-label">稳态振幅 A</span><span class="info-value" id="infoAmp">--</span></div>
+            <div class="info-item"><span class="info-label">阻尼类型</span><span class="info-value" id="infoDampType">欠阻尼</span></div>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="animCanvas" width="700" height="360"></canvas>
+    </div>
+</div>
+
+<div class="plots-row">
+    <div class="plot-box">
+        <canvas id="plotTimeCanvas" width="520" height="350"></canvas>
+    </div>
+    <div class="plot-box">
+        <canvas id="plotFreqCanvas" width="520" height="350"></canvas>
+    </div>
+</div>
+
+<script>
+/*
+ * ============================================================
+ *  物理模型：受迫阻尼谐振子 (Driven Damped Harmonic Oscillator)
+ *
+ *  微分方程:  m·x'' + b·x' + k·x = F₀·cos(ω·t)
+ *
+ *  其中:
+ *    m   —  质量 [kg]
+ *    b   —  阻尼系数 [N·s/m]
+ *    k   —  弹簧弹性系数 [N/m]
+ *    F₀  —  驱动力幅值 [N]
+ *    ω   —  驱动角频率 [rad/s]
+ *    x   —  位移 [m]
+ *
+ *  固有频率:      ω₀ = √(k/m)          [系统无阻尼时的自然振荡频率]
+ *  阻尼因子:      γ  = b/(2m)          [决定瞬态衰减速率]
+ *  有阻尼固有频率: ω₁ = √(ω₀² - γ²)    [欠阻尼时的实际振荡频率]
+ *  品质因数:      Q  = ω₀/(2γ)         [衡量共振锐度]
+ *
+ * ------------------------------------------------------------
+ *  解析解 (Analytical Solution):
+ *
+ *  通解 = 齐次解(瞬态) + 特解(稳态)
+ *  x(t) = x_h(t) + x_p(t)
+ *
+ *  --- 稳态解(特解) ---
+ *  x_p(t) = A·cos(ωt - φ)
+ *
+ *  稳态振幅:  A = (F₀/m) / √[(ω₀²-ω²)² + (2γω)²]
+ *  相位差:    φ = arctan[2γω / (ω₀²-ω²)]
+ *
+ *  当 ω→ω₀ 时，振幅 A 达到最大值 → 共振 (resonance)
+ *
+ *  --- 瞬态解(齐次解) ---
+ *  分三种情况:
+ *
+ *  【欠阻尼 γ < ω₀】:
+ *    x_h(t) = e^(-γt)·[C₁·cos(ω₁t) + C₂·sin(ω₁t)]
+ *
+ *  【临界阻尼 γ = ω₀】:
+ *    x_h(t) = e^(-γt)·[C₁ + C₂·t]
+ *
+ *  【过阻尼 γ > ω₀】:
+ *    x_h(t) = e^(-γt)·[C₁·e^(βt) + C₂·e^(-βt)],  β=√(γ²-ω₀²)
+ *
+ *  --- 初始条件 x(0)=0, v(0)=0 下的常数 ---
+ *  由 x(0)=0 和 x'(0)=0 联立解出 C₁, C₂
+ * ============================================================
+ */
+
+(function() {
+    "use strict";
+
+    /* ---------- DOM 引用 ---------- */
+    const animCanvas   = document.getElementById("animCanvas");
+    const animCtx      = animCanvas.getContext("2d");
+    const plotTimeCanvas = document.getElementById("plotTimeCanvas");
+    const plotTimeCtx  = plotTimeCanvas.getContext("2d");
+    const plotFreqCanvas = document.getElementById("plotFreqCanvas");
+    const plotFreqCtx  = plotFreqCanvas.getContext("2d");
+
+    const sliders = {
+        m: document.getElementById("sliderM"),
+        k: document.getElementById("sliderK"),
+        b: document.getElementById("sliderB"),
+        F0: document.getElementById("sliderF0"),
+        omega: document.getElementById("sliderOmega")
+    };
+    const labels = {
+        m: document.getElementById("massVal"),
+        k: document.getElementById("springVal"),
+        b: document.getElementById("dampVal"),
+        F0: document.getElementById("f0Val"),
+        omega: document.getElementById("omegaVal")
+    };
+
+    const btnStart = document.getElementById("btnStart");
+    const btnPause = document.getElementById("btnPause");
+    const btnReset = document.getElementById("btnReset");
+    const btnSweep = document.getElementById("btnSweep");
+
+    const infoOmega0   = document.getElementById("infoOmega0");
+    const infoQ        = document.getElementById("infoQ");
+    const infoAmp      = document.getElementById("infoAmp");
+    const infoDampType = document.getElementById("infoDampType");
+
+    /* ---------- 物理参数 ---------- */
+    let m     = parseFloat(sliders.m.value);     /* 质量 */
+    let k     = parseFloat(sliders.k.value);     /* 弹性系数 */
+    let b     = parseFloat(sliders.b.value);     /* 阻尼系数 */
+    let F0    = parseFloat(sliders.F0.value);    /* 驱动力幅值 */
+    let omega = parseFloat(sliders.omega.value); /* 驱动角频率 */
+
+    /* 导出量: 每次参数变化时重新计算 */
+    let omega0, gamma, omega1, dampingType; /* dampingType: 'under'|'critical'|'over' */
+
+    /* 稳态解参数 */
+    let steadyAmp, steadyPhase;
+
+    /* 瞬态解系数 C1, C2 */
+    let C1, C2;
+
+    /* 过阻尼用的 β */
+    let beta;
+
+    function recalcDerived() {
+        omega0 = Math.sqrt(k / m);
+        gamma  = b / (2 * m);
+
+        const disc = omega0 * omega0 - gamma * gamma;
+        if (disc > 1e-12) {
+            dampingType = "under";
+            omega1 = Math.sqrt(disc);
+        } else if (Math.abs(disc) < 1e-12) {
+            dampingType = "critical";
+            omega1 = 0;
+        } else {
+            dampingType = "over";
+            beta = Math.sqrt(-disc);
+            omega1 = 0;
+        }
+
+        /* 稳态振幅 A(ω) 和相位 φ(ω) */
+        const denom = Math.sqrt(
+            (omega0 * omega0 - omega * omega) * (omega0 * omega0 - omega * omega)
+            + 4 * gamma * gamma * omega * omega
+        );
+        steadyAmp   = (F0 / m) / Math.max(denom, 1e-20);
+        steadyPhase = Math.atan2(2 * gamma * omega, omega0 * omega0 - omega * omega);
+
+        /* 计算初始条件 x(0)=0, v(0)=0 下的系数 C1, C2 */
+        const A  = steadyAmp;
+        const ph = steadyPhase;
+
+        if (dampingType === "under") {
+            C1 = -A * Math.cos(ph);
+            C2 = (gamma * C1 - A * omega * Math.sin(ph)) / omega1;
+        } else if (dampingType === "critical") {
+            C1 = -A * Math.cos(ph);
+            C2 = gamma * C1 - A * omega * Math.sin(ph);
+        } else {
+            /* overdamped */
+            C1 = ( -(gamma + beta) * A * Math.cos(ph) - A * omega * Math.sin(ph) ) / (2 * beta);
+            C2 = -A * Math.cos(ph) - C1;
+        }
+    }
+
+    /*
+     * 计算 t 时刻的位移 x(t)   (解析解)
+     */
+    function computeX(t) {
+        const A  = steadyAmp;
+        const ph = steadyPhase;
+        const xp = A * Math.cos(omega * t - ph); /* 稳态部分 */
+
+        let xh; /* 瞬态部分 */
+        if (dampingType === "under") {
+            xh = Math.exp(-gamma * t) * (C1 * Math.cos(omega1 * t) + C2 * Math.sin(omega1 * t));
+        } else if (dampingType === "critical") {
+            xh = Math.exp(-gamma * t) * (C1 + C2 * t);
+        } else {
+            xh = Math.exp(-gamma * t) * (C1 * Math.exp(beta * t) + C2 * Math.exp(-beta * t));
+        }
+        return xp + xh;
+    }
+
+    /* 计算稳态振幅(无瞬态部分, 纯频率响应) */
+    function computeSteadyAmp(om) {
+        const om0sq = omega0 * omega0;
+        const g2 = 2 * gamma;
+        const denom = Math.sqrt((om0sq - om * om) * (om0sq - om * om) + g2 * g2 * om * om);
+        return (F0 / m) / Math.max(denom, 1e-20);
+    }
+
+    /* ---------- 仿真状态 ---------- */
+    let simTime    = 0;      /* 仿真时间 [s] */
+    let running    = false;  /* 是否正在运行 */
+    let sweeping   = false;  /* 是否正在进行频率扫描 */
+    let lastFrame  = 0;      /* 上一帧时间戳 */
+    const DT       = 0.016;  /* 每帧仿真步长 ~60fps */
+
+    /* 历史数据: 用于位移-时间图 */
+    const MAX_HISTORY  = 15; /* 显示最近15秒 */
+    let timeHistory   = [];
+    let xHistory      = [];
+
+    /* 共振曲线数据: 频率扫描积累的 (ω, A) 点 */
+    let resonanceData = [];
+
+    /* 频率扫描状态 */
+    let sweepFreqs    = [];   /* 待扫描频率列表 */
+    let sweepIndex    = 0;    /* 当前扫描到的频率索引 */
+
+    /* ---------- 滑块事件 ---------- */
+    function onSliderChange() {
+        m     = parseFloat(sliders.m.value);
+        k     = parseFloat(sliders.k.value);
+        b     = parseFloat(sliders.b.value);
+        F0    = parseFloat(sliders.F0.value);
+        omega = parseFloat(sliders.omega.value);
+
+        labels.m.textContent     = m.toFixed(2);
+        labels.k.textContent     = k.toFixed(1);
+        labels.b.textContent     = b.toFixed(2);
+        labels.F0.textContent    = F0.toFixed(2);
+        labels.omega.textContent = omega.toFixed(2);
+
+        recalcDerived();
+        updateInfoPanel();
+
+        /* 参数变化时清除历史数据 */
+        timeHistory   = [];
+        xHistory      = [];
+        resonanceData = [];
+        simTime = 0;
+    }
+
+    function updateInfoPanel() {
+        infoOmega0.textContent = omega0.toFixed(3) + " rad/s";
+
+        const Q = gamma > 1e-12 ? omega0 / (2 * gamma) : Infinity;
+        infoQ.textContent = isFinite(Q) ? Q.toFixed(3) : "∞";
+
+        infoAmp.textContent = steadyAmp.toFixed(4) + " m";
+
+        if (dampingType === "under") {
+            infoDampType.textContent = "欠阻尼";
+        } else if (dampingType === "critical") {
+            infoDampType.textContent = "临界阻尼";
+        } else {
+            infoDampType.textContent = "过阻尼";
+        }
+    }
+
+    Object.values(sliders).forEach(sl => {
+        sl.addEventListener("input", onSliderChange);
+    });
+
+    /* ---------- 按钮事件 ---------- */
+    btnStart.addEventListener("click", () => {
+        running = true;
+        sweeping = false;
+        lastFrame = performance.now();
+        btnStart.disabled = true;
+        btnPause.disabled = false;
+        btnSweep.disabled  = true;
+    });
+
+    btnPause.addEventListener("click", () => {
+        running = false;
+        sweeping = false;
+        btnStart.disabled = false;
+        btnPause.disabled = true;
+        btnSweep.disabled  = false;
+    });
+
+    btnReset.addEventListener("click", () => {
+        running  = false;
+        sweeping = false;
+        simTime  = 0;
+        timeHistory   = [];
+        xHistory      = [];
+        resonanceData = [];
+        sweepIndex    = 0;
+        sweepFreqs    = [];
+        btnStart.disabled = false;
+        btnPause.disabled = true;
+        btnSweep.disabled  = false;
+        recalcDerived();
+        updateInfoPanel();
+        drawAll();
+    });
+
+    /*
+     * 频率扫描: 从 ω_min 到 ω_max 按对数间隔取点,
+     * 逐点计算稳态振幅并绘制共振曲线。
+     * 每次取约80个频率点, 在动画循环中逐帧添加。
+     */
+    btnSweep.addEventListener("click", () => {
+        if (sweeping) return;
+
+        /* 生成对数间隔的频率列表 */
+        const N_POINTS = 80;
+        const omegaMin = 0.1;
+        const omegaMax = 30;
+        sweepFreqs = [];
+        for (let i = 0; i <= N_POINTS; i++) {
+            const t = i / N_POINTS;
+            const om = omegaMin * Math.pow(omegaMax / omegaMin, t);
+            sweepFreqs.push(om);
+        }
+
+        sweepIndex    = 0;
+        resonanceData = [];
+        sweeping      = true;
+
+        /* 扫描时暂停正常仿真运行 */
+        running = true;
+        lastFrame = performance.now();
+        btnStart.disabled = true;
+        btnPause.disabled = false;
+        btnSweep.disabled  = true;
+    });
+
+    /* ---------- 绘制函数 ---------- */
+
+    /*
+     * 绘制弹簧 zigzag 图案
+     * 从 (x1,y) 到 (x2,y), turns 为锯齿数, amp 为振幅
+     */
+    function drawSpring(ctx, x1, y, x2, turns, amp) {
+        const dx = x2 - x1;
+        const step = dx / turns;
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        for (let i = 0; i < turns; i++) {
+            ctx.lineTo(x1 + (i + 0.25) * step, y + amp);
+            ctx.lineTo(x1 + (i + 0.75) * step, y - amp);
+        }
+        ctx.lineTo(x2, y);
+        ctx.stroke();
+    }
+
+    /*
+     * 绘制阻尼器(减震器)示意图
+     */
+    function drawDamper(ctx, x1, y, x2) {
+        const dashX  = x1 + 35;  /* 阻尼器固定端位置 */
+        const dashW  = 50;
+        const dashH  = 18;
+        const hh     = dashH / 2;
+
+        /* 墙到阻尼器 */
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(dashX, y);
+        ctx.stroke();
+
+        /* 阻尼器外壳 */
+        ctx.strokeRect(dashX, y - hh, dashW, dashH);
+
+        /* 内部斜线(表示油液阻尼) */
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(dashX, y - hh, dashW, dashH);
+        ctx.clip();
+        ctx.beginPath();
+        ctx.strokeStyle = "#8b949e";
+        ctx.lineWidth = 1;
+        const stepX = 8;
+        for (let sx = dashX + 2; sx < dashX + dashW; sx += stepX) {
+            ctx.moveTo(sx, y - hh);
+            ctx.lineTo(sx + dashH, y + hh);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        /* 阻尼器到质量块 */
+        ctx.beginPath();
+        ctx.moveTo(dashX + dashW, y);
+        ctx.lineTo(x2, y);
+        ctx.stroke();
+    }
+
+    /*
+     * 绘制动画画布: 弹簧-质量-阻尼系统 + 驱动力箭头
+     */
+    function drawAnimation() {
+        const ctx = animCtx;
+        const W   = animCanvas.width;
+        const H   = animCanvas.height;
+
+        ctx.clearRect(0, 0, W, H);
+
+        /* 坐标参数 */
+        const wallX    = 80;     /* 墙壁 x 坐标 */
+        const eqX      = 340;    /* 质量平衡位置(弹簧原长终点) */
+        const groundY  = 260;    /* 地面 y 坐标 */
+        const springY  = 205;    /* 弹簧 y 坐标 */
+        const damperY  = 245;    /* 阻尼器 y 坐标 */
+        const massW    = 70;
+        const massH    = 54;
+        const pixScale = 80;     /* 位移缩放: 1m → 80px */
+
+        /* 计算当前位移和弹簧端点 */
+        const xVal = computeX(simTime);
+        const massCenterX = eqX + pixScale * xVal;
+        const massLeft    = massCenterX - massW / 2;
+        const massRight   = massCenterX + massW / 2;
+        const massTop     = springY - massH / 2;
+        const massBottom  = springY + massH / 2;
+
+        /* --- 墙壁 --- */
+        ctx.fillStyle = "#8b949e";
+        ctx.fillRect(wallX - 10, springY - 60, 16, 120);
+        /* 斜线填充表示固定 */
+        ctx.strokeStyle = "#484f58";
+        ctx.lineWidth = 1.5;
+        for (let sy = springY - 50; sy < springY + 50; sy += 10) {
+            ctx.beginPath();
+            ctx.moveTo(wallX - 10, sy);
+            ctx.lineTo(wallX + 6, sy + 10);
+            ctx.stroke();
+        }
+
+        /* --- 地面 --- */
+        ctx.strokeStyle = "#484f58";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(wallX - 20, groundY + 30);
+        ctx.lineTo(W - 10, groundY + 30);
+        ctx.stroke();
+
+        /* --- 弹簧 --- */
+        ctx.strokeStyle  = "#58a6ff";
+        ctx.lineWidth    = 2.5;
+        const springMinLen = 20;  /* 弹簧最短长度(防止翻转) */
+        const springEnd = Math.max(wallX + springMinLen, massLeft);
+        drawSpring(ctx, wallX, springY, springEnd, 14, 14);
+
+        /* --- 阻尼器 --- */
+        ctx.strokeStyle  = "#d2a8ff";
+        ctx.lineWidth    = 2;
+        drawDamper(ctx, wallX, damperY, massLeft);
+
+        /* --- 质量块 --- */
+        const grad = ctx.createLinearGradient(massLeft, massTop, massLeft, massBottom);
+        grad.addColorStop(0, "#3fb950");
+        grad.addColorStop(1, "#238636");
+        ctx.fillStyle = grad;
+        ctx.fillRect(massLeft, massTop, massW, massH);
+        ctx.strokeStyle = "#2ea043";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(massLeft, massTop, massW, massH);
+
+        /* 质量块标签 */
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 13px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("m", massCenterX, springY + 5);
+
+        /* --- 驱动力箭头 (作用在质量块上) --- */
+        const driveSign = Math.cos(omega * simTime); /* 驱动力方向 */
+        const arrowLen  = 30 + 16 * driveSign;
+        const arrowY    = massTop - 20;
+        const arrowBase = massCenterX;
+
+        ctx.strokeStyle = "#f0883e";
+        ctx.lineWidth   = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(arrowBase, arrowY);
+        ctx.lineTo(arrowBase + arrowLen * (driveSign > 0 ? 1 : -1), arrowY);
+        ctx.stroke();
+
+        /* 箭头尖 */
+        const tipX = arrowBase + arrowLen * (driveSign > 0 ? 1 : -1);
+        const tipDir = driveSign > 0 ? 1 : -1;
+        ctx.fillStyle = "#f0883e";
+        ctx.beginPath();
+        ctx.moveTo(tipX, arrowY);
+        ctx.lineTo(tipX - 10 * tipDir, arrowY - 6);
+        ctx.lineTo(tipX - 10 * tipDir, arrowY + 6);
+        ctx.closePath();
+        ctx.fill();
+
+        /* 驱动力标签 */
+        ctx.fillStyle = "#f0883e";
+        ctx.font = "12px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("F₀cos(ωt)", arrowBase, arrowY - 12);
+
+        /* --- 平衡位置虚线标记 --- */
+        ctx.setLineDash([4, 6]);
+        ctx.strokeStyle = "#484f58";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(eqX, springY - 50);
+        ctx.lineTo(eqX, groundY + 30);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        /* --- 位移标注 --- */
+        ctx.fillStyle = "#8b949e";
+        ctx.font = "11px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("x = " + xVal.toFixed(3) + " m", massCenterX, massBottom + 16);
+
+        /* --- 图例 --- */
+        ctx.font = "11px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "left";
+        const legendX = W - 170;
+        const legendY = 16;
+
+        ctx.fillStyle = "#58a6ff";
+        ctx.fillRect(legendX, legendY, 14, 3);
+        ctx.fillStyle = "#c9d1d9";
+        ctx.fillText("弹簧 k", legendX + 20, legendY + 5);
+
+        ctx.strokeStyle = "#d2a8ff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY + 18);
+        ctx.lineTo(legendX + 14, legendY + 18);
+        ctx.stroke();
+        ctx.fillStyle = "#c9d1d9";
+        ctx.fillText("阻尼 b", legendX + 20, legendY + 22);
+
+        ctx.strokeStyle = "#f0883e";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY + 36);
+        ctx.lineTo(legendX + 14, legendY + 36);
+        ctx.stroke();
+        ctx.fillStyle = "#c9d1d9";
+        ctx.fillText("驱动力 F₀", legendX + 20, legendY + 40);
+        ctx.lineWidth = 1;
+    }
+
+    /*
+     * 绘制位移-时间图 (x vs t)
+     */
+    function drawPlotTime() {
+        const ctx = plotTimeCtx;
+        const W   = plotTimeCanvas.width;
+        const H   = plotTimeCanvas.height;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#161b22";
+        ctx.fillRect(0, 0, W, H);
+
+        const margin = { left: 55, right: 20, top: 30, bottom: 40 };
+        const pw = W - margin.left - margin.right;
+        const ph = H - margin.top - margin.bottom;
+
+        /* 背景网格 */
+        ctx.strokeStyle = "#21262d";
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i <= 10; i++) {
+            const y = margin.top + (ph / 10) * i;
+            ctx.beginPath(); ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + pw, y); ctx.stroke();
+        }
+        for (let i = 0; i <= 10; i++) {
+            const x = margin.left + (pw / 10) * i;
+            ctx.beginPath(); ctx.moveTo(x, margin.top); ctx.lineTo(x, margin.top + ph); ctx.stroke();
+        }
+
+        /* 坐标轴 */
+        ctx.strokeStyle = "#8b949e";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, margin.top);
+        ctx.lineTo(margin.left, margin.top + ph);
+        ctx.lineTo(margin.left + pw, margin.top + ph);
+        ctx.stroke();
+
+        /* 轴标签 */
+        ctx.fillStyle = "#8b949e";
+        ctx.font = "12px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("时间 t (s)", margin.left + pw / 2, margin.top + ph + 30);
+        ctx.save();
+        ctx.translate(14, margin.top + ph / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText("位移 x (m)", 0, 0);
+        ctx.restore();
+
+        if (timeHistory.length < 2) return;
+
+        /* 确定数据范围 */
+        const tMin = timeHistory[0];
+        const tMax = timeHistory[timeHistory.length - 1];
+        const tRange = Math.max(tMax - tMin, 0.5);
+        const t0 = tMax - tRange;
+
+        let xMin = Infinity, xMax = -Infinity;
+        for (let i = 0; i < xHistory.length; i++) {
+            if (timeHistory[i] >= t0) {
+                if (xHistory[i] < xMin) xMin = xHistory[i];
+                if (xHistory[i] > xMax) xMax = xHistory[i];
+            }
+        }
+        if (!isFinite(xMin)) { xMin = -1; xMax = 1; }
+        const xMargin = (xMax - xMin) * 0.1 || 0.5;
+        xMin -= xMargin;
+        xMax += xMargin;
+
+        /* 绘制 x=0 参考线 */
+        const zeroY = margin.top + ph * (xMax / (xMax - xMin));
+        if (xMin <= 0 && xMax >= 0) {
+            ctx.setLineDash([3, 5]);
+            ctx.strokeStyle = "#30363d";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, zeroY);
+            ctx.lineTo(margin.left + pw, zeroY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        /* 绘制位移曲线 */
+        ctx.strokeStyle = "#58a6ff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let firstPoint = true;
+        for (let i = 0; i < xHistory.length; i++) {
+            if (timeHistory[i] < t0) continue;
+            const sx = margin.left + pw * (timeHistory[i] - t0) / tRange;
+            const sy = margin.top + ph * (1 - (xHistory[i] - xMin) / (xMax - xMin));
+            if (firstPoint) { ctx.moveTo(sx, sy); firstPoint = false; }
+            else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+
+        /* 轴刻度 */
+        ctx.fillStyle = "#8b949e";
+        ctx.font = "10px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "right";
+        for (let i = 0; i <= 4; i++) {
+            const val = xMin + (xMax - xMin) * i / 4;
+            const sy = margin.top + ph * (1 - i / 4);
+            ctx.fillText(val.toFixed(2), margin.left - 4, sy + 4);
+        }
+        ctx.textAlign = "center";
+        for (let i = 0; i <= 4; i++) {
+            const val = t0 + tRange * i / 4;
+            const sx = margin.left + pw * i / 4;
+            ctx.fillText(val.toFixed(1), sx, margin.top + ph + 16);
+        }
+
+        /* 标题 */
+        ctx.fillStyle = "#c9d1d9";
+        ctx.font = "13px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("位移 x(t) — 时间响应", margin.left + pw / 2, margin.top - 10);
+    }
+
+    /*
+     * 绘制振幅-频率图 (共振曲线 A vs ω)
+     */
+    function drawPlotFreq() {
+        const ctx = plotFreqCtx;
+        const W   = plotFreqCanvas.width;
+        const H   = plotFreqCanvas.height;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#161b22";
+        ctx.fillRect(0, 0, W, H);
+
+        const margin = { left: 60, right: 20, top: 30, bottom: 40 };
+        const pw = W - margin.left - margin.right;
+        const ph = H - margin.top - margin.bottom;
+
+        const omegaPlotMin = 0.1;
+        const omegaPlotMax = 30;
+
+        /* 预先计算理论共振曲线(平滑参考线) */
+        const N_THEORY = 300;
+        const theoryPts = [];
+        const omMax = omegaPlotMax * 1.1;
+        for (let i = 0; i <= N_THEORY; i++) {
+            const om = omegaPlotMin + (omMax - omegaPlotMin) * i / N_THEORY;
+            theoryPts.push({ om, amp: computeSteadyAmp(om) });
+        }
+
+        /* 确定振幅范围 */
+        let ampMax = 0;
+        for (const pt of theoryPts) {
+            if (pt.amp > ampMax) ampMax = pt.amp;
+        }
+        /* 也考虑已有共振数据 */
+        for (const dp of resonanceData) {
+            if (dp.amp > ampMax) ampMax = dp.amp;
+        }
+        ampMax = Math.max(ampMax, 0.01);
+        ampMax *= 1.15;
+
+        /* 背景网格 */
+        ctx.strokeStyle = "#21262d";
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i <= 10; i++) {
+            const y = margin.top + (ph / 10) * i;
+            ctx.beginPath(); ctx.moveTo(margin.left, y); ctx.lineTo(margin.left + pw, y); ctx.stroke();
+        }
+        for (let i = 0; i <= 10; i++) {
+            const x = margin.left + (pw / 10) * i;
+            ctx.beginPath(); ctx.moveTo(x, margin.top); ctx.lineTo(x, margin.top + ph); ctx.stroke();
+        }
+
+        /* 坐标轴 */
+        ctx.strokeStyle = "#8b949e";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, margin.top);
+        ctx.lineTo(margin.left, margin.top + ph);
+        ctx.lineTo(margin.left + pw, margin.top + ph);
+        ctx.stroke();
+
+        /* 轴标签 */
+        ctx.fillStyle = "#8b949e";
+        ctx.font = "12px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("驱动频率 ω (rad/s)", margin.left + pw / 2, margin.top + ph + 30);
+        ctx.save();
+        ctx.translate(14, margin.top + ph / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText("稳态振幅 A (m)", 0, 0);
+        ctx.restore();
+
+        /* 绘制理论共振曲线(半透明) */
+        ctx.strokeStyle = "rgba(88, 166, 255, 0.3)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        let firstTheory = true;
+        for (const pt of theoryPts) {
+            if (pt.om < omegaPlotMin - 0.01 || pt.om > omegaPlotMax + 0.01) continue;
+            const sx = margin.left + pw * (pt.om - omegaPlotMin) / (omegaPlotMax - omegaPlotMin);
+            const sy = margin.top + ph * (1 - pt.amp / ampMax);
+            if (firstTheory) { ctx.moveTo(sx, sy); firstTheory = false; }
+            else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+
+        /* 绘制共振数据点(扫描积累) */
+        for (const dp of resonanceData) {
+            if (dp.om > omegaPlotMax) continue;
+            const sx = margin.left + pw * (dp.om - omegaPlotMin) / (omegaPlotMax - omegaPlotMin);
+            const sy = margin.top + ph * (1 - dp.amp / ampMax);
+            ctx.fillStyle = "#d2a8ff";
+            ctx.beginPath();
+            ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        /* 标记当前驱动频率位置 */
+        if (!sweeping && running) {
+            const curOm = omega;
+            if (curOm >= omegaPlotMin && curOm <= omegaPlotMax) {
+                const sx = margin.left + pw * (curOm - omegaPlotMin) / (omegaPlotMax - omegaPlotMin);
+                ctx.strokeStyle = "#f0883e";
+                ctx.lineWidth = 2;
+                ctx.setLineDash([3, 4]);
+                ctx.beginPath();
+                ctx.moveTo(sx, margin.top);
+                ctx.lineTo(sx, margin.top + ph);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = "#f0883e";
+                ctx.font = "11px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("ω=" + curOm.toFixed(1), sx, margin.top - 12);
+            }
+        }
+
+        /* 标记固有频率 ω₀ 共振位置(虚线) */
+        {
+            const sx = margin.left + pw * (omega0 - omegaPlotMin) / (omegaPlotMax - omegaPlotMin);
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = "rgba(210, 168, 255, 0.6)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(sx, margin.top);
+            ctx.lineTo(sx, margin.top + ph);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = "#d2a8ff";
+            ctx.font = "bold 11px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("ω₀=" + omega0.toFixed(2), sx, margin.top + ph + 18);
+        }
+
+        /* 轴刻度 */
+        ctx.fillStyle = "#8b949e";
+        ctx.font = "10px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "right";
+        for (let i = 0; i <= 4; i++) {
+            const val = ampMax * (4 - i) / 4;
+            const sy = margin.top + ph * i / 4;
+            ctx.fillText(val.toFixed(3), margin.left - 4, sy + 4);
+        }
+        ctx.textAlign = "center";
+        for (let i = 0; i <= 4; i++) {
+            const val = omegaPlotMin + (omegaPlotMax - omegaPlotMin) * i / 4;
+            const sx = margin.left + pw * i / 4;
+            ctx.fillText(val.toFixed(1), sx, margin.top + ph + 16);
+        }
+
+        /* 标题 */
+        ctx.fillStyle = "#c9d1d9";
+        ctx.font = "13px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("稳态振幅 A(ω) — 共振曲线", margin.left + pw / 2, margin.top - 10);
+    }
+
+    /* ---------- 绘制所有画布 ---------- */
+    function drawAll() {
+        drawAnimation();
+        drawPlotTime();
+        drawPlotFreq();
+    }
+
+    /* ---------- 主循环 ---------- */
+    function frame(timestamp) {
+        if (running) {
+            const elapsed = (timestamp - lastFrame) / 1000; /* 秒 */
+            lastFrame = timestamp;
+
+            if (sweeping) {
+                /* 频率扫描模式: 每帧处理几个频率点 */
+                const ptsPerFrame = 3;
+                for (let n = 0; n < ptsPerFrame && sweepIndex < sweepFreqs.length; n++) {
+                    const sweepOm = sweepFreqs[sweepIndex];
+                    /* 计算该频率下的稳态振幅并记录 */
+                    const amp = computeSteadyAmp(sweepOm);
+                    resonanceData.push({ om: sweepOm, amp: amp });
+                    sweepIndex++;
+                }
+
+                if (sweepIndex >= sweepFreqs.length) {
+                    /* 扫描完成 */
+                    sweeping = false;
+                    btnSweep.disabled = false;
+                    btnStart.disabled = false;
+                    btnPause.disabled = true;
+                    running = false;
+                }
+
+                /* 扫描期间, 仿真时间持续推演(展示当前 omega 下的振动) */
+                simTime += elapsed * 5; /* 加速5倍 */
+            } else {
+                /* 正常仿真: 匀速推演时间 */
+                simTime += elapsed;
+            }
+
+            /* 更新位移-时间历史数据 */
+            timeHistory.push(simTime);
+            xHistory.push(computeX(simTime));
+
+            /* 限制历史长度 */
+            while (timeHistory.length > 0 && simTime - timeHistory[0] > MAX_HISTORY) {
+                timeHistory.shift();
+                xHistory.shift();
+            }
+
+            /* 更新信息面板 */
+            updateInfoPanel();
+        }
+
+        drawAll();
+        requestAnimationFrame(frame);
+    }
+
+    /* ---------- 初始化 ---------- */
+    function init() {
+        recalcDerived();
+        updateInfoPanel();
+        lastFrame = performance.now();
+        drawAll();
+        requestAnimationFrame(frame);
+    }
+
+    init();
+})();
+</script>
+
+</body>
+</html>

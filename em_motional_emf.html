@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>动生电动势 - 物理数值仿真平台</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+main{flex:1;display:flex;overflow:hidden}#canvasWrap{flex:1;position:relative}canvas{display:block;width:100%;height:100%}
+#sidebar{width:300px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0}.row label{flex:0 0 100px;font-size:13px}
+.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+</style></head>
+<body><div id="app">
+
+<main><div id="canvasWrap"><canvas id="c"></canvas></div>
+<div id="sidebar">
+<div class="sec"><h3>参数设置</h3>
+<div class="row"><label>磁场 B</label><input id="p1" type="range" min="0.2" max="3" step="0.1" value="1.5"><input id="p1n" type="number" value="1.5"></div>
+<div class="row"><label>导体速度 v</label><input id="p2" type="range" min="-5" max="5" step="0.2" value="2"><input id="p2n" type="number" value="2"></div>
+<div class="row"><label>导体长度 L</label><input id="p3" type="range" min="0.5" max="3" step="0.1" value="1.5"><input id="p3n" type="number" value="1.5"></div>
+</div></div></main></div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+window.addEventListener('resize',resize);let inited=false;
+const p1=document.getElementById('p1'),p1n=document.getElementById('p1n'),p2=document.getElementById('p2'),p2n=document.getElementById('p2n'),p3=document.getElementById('p3'),p3n=document.getElementById('p3n');
+function link(a,b){a.oninput=()=>{b.value=a.value};b.oninput=()=>{a.value=b.value}}
+link(p1,p1n);link(p2,p2n);link(p3,p3n);
+let t=0,pos=0;
+function draw(){
+if(!inited){resize();inited=true;}
+const W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H){requestAnimationFrame(draw);return}
+const B=+p1.value,v=+p2.value,L=+p3.value;t+=0.016;
+pos+=v*0.01;if(pos>1)pos-=2;if(pos<-1)pos+=2;
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+const margin=60,cx=(margin+W-margin)/2,cy=(margin+H-margin)/2,scale=Math.min(W,H)/5;
+// B field (into page, × marks)
+ctx.strokeStyle='rgba(88,166,255,0.3)';ctx.lineWidth=1;
+for(let i=-6;i<=6;i++){for(let j=-4;j<=4;j++){
+const xx=cx+i*scale*0.5,yy=cy+j*scale*0.6;
+ctx.beginPath();ctx.moveTo(xx-5,yy-5);ctx.lineTo(xx+5,yy+5);ctx.moveTo(xx+5,yy-5);ctx.lineTo(xx-5,yy+5);ctx.stroke();
+}}
+// U-shaped rail
+const rw=scale*2,rh=scale*0.8;
+ctx.strokeStyle='#c9d1d9';ctx.lineWidth=3;
+ctx.beginPath();ctx.moveTo(cx-rw,cy-rh);ctx.lineTo(cx+rw,cy-rh);ctx.stroke();
+ctx.beginPath();ctx.moveTo(cx-rw,cy-rh);ctx.lineTo(cx-rw,cy+rh);ctx.stroke();
+ctx.beginPath();ctx.moveTo(cx+rw,cy-rh);ctx.lineTo(cx+rw,cy+rh);ctx.stroke();
+// moving bar
+const bx=cx-pos*scale*1.8;
+ctx.fillStyle='#f78166';ctx.fillRect(bx-4,cy-rh,8,rh*2);
+ctx.strokeStyle='#f78166';ctx.lineWidth=3;ctx.strokeRect(bx-4,cy-rh,8,rh*2);
+// velocity arrow
+ctx.strokeStyle='#3fb950';ctx.lineWidth=2;
+ctx.beginPath();ctx.moveTo(bx,cy);ctx.lineTo(bx+v*20,cy);ctx.stroke();
+// EMF = BvL
+const emf=B*Math.abs(v)*L*0.1;
+ctx.fillStyle='#8b949e';ctx.font='14px system-ui';
+ctx.fillText(`动生电动势 ε = BvL = ${emf.toFixed(3)} V | v = ${v.toFixed(1)} m/s`,margin,H-margin-20);
+requestAnimationFrame(draw);
+}requestAnimationFrame(draw);
+</script></body></html>

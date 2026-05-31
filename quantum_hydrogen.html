@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>氢原子波函数 - 量子与核物理</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
+  .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
+  .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
+  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
+  .back-link:hover { background:#1f2937; }
+  .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
+  .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
+  canvas { display:block; border-radius:4px; background:#0d1117; }
+  .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
+  .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
+  .orbital-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:8px; }
+  .orb-btn { padding:7px 4px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.75rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; text-align:center; }
+  .orb-btn:hover { background:#30363d; border-color:var(--accent4); }
+  .orb-btn.active { background:#1f6feb33; border-color:var(--accent4); color:var(--accent4); font-weight:600; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; width:100%; margin-top:4px; text-align:center; }
+  .btn:hover { background:#30363d; }
+  .btn.primary { border-color:var(--accent4); color:var(--accent4); }
+  .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
+  .stat-item:last-child { border-bottom:none; }
+  .stat-label { color:#8b949e; }
+  .stat-value { color:var(--accent4); font-weight:600; }
+  @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>⚛️ 氢原子波函数 — 电子云可视化</h1>
+    <div class="subtitle">量子力学 — 薛定谔方程解析解、轨道角动量与电子概率密度</div>
+  </div>
+
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>🎯 选择轨道</h3>
+      <div class="orbital-grid">
+        <button class="orb-btn active" data-n="1" data-l="0" data-m="0">1s</button>
+        <button class="orb-btn" data-n="2" data-l="0" data-m="0">2s</button>
+        <button class="orb-btn" data-n="2" data-l="1" data-m="0">2p₀</button>
+        <button class="orb-btn" data-n="2" data-l="1" data-m="1">2p₁</button>
+        <button class="orb-btn" data-n="3" data-l="0" data-m="0">3s</button>
+        <button class="orb-btn" data-n="3" data-l="1" data-m="0">3p₀</button>
+        <button class="orb-btn" data-n="3" data-l="2" data-m="0">3d₀</button>
+        <button class="orb-btn" data-n="3" data-l="2" data-m="1">3d₁</button>
+        <button class="orb-btn" data-n="3" data-l="2" data-m="2">3d₂</button>
+      </div>
+      <button class="btn primary" id="btnView2D">📐 2D 截面</button>
+      <button class="btn" id="btnView3D">🌐 3D 概率云</button>
+      <button class="btn" id="btnReset">↺ 重置视图</button>
+    </div>
+    <div class="panel-box">
+      <h3>📊 轨道信息</h3>
+      <div class="stat-item"><span class="stat-label">主量子数 n</span><span class="stat-value" id="statN">1</span></div>
+      <div class="stat-item"><span class="stat-label">角量子数 l</span><span class="stat-value" id="statL">0</span></div>
+      <div class="stat-item"><span class="stat-label">磁量子数 m</span><span class="stat-value" id="statM">0</span></div>
+      <div class="stat-item"><span class="stat-label">能级 E_n</span><span class="stat-value" id="statE">-13.60 eV</span></div>
+      <div class="stat-item"><span class="stat-label">节面数</span><span class="stat-value" id="statNodes">0</span></div>
+      <div class="stat-item"><span class="stat-label">轨道名称</span><span class="stat-value" id="statName">1s</span></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const canvas=document.getElementById('simCanvas');
+  const ctx=canvas.getContext('2d');
+  let W=680,H=500;
+  function resize(){const dpr=window.devicePixelRatio||1;canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+
+  let n=1,l=0,m=0,viewMode='2d';
+
+  const a0=1;
+  function radialR(n,l,r){
+    if(n===1&&l===0)return 2*Math.exp(-r);
+    if(n===2&&l===0){const rho=r/2;return (1/Math.sqrt(2))*(1-rho/2)*Math.exp(-rho/2);}
+    if(n===2&&l===1){const rho=r/2;return (1/(2*Math.sqrt(6)))*rho*Math.exp(-rho/2);}
+    if(n===3&&l===0){const rho=2*r/3;return (2/(81*Math.sqrt(3)))*(27-18*rho+2*rho*rho)*Math.exp(-rho/2);}
+    if(n===3&&l===1){const rho=2*r/3;return (4/(81*Math.sqrt(6)))*(6*rho-rho*rho)*Math.exp(-rho/2);}
+    if(n===3&&l===2){const rho=2*r/3;return (4/(81*Math.sqrt(30)))*rho*rho*Math.exp(-rho/2);}
+    return 2*Math.exp(-r);
+  }
+
+  function sphericalY(l,m,theta,phi){
+    if(l===0)return 0.5/Math.sqrt(Math.PI);
+    if(l===1&&m===0)return (0.5*Math.sqrt(3/Math.PI))*Math.cos(theta);
+    if(l===1&&Math.abs(m)===1)return (0.5*Math.sqrt(3/(2*Math.PI)))*Math.sin(theta)*(m===1?Math.cos(phi):Math.sin(phi));
+    if(l===2&&m===0)return (0.25*Math.sqrt(5/Math.PI))*(3*Math.cos(theta)*Math.cos(theta)-1);
+    if(l===2&&Math.abs(m)===1)return (0.5*Math.sqrt(15/(2*Math.PI)))*Math.sin(theta)*Math.cos(theta)*(m===1?Math.cos(phi):Math.sin(phi));
+    if(l===2&&Math.abs(m)===2)return (0.25*Math.sqrt(15/(2*Math.PI)))*Math.sin(theta)*Math.sin(theta)*(m===2?Math.cos(2*phi):Math.sin(2*phi));
+    return 0.5/Math.sqrt(Math.PI);
+  }
+
+  function wavefunction(x,y){
+    const r=Math.sqrt(x*x+y*y+0.001);
+    const theta=Math.atan2(Math.sqrt(x*x+y*y),0.001);
+    const phi=Math.atan2(y,x);
+    return radialR(n,l,r)*sphericalY(l,m,theta,phi);
+  }
+
+  function draw2D(){
+    const cx=W/2,cy=H/2;
+    const scale=W*0.06;
+    const maxR=8*a0;
+    const steps=200;
+
+    const gridData=new Float64Array(steps*steps);
+    let maxProb=0;
+    for(let iy=0;iy<steps;iy++){for(let ix=0;ix<steps;ix++){
+      const x=(ix-steps/2)/scale;
+      const y=(iy-steps/2)/scale;
+      const r=Math.sqrt(x*x+y*y);
+      if(r>maxR){gridData[iy*steps+ix]=0;continue;}
+      const psi=wavefunction(x,y);
+      const prob=psi*psi;
+      gridData[iy*steps+ix]=prob;
+      if(prob>maxProb)maxProb=prob;
+    }}
+    if(maxProb<1e-12)maxProb=1;
+
+    const imgData=ctx.createImageData(W,H);
+    for(let iy=0;iy<H;iy++){for(let ix=0;ix<W;ix++){
+      const gi=Math.floor(iy/H*steps),gj=Math.floor(ix/W*steps);
+      if(gi>=0&&gi<steps&&gj>=0&&gj<steps){
+        const v=gridData[gi*steps+gj]/maxProb;
+        const c=Math.floor(Math.sqrt(v)*255);
+        const idx=(iy*W+ix)*4;
+        imgData.data[idx]=Math.floor(c*0.4);imgData.data[idx+1]=Math.floor(c*0.8);imgData.data[idx+2]=c;imgData.data[idx+3]=255;
+      }
+    }}
+    ctx.putImageData(imgData,0,0);
+
+    ctx.strokeStyle='#8b949e';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+
+    for(let i=1;i<=maxR;i++){
+      ctx.strokeStyle='#30363d';ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.arc(cx,cy,i*scale,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';ctx.fillText(i+'a₀',cx+i*scale,cy+2);
+    }
+
+    ctx.fillStyle='#fff';ctx.font='12px sans-serif';ctx.textAlign='center';
+    ctx.fillText('氢原子波函数 |ψ|²: '+n+l+m+'s'[l||0]+(l?('p'[l-1]||'d'[l-2]):'s'),cx,20);
+    ctx.fillText('x →',W-20,cy+14);ctx.fillText('y →',cx+14,H-10);
+
+    ctx.fillStyle='#d2a8ff';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText('n='+n+' l='+l+' m='+m,W-10,40);
+    ctx.fillText('E='+(-13.6/(n*n)).toFixed(2)+' eV',W-10,55);
+  }
+
+  function draw3D(){
+    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    const cx=W/2,cy=H/2;
+    const scale=W*0.055;
+    const maxR=8*a0;
+    const numParticles=5000;
+
+    for(let i=0;i<numParticles;i++){
+      let x,y,r;
+      do{
+        x=(Math.random()-0.5)*maxR*2;
+        y=(Math.random()-0.5)*maxR*2;
+        r=Math.sqrt(x*x+y*y);
+      }while(r>maxR-1);
+
+      const psi=wavefunction(x,y);
+      const prob=psi*psi;
+      const accept=prob/(0.4/Math.pow(n,3));
+
+      if(Math.random()<accept){
+        const sx=cx+x*scale,sy=cy+y*scale;
+        const distFromCenter=r/maxR;
+        const alpha=0.3+0.7*(1-distFromCenter);
+        const rv=Math.floor(88*alpha),gv=Math.floor(166*alpha),bv=Math.floor(255*alpha);
+        ctx.fillStyle=`rgba(${rv},${gv},${bv},${0.3+0.7*prob/accept})`;
+        ctx.beginPath();ctx.arc(sx,sy,2,0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.setLineDash([5,5]);
+    for(let r=2;r<=maxR;r+=2){
+      ctx.beginPath();ctx.arc(cx,cy,r*scale,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.fillStyle='#ffa657';ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='12px sans-serif';ctx.textAlign='center';
+    ctx.fillText('氢原子电子云 (Monte Carlo): n='+n+' l='+l+' m='+m,cx,20);
+  }
+
+  function updateInfo(){
+    document.getElementById('statN').textContent=n;
+    document.getElementById('statL').textContent=l;
+    document.getElementById('statM').textContent=m;
+    document.getElementById('statE').textContent=(-13.6/(n*n)).toFixed(2)+' eV';
+    const nodes=n-l-1;
+    document.getElementById('statNodes').textContent=nodes;
+    const nameMap={0:'s',1:'p',2:'d',3:'f'};
+    document.getElementById('statName').textContent=n+nameMap[l]||'?';
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    if(viewMode==='2d')draw2D();
+    else draw3D();
+    updateInfo();
+  }
+
+  document.querySelectorAll('.orb-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      n=parseInt(btn.dataset.n);l=parseInt(btn.dataset.l);m=parseInt(btn.dataset.m);
+      document.querySelectorAll('.orb-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      draw();
+    });
+  });
+
+  document.getElementById('btnView2D').addEventListener('click',()=>{viewMode='2d';draw();});
+  document.getElementById('btnView3D').addEventListener('click',()=>{viewMode='3d';draw();});
+  document.getElementById('btnReset').addEventListener('click',()=>{n=1;l=0;m=0;viewMode='2d';document.querySelectorAll('.orb-btn').forEach(b=>b.classList.remove('active'));document.querySelector('[data-n="1"]').classList.add('active');draw();});
+
+  function init(){resize();draw();}
+  window.addEventListener('resize',()=>{resize();draw();});
+  init();
+})();
+</script>
+</body>
+</html>

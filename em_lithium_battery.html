@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔋 锂电池仿真</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group input[type="number"] { background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:4px 8px; color:var(--text); font-size:0.8em; width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .control-group button:hover { opacity:0.9; }
+  .info-panel { background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  .info-panel .label { color:#8b949e; }
+  .info-panel .value { color:var(--accent); font-weight:600; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔋 锂电池工作原理仿真</h1>
+  <p>模拟锂电池充电/放电过程中的离子迁移与电势变化</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>操作模式</label>
+      <select id="mode" style="background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:6px; color:var(--text); font-size:0.8em;">
+        <option value="discharge">放电模式</option>
+        <option value="charge">充电模式</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>负载电阻 (Ω): <span id="resVal">100</span></label>
+      <input type="range" id="resistor" min="10" max="500" value="100">
+    </div>
+    <div class="control-group">
+      <label>电池容量 (mAh): <span id="capVal">2000</span></label>
+      <input type="range" id="capacity" min="500" max="5000" step="100" value="2000">
+    </div>
+    <div class="control-group">
+      <button id="resetBtn">🔄 重置电池</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">电池电压:</span><span class="value" id="voltage">3.7 V</span></div>
+      <div class="item"><span class="label">电流:</span><span class="value" id="current">0 mA</span></div>
+      <div class="item"><span class="label">剩余电量:</span><span class="value" id="soc">100%</span></div>
+      <div class="item"><span class="label">状态:</span><span class="value" id="status">待机</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+
+let voltage = 3.7;
+let soc = 100;
+let mode = 'discharge';
+let resistor = 100;
+let capacity = 2000;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  const cellW = 80;
+  const cellH = 280;
+  const leftX = 120;
+  const midX = canvas.width / 2;
+  const rightX = canvas.width - 120 - cellW;
+  const topY = 60;
+  
+  // 负极 (阳极 - 石墨)
+  ctx.fillStyle = '#4a5568';
+  ctx.fillRect(leftX, topY, cellW, cellH);
+  ctx.fillStyle = '#2d3748';
+  ctx.fillRect(leftX + 5, topY + 5, cellW - 10, cellH - 10);
+  ctx.fillStyle = '#718096';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('石墨阳极', leftX + 10, topY + 25);
+  
+  // 正极 (阴极 - 钴酸锂)
+  ctx.fillStyle = '#c05621';
+  ctx.fillRect(rightX, topY, cellW, cellH);
+  ctx.fillStyle = '#8b4513';
+  ctx.fillRect(rightX + 5, topY + 5, cellW - 10, cellH - 10);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('钴酸锂阴极', rightX + 8, topY + 25);
+  
+  // 电解液区域
+  ctx.fillStyle = '#1a365d';
+  ctx.fillRect(leftX + cellW, topY, rightX - leftX - cellW, cellH);
+  ctx.strokeStyle = '#3182ce';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5,5]);
+  ctx.strokeRect(leftX + cellW, topY, rightX - leftX - cellW, cellH);
+  ctx.setLineDash([]);
+  
+  // 绘制锂离子
+  const lithiumCount = Math.floor(30 * (100 - soc) / 100);
+  for (let i = 0; i < lithiumCount; i++) {
+    const x = leftX + cellW + Math.random() * (rightX - leftX - cellW);
+    const y = topY + Math.random() * cellH;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = mode === 'discharge' ? '#fbbf24' : '#f59e0b';
+    ctx.fill();
+    ctx.strokeStyle = '#fcd34d';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  
+  // 外部电路
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(leftX, topY);
+  ctx.lineTo(leftX, topY - 30);
+  ctx.lineTo(rightX + cellW, topY - 30);
+  ctx.lineTo(rightX + cellW, topY);
+  ctx.stroke();
+  
+  // 电阻符号
+  const rX = midX - 25;
+  const rY = topY - 30;
+  ctx.strokeStyle = '#f78166';
+  ctx.beginPath();
+  ctx.moveTo(rX, rY);
+  ctx.lineTo(rX + 15, rY - 15);
+  ctx.lineTo(rX + 30, rY - 15);
+  ctx.lineTo(rX + 45, rY);
+  ctx.lineTo(rX + 30, rY + 15);
+  ctx.lineTo(rX + 15, rY + 15);
+  ctx.lineTo(rX, rY);
+  ctx.stroke();
+  ctx.fillStyle = '#f78166';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('R', midX - 5, rY + 35);
+  
+  // 电流方向箭头
+  if (mode === 'discharge') {
+    drawArrow(leftX + 20, topY - 35, leftX + 60, topY - 35, '#3fb950');
+    drawArrow(rightX + 60, topY - 25, rightX + 20, topY - 25, '#3fb950');
+  } else {
+    drawArrow(leftX + 60, topY - 35, leftX + 20, topY - 35, '#f78166');
+    drawArrow(rightX + 20, topY - 25, rightX + 60, topY - 25, '#f78166');
+  }
+  
+  // 电池状态条
+  const barW = 60;
+  const barH = 10;
+  const barX = midX - barW / 2;
+  const barY = topY + cellH + 20;
+  ctx.fillStyle = '#30363d';
+  ctx.fillRect(barX, barY, barW, barH);
+  const fillColor = soc > 50 ? '#3fb950' : soc > 20 ? '#ffa657' : '#f85149';
+  ctx.fillStyle = fillColor;
+  ctx.fillRect(barX, barY, barW * soc / 100, barH);
+  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeRect(barX, barY, barW, barH);
+  
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${soc.toFixed(1)}%`, midX, barY + 25);
+  ctx.textAlign = 'left';
+}
+
+function drawArrow(fromX, fromY, toX, toY, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  const angle = Math.atan2(toY - fromY, toX - fromX);
+  const headLen = 8;
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.lineTo(toX, toY);
+  ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.stroke();
+}
+
+function update() {
+  const current = (voltage * 1000) / resistor;
+  const dt = 0.016;
+  
+  if (mode === 'discharge') {
+    soc = Math.max(0, soc - (current * dt) / (capacity * 3.6));
+    voltage = 3.0 + (soc / 100) * 0.7;
+    document.getElementById('status').textContent = '放电中';
+  } else {
+    soc = Math.min(100, soc + (current * dt) / (capacity * 3.6));
+    voltage = 3.0 + (soc / 100) * 0.7;
+    document.getElementById('status').textContent = '充电中';
+  }
+  
+  document.getElementById('voltage').textContent = voltage.toFixed(2) + ' V';
+  document.getElementById('current').textContent = current.toFixed(1) + ' mA';
+  document.getElementById('soc').textContent = soc.toFixed(1) + '%';
+}
+
+function animate() {
+  update();
+  draw();
+  animationId = requestAnimationFrame(animate);
+}
+
+document.getElementById('mode').addEventListener('change', (e) => {
+  mode = e.target.value;
+});
+
+document.getElementById('resistor').addEventListener('input', (e) => {
+  resistor = parseInt(e.target.value);
+  document.getElementById('resVal').textContent = resistor;
+});
+
+document.getElementById('capacity').addEventListener('input', (e) => {
+  capacity = parseInt(e.target.value);
+  document.getElementById('capVal').textContent = capacity;
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  voltage = 3.7;
+  soc = 100;
+});
+
+draw();
+animate();
+</script>
+</body>
+</html>

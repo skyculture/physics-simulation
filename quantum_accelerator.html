@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加速器与重离子治疗 - 量子与核物理</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
+  .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
+  .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
+  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
+  .back-link:hover { background:#1f2937; }
+  .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
+  .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
+  canvas { display:block; border-radius:4px; background:#0d1117; }
+  .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
+  .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; }
+  .control-row label { font-size:0.82rem; color:var(--text); white-space:nowrap; }
+  .control-row input[type="range"] { flex:1; accent-color:var(--accent4); }
+  .control-row .val { font-size:0.78rem; color:var(--accent4); min-width:36px; text-align:right; font-weight:600; }
+  select { width:100%; padding:6px 8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:5px; font-size:0.82em; outline:none; cursor:pointer; margin-bottom:8px; }
+  select:focus { border-color:var(--accent4); }
+  .btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; flex:1; text-align:center; min-width:48px; }
+  .btn:hover { background:#30363d; }
+  .btn.primary { border-color:var(--accent4); color:var(--accent4); }
+  .btn.primary:hover { background:#1f6feb33; }
+  .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
+  .stat-item:last-child { border-bottom:none; }
+  .stat-label { color:#8b949e; }
+  .stat-value { color:var(--accent4); font-weight:600; font-variant-numeric:tabular-nums; }
+  @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>⚛️ 回旋加速器与重离子治疗</h1>
+    <div class="subtitle">核物理 — 回旋加速器原理 & 重离子束在癌症治疗中的应用</div>
+  </div>
+
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 加速器参数</h3>
+      <div class="control-row">
+        <label>磁场 B (T)</label>
+        <input type="range" id="bField" min="0.5" max="3" step="0.1" value="1.5">
+        <span class="val" id="bVal">1.5</span>
+      </div>
+      <div class="control-row">
+        <label>Dee 电压 (kV)</label>
+        <input type="range" id="voltage" min="10" max="200" step="10" value="50">
+        <span class="val" id="vVal">50</span>
+      </div>
+      <label style="font-size:0.82rem;color:var(--text);">粒子类型</label>
+      <select id="particleSelect">
+        <option value="proton">质子 (p⁺) — 轻离子</option>
+        <option value="carbon" selected>碳离子 (¹²C⁶⁺) — 重离子治疗</option>
+        <option value="helium">氦离子 (⁴He²⁺)</option>
+        <option value="oxygen">氧离子 (¹⁶O⁸⁺)</option>
+      </select>
+      <div class="btn-row">
+        <button class="btn primary" id="btnStart">▶ 开始</button>
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn" id="btnReset">↺ 重置</button>
+        <button class="btn" id="btnBeam">🎯 发射束流</button>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h3>📊 实时物理量</h3>
+      <div class="stat-item"><span class="stat-label">动能 E_k</span><span class="stat-value" id="statEk">0.00 MeV</span></div>
+      <div class="stat-item"><span class="stat-label">轨道半径 r</span><span class="stat-value" id="statRadius">0.00 m</span></div>
+      <div class="stat-item"><span class="stat-label">回旋频率 f</span><span class="stat-value" id="statFreq">0.00 MHz</span></div>
+      <div class="stat-item"><span class="stat-label">速度 v</span><span class="stat-value" id="statSpeed">0.00 c</span></div>
+      <div class="stat-item"><span class="stat-label">布拉格峰深度</span><span class="stat-value" id="statBragg">—</span></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const canvas=document.getElementById('simCanvas');
+  const ctx=canvas.getContext('2d');
+  let W=680,H=460;
+  function resizeCanvas(){const dpr=window.devicePixelRatio||1;canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+
+  const particlesData={
+    proton:{mass:1.67e-27,charge:1.6e-19,color:'#3fb950',name:'p⁺',z:1,a:1},
+    carbon:{mass:12*1.67e-27,charge:6*1.6e-19,color:'#f78166',name:'¹²C⁶⁺',z:6,a:12},
+    helium:{mass:4*1.67e-27,charge:2*1.6e-19,color:'#58a6ff',name:'⁴He²⁺',z:2,a:4},
+    oxygen:{mass:16*1.67e-27,charge:8*1.6e-19,color:'#d2a8ff',name:'¹⁶O⁸⁺',z:8,a:16}
+  };
+
+  let B=1.5,V=50000,particleType='carbon';
+  let particle=null,trail=[];
+  let isRunning=false,animId=null;
+  let beamParticles=[];
+
+  function createParticle(){
+    const d=particlesData[particleType];
+    return {x:W/2,y:H/2,vx:80,vy:0,color:d.color,colorAlpha:d.color+'88',mass:d.mass,charge:d.charge,energy:0,turnCount:0,phase:0};
+  }
+
+  function draw(){
+    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    const cx=W/2,cy=H/2;
+
+    ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    for(let i=0;i<10;i++){const r=70+i*25;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();}
+    ctx.setLineDash([]);
+
+    ctx.fillStyle='#21262d';ctx.beginPath();
+    ctx.arc(cx,cy,160,-Math.PI/2,Math.PI/2);ctx.lineTo(cx,cy);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#2d3748';ctx.beginPath();
+    ctx.arc(cx,cy,160,Math.PI/2,-Math.PI/2);ctx.lineTo(cx,cy);ctx.closePath();ctx.fill();
+
+    ctx.strokeStyle='var(--accent4)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(cx,cy,160,0,Math.PI*2);ctx.stroke();
+
+    if(trail.length>1){ctx.strokeStyle='rgba(210,168,255,0.3)';ctx.lineWidth=2;ctx.beginPath();
+      ctx.moveTo(trail[0].x,trail[0].y);for(let i=1;i<trail.length;i++)ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke();}
+
+    beamParticles.forEach(bp=>{ctx.fillStyle=bp.color;ctx.beginPath();ctx.arc(bp.x,bp.y,4,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle=bp.color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bp.x-3,bp.y);ctx.lineTo(bp.x+8,bp.y);ctx.stroke();});
+
+    if(particle){ctx.fillStyle=particle.color;ctx.beginPath();ctx.arc(particle.x,particle.y,6,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke();
+      const s=Math.hypot(particle.vx,particle.vy);if(s>0){ctx.strokeStyle=particle.color;ctx.lineWidth=2;ctx.beginPath();
+        ctx.moveTo(particle.x,particle.y);ctx.lineTo(particle.x+particle.vx/s*18,particle.y+particle.vy/s*18);ctx.stroke();}}
+
+    ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fill();
+
+    ctx.strokeStyle='#f78166';ctx.lineWidth=3;ctx.setLineDash([5,5]);
+    ctx.beginPath();ctx.moveTo(cx+160,cy);ctx.lineTo(W-40,cy);ctx.stroke();ctx.setLineDash([]);
+
+    ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(W-30,cy,14,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('肿瘤靶区',W-30,cy-22);
+
+    ctx.fillStyle=particlesData[particleType].color;ctx.font='11px sans-serif';ctx.textAlign='left';
+    ctx.fillText(particlesData[particleType].name+' 加速中',cx-50,cy-170);
+
+    ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';ctx.textAlign='center';
+    ctx.fillText('D 型电极',cx-80,cy-40);ctx.fillText('D 型电极',cx+80,cy+40);
+    ctx.fillText('B = '+B.toFixed(1)+' T',cx,cy+10);
+  }
+
+  function update(){
+    if(!isRunning||!particle)return;
+    const dt=0.0008;
+    const d=particlesData[particleType];
+    const q=d.charge,m=d.mass;
+    const cx=W/2,cy=H/2;
+
+    const fx=q*particle.vy*B*0.8;
+    const fy=-q*particle.vx*B*0.8;
+    particle.vx+=fx/m*dt*5e12;
+    particle.vy+=fy/m*dt*5e12;
+    particle.x+=particle.vx*dt*0.8;
+    particle.y+=particle.vy*dt*0.8;
+
+    const r=Math.hypot(particle.x-cx,particle.y-cy);
+    const gapR=8;
+    if(Math.abs(r-80)<gapR&&particle.phase%2===0&&particle.x>cx-20&&particle.x<cx+20){
+      const s=Math.hypot(particle.vx,particle.vy);
+      const factor=Math.sqrt(1+2*q*V/(m*s*s*1e-10));
+      particle.vx*=factor;particle.vy*=factor;
+      particle.energy+=q*V;particle.turnCount++;particle.phase++;
+    }
+
+    if(trail.length===0||Math.hypot(particle.x-trail[trail.length-1].x,particle.y-trail[trail.length-1].y)>3)
+      trail.push({x:particle.x,y:particle.y});
+    if(trail.length>500)trail.shift();
+
+    if(particle.turnCount>0&&r>155){const s=Math.hypot(particle.vx,particle.vy);
+      particle.vx+=Math.abs(particle.vx/(s||1))*200;
+      particle.trailVx=particle.vx;particle.trailVy=particle.vy;}
+
+    if(particle.x>W-20){particle.x=cx;particle.y=cy;particle.vx=80;particle.vy=0;
+      beamParticles.push({x:W-30,y:cy,vx:-3,vy:0,color:particle.color,life:60});}
+
+    beamParticles.forEach(bp=>{bp.x+=bp.vx;bp.life--;});
+    beamParticles=beamParticles.filter(bp=>bp.life>0&&bp.x>W-100);
+
+    const s=Math.hypot(particle.vx,particle.vy);
+    const ek=0.5*m*s*s/1.602e-13;
+    const radius=r/20;
+    const freq=(q*B)/(2*Math.PI*m)/1e6;
+    const vc=s*3.3e-9/3e8;
+
+    document.getElementById('statEk').textContent=ek.toFixed(2)+' MeV';
+    document.getElementById('statRadius').textContent=radius.toFixed(3)+' m';
+    document.getElementById('statFreq').textContent=freq.toFixed(2)+' MHz';
+    document.getElementById('statSpeed').textContent=vc.toFixed(4)+' c';
+    document.getElementById('statBragg').textContent=(ek*0.3).toFixed(1)+' cm (水中)';
+  }
+
+  function animate(){if(!isRunning)return;update();draw();animId=requestAnimationFrame(animate);}
+
+  document.getElementById('bField').addEventListener('input',e=>{B=parseFloat(e.target.value);document.getElementById('bVal').textContent=B.toFixed(1);});
+  document.getElementById('voltage').addEventListener('input',e=>{V=parseInt(e.target.value)*1000;document.getElementById('vVal').textContent=e.target.value;});
+  document.getElementById('particleSelect').addEventListener('change',e=>{particleType=e.target.value;resetSim();});
+
+  function startSim(){if(isRunning)return;if(!particle){particle=createParticle();trail=[];}isRunning=true;document.getElementById('btnStart').textContent='▶ 运行中';document.getElementById('btnStart').style.opacity='0.6';animId=requestAnimationFrame(animate);}
+  function pauseSim(){isRunning=false;if(animId){cancelAnimationFrame(animId);animId=null;}document.getElementById('btnStart').textContent='▶ 开始';document.getElementById('btnStart').style.opacity='1';}
+  function resetSim(){pauseSim();particle=null;trail=[];beamParticles=[];document.getElementById('statEk').textContent='0.00 MeV';document.getElementById('statRadius').textContent='0.00 m';document.getElementById('statFreq').textContent='0.00 MHz';document.getElementById('statSpeed').textContent='0.00 c';document.getElementById('statBragg').textContent='—';draw();}
+
+  document.getElementById('btnStart').addEventListener('click',startSim);
+  document.getElementById('btnPause').addEventListener('click',pauseSim);
+  document.getElementById('btnReset').addEventListener('click',resetSim);
+  document.getElementById('btnBeam').addEventListener('click',()=>{if(!particle){particle=createParticle();trail=[];}if(!isRunning)startSim();});
+
+  document.addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();isRunning?pauseSim():startSim();}if(e.key==='r'&&!e.ctrlKey){resetSim();}});
+
+  function init(){resizeCanvas();draw();}
+  window.addEventListener('resize',()=>{resizeCanvas();draw();});
+  init();
+})();
+</script>
+</body>
+</html>

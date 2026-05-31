@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>平行板电容 - 物理数值仿真平台</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
+#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#30363d}
+header h1{margin:0;font-size:18px;font-weight:600}
+#info{margin-left:auto;color:#8b949e;font-size:13px}
+main{flex:1;display:flex;overflow:hidden}
+#canvasWrap{flex:1;position:relative}
+canvas{display:block;width:100%;height:100%}
+#sidebar{width:300px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0}
+.row label{flex:0 0 100px;font-size:13px}
+.row input[type=range]{flex:1}
+.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+.val{font-size:12px;color:#8b949e;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<main>
+<div id="canvasWrap"><canvas id="c"></canvas></div>
+<div id="sidebar">
+<div class="sec"><h3>参数设置</h3>
+<div class="row"><label>极板电压 V</label><input id="p1" type="range" min="-10" max="10" step="0.5" value="5"><input id="p1n" type="number" value="5"></div>
+<div class="row"><label>极板间距 d</label><input id="p2" type="range" min="0.5" max="3" step="0.1" value="1.5"><input id="p2n" type="number" value="1.5"></div>
+<div class="row"><label>介电常数 ε</label><input id="p3" type="range" min="1" max="8" step="0.5" value="3"><input id="p3n" type="number" value="3"></div>
+<div class="val" id="infoBox">电场强度 E = 3.33 V/m | 电容 C = 1.77 pF</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+window.addEventListener('resize',resize);
+let inited=false;
+const p1=document.getElementById('p1'),p1n=document.getElementById('p1n');
+const p2=document.getElementById('p2'),p2n=document.getElementById('p2n');
+const p3=document.getElementById('p3'),p3n=document.getElementById('p3n');
+const infoBox=document.getElementById('infoBox');
+function link(a,b){a.oninput=()=>{b.value=a.value};b.oninput=()=>{a.value=b.value}}
+link(p1,p1n);link(p2,p2n);link(p3,p3n);
+function draw(){
+if(!inited){resize();inited=true;}
+const W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H){requestAnimationFrame(draw);return}
+const V=+p1.value,d=+p2.value,eps=+p3.value;
+ctx.clearRect(0,0,W,H);
+ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+const margin=60,top=margin,bottom=H-margin,left=margin,right=W-margin;
+const cx=(left+right)/2,cy=(top+bottom)/2;
+const pw=Math.min(right-left)*0.06,ph=(bottom-top)*0.6,hgap=d*(bottom-top)/8;
+const E=V/d,C=eps*8.85*1/(d*0.1);
+infoBox.textContent=`电场强度 E = ${Math.abs(E).toFixed(2)} V/m | 电容 C = ${C.toFixed(2)} pF`;
+// plates
+ctx.fillStyle='#21262d';ctx.strokeStyle='#30363d';ctx.lineWidth=2;
+ctx.fillRect(cx-pw-ph,cy-ph/2+10,ph,ph-20);ctx.strokeRect(cx-pw-ph,cy-ph/2+10,ph,ph-20);
+ctx.fillRect(cx+pw,cy-ph/2+10,ph,ph-20);ctx.strokeRect(cx+pw,cy-ph/2+10,ph,ph-20);
+ctx.fillStyle='#58a6ff';ctx.font='14px system-ui';
+ctx.fillText(V>0?'+':'-',cx-pw-ph-12,cy+4);ctx.fillText(V>0?'-':'+',cx+pw+ph+4,cy+4);
+// field lines
+ctx.strokeStyle='#58a6ff';ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
+for(let i=0;i<12;i++){
+const x=cx-pw+i/11*2*pw;
+ctx.beginPath();
+for(let s=0;s<=1;s+=0.01){
+const y=cy-ph/2+20+s*(ph-40);
+const fx=V>0?1:-1;
+ctx.lineTo(x+fx*0.5*Math.sin(s*Math.PI)*20,y);
+}
+ctx.stroke();
+}
+ctx.globalAlpha=1;
+// E field vector field
+ctx.strokeStyle='rgba(63,185,80,0.4)';ctx.lineWidth=1;
+for(let i=0;i<5;i++){for(let j=0;j<8;j++){
+const ax=cx-pw*1.2+i*pw*0.6,ay=cy-ph/2+30+j*ph/10;
+ctx.beginPath();ctx.moveTo(ax,ay);
+const ex=(V>0?0.5:-0.5)*Math.abs(E)*0.02;
+ctx.lineTo(ax+ex,ay);ctx.stroke();
+}}
+// equipotential lines
+ctx.strokeStyle='rgba(247,129,102,0.3)';ctx.setLineDash([4,4]);
+for(let k=0;k<=6;k++){
+const xx=cx-pw+k/6*2*pw;
+ctx.beginPath();ctx.moveTo(xx,top+20);ctx.lineTo(xx,bottom-20);ctx.stroke();
+}
+ctx.setLineDash([]);
+requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

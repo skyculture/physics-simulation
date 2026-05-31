@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>狭义相对论时间膨胀 - 爱因斯坦相对论</title>
+<style>
+/* ============================================================
+   全局样式 - 暗色主题，深色背景，柔和色调
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 顶部标题区域 */
+.header {
+  text-align: center;
+  padding: 20px 20px 12px 20px;
+  border-bottom: 1px solid #30363d;
+  background: #161b22;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  color: #58a6ff;
+  letter-spacing: 0.05em;
+}
+
+.header .subtitle {
+  font-size: 0.9rem;
+  color: #8b949e;
+  margin-top: 4px;
+}
+
+/* 主体布局 - 左右分栏 */
+.main-container {
+  display: flex;
+  gap: 0;
+  min-height: 520px;
+}
+
+/* 左侧时钟画布区域 */
+.clock-panel {
+  flex: 1 1 55%;
+  background: #161b22;
+  border-right: 1px solid #30363d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  position: relative;
+}
+
+.clock-panel .panel-label {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-size: 0.75rem;
+  color: #8b949e;
+  letter-spacing: 0.04em;
+}
+
+#clockCanvas {
+  display: block;
+  border-radius: 4px;
+}
+
+/* 右侧控制面板 */
+.control-panel {
+  flex: 0 0 420px;
+  background: #161b22;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid #30363d;
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+/* 滑块样式 */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slider-group label {
+  font-size: 0.82rem;
+  color: #c9d1d9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slider-group label .val {
+  color: #58a6ff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #30363d;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #58a6ff;
+  cursor: pointer;
+  border: 2px solid #1f6feb;
+  transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* 数据显示卡片 */
+.data-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.data-card {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.data-card .card-label {
+  font-size: 0.7rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.data-card .card-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #58a6ff;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-card .card-value.warn {
+  color: #f0883e;
+}
+
+/* 按钮样式 */
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  flex: 1;
+  padding: 8px 14px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #c9d1d9;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn:hover {
+  background: #30363d;
+  border-color: #58a6ff;
+}
+
+.btn.accent {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn.accent:hover {
+  background: #388bfd;
+}
+
+/* 图表区域 */
+.chart-panel {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.chart-panel canvas {
+  display: block;
+  width: 100%;
+}
+
+/* 底部太空旅行场景 */
+.space-panel {
+  background: #161b22;
+  border-top: 1px solid #30363d;
+  padding: 14px 20px;
+}
+
+.space-panel .section-title {
+  margin-bottom: 8px;
+}
+
+.space-scenario {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.space-card {
+  flex: 1;
+  min-width: 200px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.space-card .space-label {
+  font-size: 0.75rem;
+  color: #8b949e;
+  margin-bottom: 4px;
+}
+
+.space-card .space-time {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #58a6ff;
+}
+
+.space-card .space-sub {
+  font-size: 0.75rem;
+  color: #8b949e;
+  margin-top: 2px;
+}
+
+.rocket-icon {
+  font-size: 2rem;
+  color: #f0883e;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* 图例提示 */
+.legend-note {
+  font-size: 0.7rem;
+  color: #8b949e;
+  margin-top: 2px;
+  text-align: center;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  .main-container {
+    flex-direction: column;
+  }
+  .control-panel {
+    flex: 0 0 auto;
+    max-height: none;
+  }
+  .clock-panel {
+    flex: 0 0 350px;
+  }
+  .data-cards {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* 预设速度快捷按钮 */
+.preset-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  flex: 1;
+  min-width: 44px;
+  padding: 3px 6px;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  background: #21262d;
+  color: #8b949e;
+  font-size: 0.7rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.preset-btn:hover {
+  background: #30363d;
+  color: #58a6ff;
+  border-color: #58a6ff;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     头部标题：狭义相对论时间膨胀
+     狭义相对论的两个基本假设：
+     (1) 物理定律在所有惯性参考系中具有相同的形式（相对性原理）
+     (2) 真空中的光速在所有惯性参考系中都是恒定的（光速不变原理）
+     由这两个假设可导出洛伦兹变换，进而得出时间膨胀效应。
+     ============================================================ -->
+<div class="header">
+  <h1>⏱ 狭义相对论时间膨胀</h1>
+  <div class="subtitle">爱因斯坦狭义相对论 — 光速不变原理与相对性原理的必然结果 | 1905</div>
+</div>
+
+<!-- 主体区域 -->
+<div class="main-container">
+
+  <!-- ============================================================
+       左侧：时钟可视化 Canvas
+       展示两个时钟的对比：
+       - 左半部分：静止参考系中的时钟，以正常速率走时
+       - 右半部分：以速度v运动的时钟，因时间膨胀效应走得更慢
+       运动时钟的走时速率 = 静止时钟速率 / γ
+       其中 γ = 1/√(1-v²/c²) 是洛伦兹因子
+       ============================================================ -->
+  <div class="clock-panel">
+    <span class="panel-label">时钟对比可视化</span>
+    <canvas id="clockCanvas" width="700" height="420"></canvas>
+  </div>
+
+  <!-- ============================================================
+       右侧：控制面板、数据显示区、图表
+       ============================================================ -->
+  <div class="control-panel">
+
+    <!-- 速度控制滑块 -->
+    <div class="section-title">▼ 速度控制</div>
+    <div class="slider-group">
+      <label>
+        速度比 v/c：
+        <span class="val" id="vcDisplay">0.000</span>
+      </label>
+      <input type="range" id="vcSlider" min="0" max="999" value="0" step="1">
+    </div>
+
+    <!-- 预设速度按钮 -->
+    <div class="preset-group">
+      <span style="font-size:0.68rem;color:#8b949e;line-height:24px;">快捷预设:</span>
+      <button class="preset-btn" data-vc="0">0</button>
+      <button class="preset-btn" data-vc="500">0.5c</button>
+      <button class="preset-btn" data-vc="750">0.75c</button>
+      <button class="preset-btn" data-vc="866">0.866c</button>
+      <button class="preset-btn" data-vc="900">0.9c</button>
+      <button class="preset-btn" data-vc="943">0.943c</button>
+      <button class="preset-btn" data-vc="990">0.99c</button>
+      <button class="preset-btn" data-vc="999">0.999c</button>
+    </div>
+
+    <!-- 物理量数据显示 -->
+    <div class="section-title">▼ 物理量</div>
+    <div class="data-cards">
+      <div class="data-card">
+        <div class="card-label">洛伦兹因子 γ</div>
+        <div class="card-value" id="gammaDisplay">1.000</div>
+        <div class="legend-note">γ = 1/√(1-v²/c²)</div>
+      </div>
+      <div class="data-card">
+        <div class="card-label">时间膨胀 Δt'</div>
+        <div class="card-value" id="tdDisplay">1.000 × Δt</div>
+        <div class="legend-note">Δt' = γ · Δt₀</div>
+      </div>
+      <div class="data-card">
+        <div class="card-label">长度收缩因子</div>
+        <div class="card-value" id="lcDisplay">1.000</div>
+        <div class="legend-note">L = L₀ / γ</div>
+      </div>
+      <div class="data-card">
+        <div class="card-label">静止时钟已过</div>
+        <div class="card-value" id="elapsedDisplay">0.00 s</div>
+        <div class="legend-note">实验室参考系时间</div>
+      </div>
+    </div>
+
+    <!-- 控制按钮 -->
+    <div class="btn-group">
+      <button class="btn accent" id="btnStart">▶ 开始</button>
+      <button class="btn" id="btnPause">⏸ 暂停</button>
+      <button class="btn" id="btnReset">↺ 重置</button>
+    </div>
+
+    <!-- ============================================================
+         图表区域 Canvas
+         图表1：洛伦兹因子 γ 随 v/c 变化的曲线
+         图表2：时间膨胀比值 Δt'/Δt₀ 随 v/c 变化的曲线
+         关键点标注：γ=2 (v/c≈0.866), γ=5 (v/c≈0.980), γ=10 (v/c≈0.995)
+         ============================================================ -->
+    <div class="section-title">▼ 相对论效应曲线</div>
+    <div class="chart-panel">
+      <canvas id="plotCanvas" width="384" height="440"></canvas>
+    </div>
+    <div class="legend-note">
+      ● γ=2,5,10 关键点   — γ曲线   — 时间膨胀比值
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     底部：太空旅行场景
+     模拟一艘以相对论速度飞行的宇宙飞船：
+     - 地球经过的时间（坐标时间）Δt = γ · Δτ
+     - 宇航员经历的时间（固有时）Δτ
+     例如：以 v=0.999c 飞行，γ≈22.4，地球过了22.4年，宇航员只老了1年
+     ============================================================ -->
+<div class="space-panel">
+  <div class="section-title">🚀 星际旅行场景 — 地球视角 vs 宇航员视角</div>
+  <div class="space-scenario">
+    <div class="space-card">
+      <div class="space-label">🌍 地球经过的时间（坐标时间）</div>
+      <div class="space-time" id="earthTime">0.00 年</div>
+      <div class="space-sub">Δt = γ · Δτ</div>
+    </div>
+    <div class="rocket-icon">🚀</div>
+    <div class="space-card">
+      <div class="space-label">👨‍🚀 宇航员固有时（本征时间）</div>
+      <div class="space-time" id="astroTime">0.00 年</div>
+      <div class="space-sub">Δτ — 宇航员实际感受到的时间</div>
+    </div>
+    <div class="space-card">
+      <div class="space-label">📏 飞船航行距离（地球观测）</div>
+      <div class="space-time" id="travelDist">0.00 光年</div>
+      <div class="space-sub">d = v · Δt</div>
+    </div>
+    <div class="space-card">
+      <div class="space-label">📐 宇航员感知距离（长度收缩）</div>
+      <div class="space-time" id="contractedDist">0.00 光年</div>
+      <div class="space-sub">d' = d / γ</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   狭义相对论时间膨胀模拟 — JavaScript 核心代码
+
+   【狭义相对论基本假设】
+   1. 相对性原理：所有惯性参考系中物理定律具有相同的数学形式。
+      不存在"绝对静止"的参考系。
+   2. 光速不变原理：真空中光速c在所有惯性参考系中恒定不变，
+      与光源和观察者的相对运动无关。c ≈ 3×10⁸ m/s。
+
+   【洛伦兹变换与时间膨胀】
+   设S系为"静止"实验室系，S'系以速度v沿x轴相对S运动。
+   洛伦兹变换给出两参考系时间坐标的关系：
+     t' = γ (t - vx/c²)
+   其中洛伦兹因子 γ = 1 / √(1 - v²/c²)
+
+   时间膨胀公式：在S系中测得的时间间隔Δt，与在S'系中
+   同一地点测得的本征时间间隔Δτ的关系为：
+     Δt = γ · Δτ    (即 Δt > Δτ，运动时钟走得慢)
+
+   对运动观察者而言，其本征时间Δτ流逝得更慢。
+   当v→c时，γ→∞，时间膨胀效应趋于无穷大。
+
+   【长度收缩】
+   在运动方向上，物体的长度会发生收缩：
+     L = L₀ / γ
+   其中L₀为静长度（本征长度），L为运动观测者测得的长度。
+
+   【关于"双生子佯谬"】
+   若一人留在地球，另一人以近光速旅行后返回，旅行者会更年轻。
+   这不是佯谬，因为旅行者经历了加速（非惯性系），
+   广义相对论可以严格解释这一结果。
+   ============================================================ */
+
+(function() {
+  /* ---- DOM元素引用 ---- */
+  const clockCanvas = document.getElementById('clockCanvas');
+  const clockCtx = clockCanvas.getContext('2d');
+  const plotCanvas = document.getElementById('plotCanvas');
+  const plotCtx = plotCanvas.getContext('2d');
+
+  const vcSlider = document.getElementById('vcSlider');
+  const vcDisplay = document.getElementById('vcDisplay');
+  const gammaDisplay = document.getElementById('gammaDisplay');
+  const tdDisplay = document.getElementById('tdDisplay');
+  const lcDisplay = document.getElementById('lcDisplay');
+  const elapsedDisplay = document.getElementById('elapsedDisplay');
+  const earthTimeDisplay = document.getElementById('earthTime');
+  const astroTimeDisplay = document.getElementById('astroTime');
+  const travelDistDisplay = document.getElementById('travelDist');
+  const contractedDistDisplay = document.getElementById('contractedDist');
+
+  const btnStart = document.getElementById('btnStart');
+  const btnPause = document.getElementById('btnPause');
+  const btnReset = document.getElementById('btnReset');
+
+  /* ---- 模拟状态变量 ---- */
+  let vc = 0;                // 速度比值 v/c，范围[0, 0.999]
+  let gamma = 1;             // 洛伦兹因子 γ = 1/√(1-v²/c²)
+  let elapsedLab = 0;        // 实验室（静止）参考系经过的时间（秒）
+  let isRunning = false;     // 动画是否在运行
+  let animFrameId = null;    // requestAnimationFrame ID
+  let lastTimestamp = null;  // 上一帧时间戳
+
+  /* ---- 运动时钟的动画位置 ---- */
+  /* 运动时钟在画布上从左到右匀速运动，模拟相对运动。
+     当它到达右边界时，会从左侧重新出现，形成循环。 */
+  const CLOCK_MOVE_SPEED_BASE = 80; // 基准移动速度（像素/秒），运动时钟屏幕移动速度
+  let movingClockX = 80;     // 运动时钟在画布上的x坐标
+
+  /* ---- 物理量计算函数 ---- */
+  /*
+   * 计算洛伦兹因子 γ
+   * γ = 1 / √(1 - v²/c²)
+   * 当 v/c → 1 时，γ → ∞，体现出光速的不可超越性。
+   */
+  function calcGamma(vc) {
+    if (vc >= 0.9999) return 70.7; // 限制最大值，防止数值溢出
+    if (vc >= 1) return 70.7;
+    return 1 / Math.sqrt(1 - vc * vc);
+  }
+
+  /* ---- 更新所有显示 ---- */
+  function updateDisplays() {
+    gamma = calcGamma(vc);
+
+    vcDisplay.textContent = vc.toFixed(3);
+    gammaDisplay.textContent = gamma.toFixed(4);
+    tdDisplay.textContent = gamma.toFixed(4) + ' × Δt₀';
+
+    /* 长度收缩因子 = 1/γ，当v→c时趋于0 */
+    const lc = 1 / gamma;
+    lcDisplay.textContent = lc.toFixed(4);
+
+    elapsedDisplay.textContent = elapsedLab.toFixed(2) + ' s';
+
+    /* 太空旅行场景计算 */
+    /* 假设以当前速度航行，计算地球时间与宇航员时间 */
+    const travelDuration = elapsedLab;
+    /* 地球经过的时间 = 实验室时间（坐标时间） */
+    const earthYears = travelDuration;
+    /* 宇航员经历的固有时 = 地球时间 / γ（时间膨胀导致宇航员时间过得更慢） */
+    const astroYears = travelDuration / gamma;
+    /* 航行距离（地球观测）= v * Δt（用光年表示，简化：c=1） */
+    const distLY = vc * earthYears;
+    /* 宇航员感知的距离（长度收缩）= 地球观测距离 / γ */
+    const contractedDistLY = distLY / gamma;
+
+    earthTimeDisplay.textContent = earthYears.toFixed(4) + ' 年';
+    astroTimeDisplay.textContent = astroYears.toFixed(4) + ' 年';
+    travelDistDisplay.textContent = distLY.toFixed(4) + ' 光年';
+    contractedDistDisplay.textContent = contractedDistLY.toFixed(4) + ' 光年';
+  }
+
+  /* ---- 绘制时钟 ---- */
+  /*
+   * 在指定位置绘制一个模拟时钟。
+   * 时钟为圆形表盘，有时针和分针。
+   * time参数表示该时钟当前显示的时间（单位：秒），
+   * 不同速率的时钟通过在不同时间间隔内推进不同量的时间来实现。
+   * 分针：每60秒转一圈（模拟分钟）
+   * 时针：每3600秒转一圈（模拟小时，为可视化调快）
+   * 秒针：每秒转一圈
+   */
+  function drawClock(ctx, cx, cy, radius, time, label, movingClockRate) {
+    /* 表盘背景 */
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#0d1117';
+    ctx.fill();
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    /* 表盘刻度线 */
+    for (let i = 0; i < 60; i++) {
+      const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
+      const innerR = i % 5 === 0 ? radius * 0.82 : radius * 0.88;
+      const outerR = radius * 0.95;
+      ctx.beginPath();
+      ctx.moveTo(
+        cx + Math.cos(angle) * innerR,
+        cy + Math.sin(angle) * innerR
+      );
+      ctx.lineTo(
+        cx + Math.cos(angle) * outerR,
+        cy + Math.sin(angle) * outerR
+      );
+      ctx.strokeStyle = i % 5 === 0 ? '#c9d1d9' : '#484f58';
+      ctx.lineWidth = i % 5 === 0 ? 2 : 1;
+      ctx.stroke();
+    }
+
+    /* 数字1-12 */
+    ctx.fillStyle = '#c9d1d9';
+    ctx.font = `${radius * 0.14}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 1; i <= 12; i++) {
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const nx = cx + Math.cos(angle) * radius * 0.72;
+      const ny = cy + Math.sin(angle) * radius * 0.72;
+      ctx.fillText(i.toString(), nx, ny);
+    }
+
+    /* 秒针：每秒转一圈，角度 = time * 2π */
+    const secAngle = (time % 60) / 60 * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(
+      cx + Math.cos(secAngle) * radius * 0.78,
+      cy + Math.sin(secAngle) * radius * 0.78
+    );
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    /* 分针：每60秒转一圈 */
+    const minAngle = (time % 3600) / 3600 * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(
+      cx + Math.cos(minAngle) * radius * 0.6,
+      cy + Math.sin(minAngle) * radius * 0.6
+    );
+    ctx.strokeStyle = '#c9d1d9';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    /* 中心点 */
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 0.05, 0, Math.PI * 2);
+    ctx.fillStyle = '#58a6ff';
+    ctx.fill();
+
+    /* 标签 */
+    ctx.fillStyle = movingClockRate ? '#f0883e' : '#58a6ff';
+    ctx.font = `bold ${radius * 0.1}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(label, cx, cy + radius + 8);
+
+    /* 速率提示 */
+    ctx.fillStyle = '#8b949e';
+    ctx.font = `${radius * 0.075}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+    if (movingClockRate) {
+      ctx.fillText(`走时速率: 1/${gamma.toFixed(1)}`, cx, cy + radius + 24);
+    } else {
+      ctx.fillText('正常走时', cx, cy + radius + 24);
+    }
+  }
+
+  /* ---- 绘制时钟面板主画面 ---- */
+  function drawClockPanel() {
+    const W = clockCanvas.width;
+    const H = clockCanvas.height;
+    clockCtx.clearRect(0, 0, W, H);
+
+    /* 背景 */
+    clockCtx.fillStyle = '#0d1117';
+    clockCtx.fillRect(0, 0, W, H);
+
+    /* 参考线 - 时间轴 */
+    clockCtx.strokeStyle = '#30363d';
+    clockCtx.setLineDash([4, 8]);
+    clockCtx.lineWidth = 1;
+    clockCtx.beginPath();
+    clockCtx.moveTo(20, H / 2);
+    clockCtx.lineTo(W - 20, H / 2);
+    clockCtx.stroke();
+    clockCtx.setLineDash([]);
+
+    /* 静止参考系标签 */
+    clockCtx.fillStyle = '#484f58';
+    clockCtx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    clockCtx.textAlign = 'left';
+    clockCtx.textBaseline = 'top';
+    clockCtx.fillText('静止参考系 (实验室)', 20, H / 2 + 6);
+
+    /* 左侧：静止时钟 */
+    /*
+     * 静止时钟：位于画布左侧，以正常速率走时。
+     * 这代表实验室参考系中的标准时钟。
+     * 其显示时间 = elapsedLab（实验室经过的秒数）。
+     */
+    const stationaryClockTime = elapsedLab; // 静止时钟显示的时间
+    drawClock(clockCtx, 180, H / 2 - 5, 75, stationaryClockTime, '🕐 静止时钟', false);
+
+    /* 右侧：运动时钟 */
+    /*
+     * 运动时钟：以速度v沿x轴运动。
+     * 由于时间膨胀效应，运动时钟走得更慢。
+     * 其显示时间 = elapsedLab / γ（运动参考系的本征时间）。
+     * 当v→c，γ→∞时，运动时钟几乎停止走时。
+     *
+     * 运动时钟在画布上从左侧移动到右侧，
+     * 当它到达右边界时从左边重新出现，模拟周期性运动。
+     */
+    const movingClockTime = elapsedLab / gamma;
+    const mcx = movingClockX;
+    const mcy = H / 2 - 5;
+
+    /* 运动轨迹线 */
+    clockCtx.strokeStyle = 'rgba(240, 136, 62, 0.3)';
+    clockCtx.setLineDash([6, 4]);
+    clockCtx.lineWidth = 1;
+    clockCtx.beginPath();
+    clockCtx.moveTo(100, mcy + 75 + 30);
+    clockCtx.lineTo(W - 100, mcy + 75 + 30);
+    clockCtx.stroke();
+    clockCtx.setLineDash([]);
+
+    /* 速度箭头指示 */
+    const arrowX = Math.min(mcx + 50, W - 80);
+    clockCtx.fillStyle = '#f0883e';
+    clockCtx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    clockCtx.textAlign = 'center';
+    clockCtx.fillText(`→ v = ${vc.toFixed(3)}c`, arrowX, mcy + 75 + 48);
+
+    /* 绘制运动时钟 */
+    drawClock(clockCtx, mcx, mcy, 75, movingClockTime, '🚀 运动时钟 (v=' + vc.toFixed(2) + 'c)', true);
+
+    /* 说明文字 */
+    clockCtx.fillStyle = '#484f58';
+    clockCtx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    clockCtx.textAlign = 'right';
+    clockCtx.textBaseline = 'bottom';
+    clockCtx.fillText('v →', W - 40, H / 2 - 60);
+  }
+
+  /* ---- 绘制图表 ---- */
+  /*
+   * 图表分为上下两部分：
+   * 上半部分：洛伦兹因子 γ 随 v/c 变化曲线
+   * 下半部分：时间膨胀比值 Δt'/Δt₀ (= γ) 随 v/c 变化曲线
+   *
+   * 在γ曲线上标注γ=2, 5, 10的关键点：
+   *   γ=2  → v/c = √(1-1/4) = √0.75 ≈ 0.8660
+   *   γ=5  → v/c = √(1-1/25) = √0.96 ≈ 0.9798
+   *   γ=10 → v/c = √(1-1/100) = √0.99 ≈ 0.9950
+   */
+  function drawPlots() {
+    const W = plotCanvas.width;
+    const H = plotCanvas.height;
+    plotCtx.clearRect(0, 0, W, H);
+
+    const margin = { top: 30, right: 25, bottom: 25, left: 50 };
+    const plotHeight = (H - margin.top - margin.bottom - 20) / 2;
+    const plotWidth = W - margin.left - margin.right;
+
+    /* 上半图：γ vs v/c */
+    const topY = margin.top;
+    drawSinglePlot(plotCtx, margin.left, topY, plotWidth, plotHeight,
+      '洛伦兹因子 γ = 1/√(1-v²/c²)', 'γ', true);
+
+    /* 下半图：时间膨胀比值 Δt\'/Δt₀ vs v/c */
+    const bottomY = topY + plotHeight + 20;
+    drawSinglePlot(plotCtx, margin.left, bottomY, plotWidth, plotHeight,
+      '时间膨胀比值 Δt\'/Δt₀ (= γ)', 'Δt\'/Δt₀', false);
+  }
+
+  function drawSinglePlot(ctx, ox, oy, w, h, title, yLabel, markKeyPoints) {
+    /* 背景 */
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(ox, oy, w + 1, h + 1);
+
+    /* 坐标轴 */
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy + h);
+    ctx.lineTo(ox + w, oy + h); // X轴
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox, oy + h);     // Y轴
+    ctx.stroke();
+
+    /* 网格线 */
+    ctx.strokeStyle = '#21262d';
+    ctx.lineWidth = 0.5;
+    for (let i = 1; i <= 4; i++) {
+      const gy = oy + h - (h * i / 5);
+      ctx.beginPath();
+      ctx.moveTo(ox, gy);
+      ctx.lineTo(ox + w, gy);
+      ctx.stroke();
+    }
+    for (let i = 1; i <= 5; i++) {
+      const gx = ox + w * i / 5;
+      ctx.beginPath();
+      ctx.moveTo(gx, oy);
+      ctx.lineTo(gx, oy + h);
+      ctx.stroke();
+    }
+
+    /* 轴标签 */
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '9px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+
+    /* X轴刻度 */
+    for (let i = 0; i <= 10; i++) {
+      const v = i / 10;
+      const x = ox + w * v;
+      ctx.fillText(v.toFixed(1), x, oy + h + 12);
+    }
+    ctx.fillText('v/c', ox + w / 2, oy + h + 22);
+
+    /* 标题 */
+    ctx.fillStyle = '#c9d1d9';
+    ctx.font = 'bold 11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillText(title, ox + w / 2, oy - 10);
+
+    /* Y轴：γ范围根据v/c=0.999对应的γ≈22.4，设置上限为25 */
+    const yMax = 25;
+
+    /* 绘制曲线 */
+    ctx.beginPath();
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 2;
+    let firstPoint = true;
+    for (let i = 0; i <= 200; i++) {
+      const v = i / 200;
+      const g = calcGamma(Math.min(v, 0.9999));
+      const x = ox + w * v;
+      const yNorm = Math.min(g / yMax, 1);
+      const y = oy + h - h * yNorm;
+      if (firstPoint) {
+        ctx.moveTo(x, y);
+        firstPoint = false;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+
+    /* 当前速度指示线 */
+    const curX = ox + w * vc;
+    const curYNorm = Math.min(gamma / yMax, 1);
+    const curY = oy + h - h * curYNorm;
+    ctx.beginPath();
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = '#f0883e';
+    ctx.lineWidth = 1;
+    ctx.moveTo(curX, oy);
+    ctx.lineTo(curX, oy + h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* 当前值标记点 */
+    ctx.beginPath();
+    ctx.arc(curX, curY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0883e';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    /* 标注γ=2, 5, 10关键点 */
+    if (markKeyPoints) {
+      /*
+       * 关键点计算：
+       * γ=2 → v/c = √(1-1/γ²) = √(1-1/4) = √0.75 ≈ 0.8660
+       * γ=5 → v/c = √(1-1/25) = √0.96 ≈ 0.9798
+       * γ=10 → v/c = √(1-1/100) = √0.99 ≈ 0.9950
+       */
+      const keyPoints = [
+        { gamma: 2, vc: Math.sqrt(0.75), label: 'γ=2' },
+        { gamma: 5, vc: Math.sqrt(0.96), label: 'γ=5' },
+        { gamma: 10, vc: Math.sqrt(0.99), label: 'γ=10' }
+      ];
+
+      keyPoints.forEach(kp => {
+        const kx = ox + w * kp.vc;
+        const kyNorm = Math.min(kp.gamma / yMax, 1);
+        const ky = oy + h - h * kyNorm;
+
+        /* 标记点 */
+        ctx.beginPath();
+        ctx.arc(kx, ky, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#da3633';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        /* 标签 */
+        ctx.fillStyle = '#da3633';
+        ctx.font = 'bold 9px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(kp.label, kx, ky - 10);
+        ctx.fillText(`v/c=${kp.vc.toFixed(3)}`, kx, ky + 14);
+      });
+    }
+
+    /* Y轴刻度 */
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '9px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i <= 5; i++) {
+      const val = yMax * i / 5;
+      const yy = oy + h - h * i / 5;
+      ctx.fillText(val.toFixed(0), ox - 6, yy);
+    }
+
+    /* Y轴标签 */
+    ctx.save();
+    ctx.translate(ox - 38, oy + h / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+  }
+
+  /* ---- 主循环 ---- */
+  /*
+   * 动画主循环：
+   * 1. 计算自上一帧以来经过的真实时间Δt（墙钟时间）
+   * 2. 将Δt加到实验室时钟的已过时间上
+   * 3. 更新运动时钟的位置（在画布上移动）
+   * 4. 重绘时钟面板和图表
+   */
+  function mainLoop(timestamp) {
+    if (!isRunning) {
+      lastTimestamp = null;
+      return;
+    }
+
+    if (lastTimestamp === null) {
+      lastTimestamp = timestamp;
+      animFrameId = requestAnimationFrame(mainLoop);
+      return;
+    }
+
+    /* 墙钟时间增量（秒） */
+    const dt = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+
+    /* 实验室经过的时间递增 */
+    elapsedLab += dt;
+
+    /* 更新运动时钟在画布上的位置 */
+    /* 基准速度加上相对论视觉速度（v/c越高，移动越快） */
+    const clockSpeed = CLOCK_MOVE_SPEED_BASE + vc * 250;
+    movingClockX += clockSpeed * dt;
+
+    /* 运动时钟到达右边界时，从左边界重新出现 */
+    const maxX = clockCanvas.width - 80;
+    if (movingClockX > maxX) {
+      movingClockX = 80 + (movingClockX - maxX);
+      if (movingClockX > maxX) movingClockX = 80; // 安全回绕
+    }
+
+    /* 更新显示、重绘 */
+    updateDisplays();
+    drawClockPanel();
+    drawPlots();
+
+    animFrameId = requestAnimationFrame(mainLoop);
+  }
+
+  /* ---- 仅重绘（不更新状态）---- */
+  function redrawStatic() {
+    updateDisplays();
+    drawClockPanel();
+    drawPlots();
+  }
+
+  /* ---- 开始动画 ---- */
+  function startAnimation() {
+    if (isRunning) return;
+    isRunning = true;
+    lastTimestamp = null;
+    animFrameId = requestAnimationFrame(mainLoop);
+  }
+
+  /* ---- 暂停动画 ---- */
+  function pauseAnimation() {
+    isRunning = false;
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    lastTimestamp = null;
+  }
+
+  /* ---- 重置 ---- */
+  function resetSimulation() {
+    pauseAnimation();
+    elapsedLab = 0;
+    movingClockX = 80;
+    vc = 0;
+    vcSlider.value = 0;
+    gamma = 1;
+    updateDisplays();
+    drawClockPanel();
+    drawPlots();
+  }
+
+  /* ---- 设置速度 ---- */
+  function setVelocity(newVc) {
+    vc = Math.max(0, Math.min(0.999, newVc));
+    vcSlider.value = Math.round(vc * 1000);
+    /* 重置运动时钟位置，让效果更直观 */
+    movingClockX = 80;
+    updateDisplays();
+    drawClockPanel();
+    drawPlots();
+  }
+
+  /* ---- 事件监听 ---- */
+  vcSlider.addEventListener('input', function() {
+    vc = parseInt(this.value) / 1000;
+    movingClockX = 80;
+    updateDisplays();
+    redrawStatic();
+  });
+
+  btnStart.addEventListener('click', startAnimation);
+  btnPause.addEventListener('click', pauseAnimation);
+
+  btnReset.addEventListener('click', function() {
+    resetSimulation();
+  });
+
+  /* 预设速度按钮 */
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const targetVc = parseInt(this.dataset.vc) / 1000;
+      setVelocity(targetVc);
+    });
+  });
+
+  /* ---- 初始化渲染 ---- */
+  updateDisplays();
+  drawClockPanel();
+  drawPlots();
+
+  /* ---- 窗口resize时不缩放Canvas，保持固定分辨率 ---- */
+  console.log('狭义相对论时间膨胀模拟已加载。');
+  console.log('狭义相对论基本假设：');
+  console.log('  (1) 相对性原理：所有惯性参考系中物理定律等价');
+  console.log('  (2) 光速不变原理：真空中光速c在所有惯性参考系中恒定');
+  console.log('洛伦兹因子 γ = 1/√(1-v²/c²)');
+  console.log('时间膨胀公式：Δt = γ · Δτ（运动时钟走得慢）');
+  console.log('长度收缩公式：L = L₀/γ');
+
+})();
+</script>
+
+</body>
+</html>

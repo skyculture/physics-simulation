@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>斜抛运动 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>初速度v₀(m/s):</label><input type="range" id="v0" min="10" max="100" step="5" value="30"><input type="number" id="v0Val" value="30"></div>
+      <div class="ctrl-group"><label>抛射角θ(°):</label><input type="range" id="angle" min="5" max="85" step="5" value="45"><input type="number" id="angleVal" value="45"></div>
+      <div class="ctrl-group"><label>重力加速度g:</label><input type="range" id="g" min="1" max="20" step="1" value="9.8"><input type="number" id="gVal" value="9.8"></div>
+      <div class="ctrl-group"><button id="startBtn">▶ 开始</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">斜抛运动：水平方向匀速运动 x = v₀cosθ·t，竖直方向匀变速运动 y = v₀sinθ·t - ½gt²。射程 R = v₀²sin2θ/g，最大高度 H = v₀²sin²θ/(2g)。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let t = 0;
+let isRunning = false;
+let trail = [];
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  t = 0;
+  isRunning = false;
+  trail = [];
+  if(animationId) cancelAnimationFrame(animationId);
+  draw();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const v0 = parseFloat(document.getElementById('v0').value);
+  const angle = parseFloat(document.getElementById('angle').value) * Math.PI / 180;
+  const g = parseFloat(document.getElementById('g').value);
+
+  if(isRunning) {
+    t += 0.02;
+    const x = v0 * Math.cos(angle) * t;
+    const y = v0 * Math.sin(angle) * t - 0.5 * g * t * t;
+    trail.push({x: x, y: y});
+    if(y < 0) {
+      isRunning = false;
+    }
+  }
+
+  const cx = canvas.width * 0.15, cy = canvas.height * 0.85;
+  const scaleX = canvas.width * 0.006;
+  const scaleY = canvas.height * 0.004;
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(canvas.width * 0.95, cy);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx, canvas.height * 0.1);
+  ctx.stroke();
+
+  if(trail.length > 1) {
+    ctx.strokeStyle = 'rgba(247,129,102,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let i = 0; i < trail.length; i++) {
+      const px = cx + trail[i].x * scaleX;
+      const py = cy - trail[i].y * scaleY;
+      if(i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  const x = v0 * Math.cos(angle) * t;
+  const y = Math.max(0, v0 * Math.sin(angle) * t - 0.5 * g * t * t);
+  const px = cx + x * scaleX;
+  const py = cy - y * scaleY;
+
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(px, py, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  const R = (v0 * v0 * Math.sin(2 * angle)) / g;
+  const H = (v0 * v0 * Math.sin(angle) * Math.sin(angle)) / (2 * g);
+  const T = (2 * v0 * Math.sin(angle)) / g;
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`初速度 v₀ = ${v0} m/s`, 10, 20);
+  ctx.fillText(`抛射角 θ = ${(angle * 180 / Math.PI).toFixed(0)}°`, 10, 40);
+  ctx.fillText(`重力加速度 g = ${g} m/s²`, 10, 60);
+  ctx.fillText(`时间 t = ${t.toFixed(2)} s`, 10, 80);
+  ctx.fillText(`水平位移 x = ${x.toFixed(1)} m`, 10, 100);
+  ctx.fillText(`竖直位移 y = ${y.toFixed(1)} m`, 10, 120);
+
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`射程 R = ${R.toFixed(1)} m`, cx + 50, cy + 30);
+  ctx.fillText(`最大高度 H = ${H.toFixed(1)} m`, cx + 50, cy + 50);
+  ctx.fillText(`飞行时间 T = ${T.toFixed(2)} s`, cx + 50, cy + 70);
+
+  if(!isRunning && t > 0) {
+    ctx.fillStyle = '#f78166';
+    ctx.fillText(`落地! 实际射程: ${x.toFixed(1)} m`, cx + 50, cy + 90);
+  }
+
+  if(isRunning) animationId = requestAnimationFrame(draw);
+}
+
+function start() {
+  if(t > 0 && trail.length > 0 && trail[trail.length-1].y < 0) {
+    reset();
+  }
+  isRunning = true;
+  draw();
+}
+
+document.getElementById('v0').addEventListener('input', e => { document.getElementById('v0Val').value = e.target.value; });
+document.getElementById('angle').addEventListener('input', e => { document.getElementById('angleVal').value = e.target.value; });
+document.getElementById('g').addEventListener('input', e => { document.getElementById('gVal').value = e.target.value; });
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+</script>
+</body>
+</html>

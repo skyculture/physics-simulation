@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡诺循环 - 物理数值仿真平台</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0d1117; color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px;
+}
+.header {
+  width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 24px;
+}
+.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #ffa657; line-height: 1.2; }
+.header-left .subtitle { font-size: 0.82rem; color: #8b949e; margin-top: 2px; }
+.back-link {
+  color: #58a6ff; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
+  border: 1px solid #30363d; border-radius: 6px; transition: background 0.2s;
+}
+.back-link:hover { background: #1f2937; }
+.main-container { width: 100%; max-width: 1100px; display: flex; gap: 12px; flex: 1; }
+.canvas-panel {
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px;
+  display: flex; align-items: center; justify-content: center; flex: 1;
+}
+canvas#pvCanvas { display: block; border-radius: 4px; background: #0d1117; }
+.side-panel { width: 320px; min-width: 320px; display: flex; flex-direction: column; gap: 10px; }
+.panel-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
+.panel-box h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+.control-row label { font-size: 0.82rem; color: #c9d1d9; white-space: nowrap; }
+.control-row input[type="range"] { flex: 1; accent-color: #ffa657; height: 4px; }
+.control-row .val { font-size: 0.78rem; color: #ffa657; min-width: 50px; text-align: right; font-weight: 600; }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.btn {
+  padding: 7px 12px; border: 1px solid #30363d; border-radius: 6px; background: #21262d;
+  color: #c9d1d9; cursor: pointer; font-size: 0.82rem; font-family: inherit;
+  transition: background 0.15s, border-color 0.15s; flex: 1; text-align: center; min-width: 48px;
+}
+.btn:hover { background: #30363d; }
+.btn.active { background: #ffa65733; border-color: #ffa657; color: #ffa657; }
+.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; font-size: 0.82rem; }
+.stat-item:last-child { border-bottom: none; }
+.stat-label { color: #8b949e; }
+.stat-value { color: #ffa657; font-weight: 600; font-variant-numeric: tabular-nums; }
+.process-info {
+  padding: 10px; background: #0d1117; border-radius: 6px; margin-top: 6px;
+  font-size: 0.78rem; color: #c9d1d9; line-height: 1.6;
+}
+.process-info .hot { color: #f85149; }
+.process-info .cold { color: #79c0ff; }
+.process-info .work { color: #3fb950; }
+.process-info .eff { color: #ffa657; font-weight: 600; }
+.diagram-panel {
+  width: 100%; max-width: 1100px; background: #161b22; border: 1px solid #30363d;
+  border-radius: 8px; padding: 14px 20px;
+}
+.diagram-panel h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 6px; font-weight: 600; }
+canvas#tsCanvas { display: block; width: 100%; border-radius: 4px; }
+@media (max-width: 900px) {
+  .main-container { flex-direction: column; }
+  .side-panel { width: 100%; min-width: unset; flex-direction: row; flex-wrap: wrap; }
+  .side-panel .panel-box { flex: 1; min-width: 200px; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>卡诺循环</h1>
+    <div class="subtitle">Carnot Cycle — 理想热机效率与PV/TS图可视化</div>
+  </div>
+  <a class="back-link" href="index.html">← 返回首页</a>
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="pvCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 控制参数</h3>
+      <div class="control-row">
+        <label>高温热源 T_H (K)</label>
+        <input type="range" id="tHot" min="400" max="1000" value="600" step="50">
+        <span class="val" id="tHotVal">600</span>
+      </div>
+      <div class="control-row">
+        <label>低温热源 T_C (K)</label>
+        <input type="range" id="tCold" min="100" max="399" value="300" step="50">
+        <span class="val" id="tColdVal">300</span>
+      </div>
+      <div class="control-row">
+        <label>初始体积 V₁</label>
+        <input type="range" id="v1" min="1" max="5" value="2" step="0.5">
+        <span class="val" id="v1Val">2.0</span>
+      </div>
+      <div class="control-row">
+        <label>膨胀比 V₂/V₁</label>
+        <input type="range" id="vRatio" min="1.5" max="5" value="3" step="0.5">
+        <span class="val" id="vRatioVal">3.0</span>
+      </div>
+      <div class="control-row">
+        <label>物质的量 n (mol)</label>
+        <input type="range" id="nMol" min="0.5" max="5" value="1" step="0.5">
+        <span class="val" id="nMolVal">1.0</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn active" id="btnAnimate">▶ 动画</button>
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn" id="btnReset">↺ 重置</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btnStep1" style="border-color:#f8514966;color:#f85149">1→2 等温膨胀</button>
+        <button class="btn" id="btnStep2" style="border-color:#79c0ff66;color:#79c0ff">2→3 绝热膨胀</button>
+        <button class="btn" id="btnStep3" style="border-color:#79c0ff66;color:#79c0ff">3→4 等温压缩</button>
+        <button class="btn" id="btnStep4" style="border-color:#f8514966;color:#f85149">4→1 绝热压缩</button>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h3>📊 热力学量</h3>
+      <div class="stat-item"><span class="stat-label">卡诺效率 η</span><span class="stat-value" id="statEta">—</span></div>
+      <div class="stat-item"><span class="stat-label">吸热 Q_H (J)</span><span class="stat-value" id="statQH">—</span></div>
+      <div class="stat-item"><span class="stat-label">放热 Q_C (J)</span><span class="stat-value" id="statQC">—</span></div>
+      <div class="stat-item"><span class="stat-label">净功 W (J)</span><span class="stat-value" id="statW">—</span></div>
+      <div class="stat-item"><span class="stat-label">当前状态</span><span class="stat-value" id="statState">—</span></div>
+      <div class="stat-item"><span class="stat-label">当前压强 P (kPa)</span><span class="stat-value" id="statP">—</span></div>
+      <div class="stat-item"><span class="stat-label">当前体积 V (L)</span><span class="stat-value" id="statV">—</span></div>
+      <div class="stat-item"><span class="stat-label">当前温度 T (K)</span><span class="stat-value" id="statT">—</span></div>
+    </div>
+    <div class="panel-box">
+      <h3>📖 循环说明</h3>
+      <div class="process-info">
+        <span class="hot">1→2 等温膨胀</span>：T=T_H, 吸热Q_H<br>
+        <span class="cold">2→3 绝热膨胀</span>：Q=0, T_H→T_C<br>
+        <span class="cold">3→4 等温压缩</span>：T=T_C, 放热Q_C<br>
+        <span class="hot">4→1 绝热压缩</span>：Q=0, T_C→T_H<br>
+        <span class="work">净功 W = Q_H - Q_C</span><br>
+        <span class="eff">效率 η = 1 - T_C/T_H</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="diagram-panel">
+  <h3>📈 TS图 (温-熵图)</h3>
+  <canvas id="tsCanvas"></canvas>
+</div>
+<script>
+(function() {
+  const pvCanvas = document.getElementById('pvCanvas');
+  const pvCtx = pvCanvas.getContext('2d');
+  const tsCanvas = document.getElementById('tsCanvas');
+  const tsCtx = tsCanvas.getContext('2d');
+
+  const PV_W = 680, PV_H = 450;
+  const R = 8.314;
+  const gamma = 5 / 3;
+
+  let tHot = 600, tCold = 300, v1 = 2, vRatio = 3, nMol = 1;
+  let animProgress = 0, running = false, animId = null;
+  let highlightStep = -1;
+
+  function getV2() { return v1 * vRatio; }
+  function getV3() { return getV2() * Math.pow(tHot / tCold, 1 / (gamma - 1)); }
+  function getV4() { return v1 * Math.pow(tHot / tCold, 1 / (gamma - 1)); }
+
+  function getCyclePoints() {
+    const V1 = v1, V2 = getV2(), V3 = getV3(), V4 = getV4();
+    const points = [];
+    const steps = 100;
+
+    for (let i = 0; i <= steps; i++) {
+      const v = V1 + (V2 - V1) * i / steps;
+      const p = nMol * R * tHot / v;
+      points.push({ v, p, t: tHot, s: nMol * R * Math.log(v / V1), step: 0 });
+    }
+    for (let i = 1; i <= steps; i++) {
+      const v = V2 + (V3 - V2) * i / steps;
+      const t = tHot * Math.pow(V2 / v, gamma - 1);
+      const p = nMol * R * t / v;
+      const s = nMol * R * Math.log(V2 / V1);
+      points.push({ v, p, t, s, step: 1 });
+    }
+    for (let i = 1; i <= steps; i++) {
+      const v = V3 + (V4 - V3) * i / steps;
+      const p = nMol * R * tCold / v;
+      const s = nMol * R * Math.log(V4 / V1);
+      points.push({ v, p, t: tCold, s, step: 2 });
+    }
+    for (let i = 1; i <= steps; i++) {
+      const v = V4 + (V1 - V4) * i / steps;
+      const t = tCold * Math.pow(V4 / v, gamma - 1);
+      const p = nMol * R * t / v;
+      const s = nMol * R * Math.log(V4 / V1);
+      points.push({ v, p, t, s, step: 3 });
+    }
+    return points;
+  }
+
+  function resizePvCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    pvCanvas.style.width = PV_W + 'px';
+    pvCanvas.style.height = PV_H + 'px';
+    pvCanvas.width = PV_W * dpr;
+    pvCanvas.height = PV_H * dpr;
+    pvCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function resizeTsCanvas() {
+    const panel = tsCanvas.parentElement;
+    const w = panel.clientWidth - 40, h = 200;
+    const dpr = window.devicePixelRatio || 1;
+    tsCanvas.style.width = w + 'px';
+    tsCanvas.style.height = h + 'px';
+    tsCanvas.width = w * dpr;
+    tsCanvas.height = h * dpr;
+    tsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  const stepColors = ['#f85149', '#79c0ff', '#79c0ff', '#f85149'];
+  const stepNames = ['1→2 等温膨胀', '2→3 绝热膨胀', '3→4 等温压缩', '4→1 绝热压缩'];
+
+  function drawPv() {
+    pvCtx.clearRect(0, 0, PV_W, PV_H);
+    const margin = { top: 30, right: 30, bottom: 50, left: 60 };
+    const plotW = PV_W - margin.left - margin.right;
+    const plotH = PV_H - margin.top - margin.bottom;
+
+    const V3 = getV3(), V4 = getV4();
+    const vMin = 0, vMax = Math.max(V3, V4) * 1.15;
+    const pMax = (nMol * R * tHot / v1) * 1.15;
+
+    pvCtx.strokeStyle = '#30363d';
+    pvCtx.lineWidth = 1;
+    pvCtx.beginPath();
+    pvCtx.moveTo(margin.left, margin.top);
+    pvCtx.lineTo(margin.left, margin.top + plotH);
+    pvCtx.lineTo(margin.left + plotW, margin.top + plotH);
+    pvCtx.stroke();
+
+    pvCtx.fillStyle = '#8b949e';
+    pvCtx.font = '11px sans-serif';
+    pvCtx.textAlign = 'center';
+    for (let i = 0; i <= 5; i++) {
+      const v = vMin + (vMax - vMin) * i / 5;
+      const x = margin.left + (v / vMax) * plotW;
+      pvCtx.fillText(v.toFixed(1), x, margin.top + plotH + 18);
+    }
+    pvCtx.fillText('体积 V (L)', margin.left + plotW / 2, margin.top + plotH + 38);
+
+    pvCtx.save();
+    pvCtx.translate(15, margin.top + plotH / 2);
+    pvCtx.rotate(-Math.PI / 2);
+    pvCtx.textAlign = 'center';
+    pvCtx.fillText('压强 P (kPa)', 0, 0);
+    pvCtx.restore();
+
+    pvCtx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+      const p = pMax * i / 5;
+      const y = margin.top + plotH - (p / pMax) * plotH;
+      pvCtx.fillText(p.toFixed(0), margin.left - 6, y + 4);
+      pvCtx.strokeStyle = '#30363d33';
+      pvCtx.beginPath(); pvCtx.moveTo(margin.left, y); pvCtx.lineTo(margin.left + plotW, y); pvCtx.stroke();
+    }
+
+    const isotherms = [tCold, (tHot + tCold) / 2, tHot];
+    isotherms.forEach((tIso, idx) => {
+      pvCtx.beginPath();
+      pvCtx.strokeStyle = '#30363d88';
+      pvCtx.lineWidth = 0.8;
+      pvCtx.setLineDash([4, 4]);
+      for (let i = 0; i <= 200; i++) {
+        const v = vMin + (vMax - vMin) * i / 200;
+        if (v < 0.1) continue;
+        const p = nMol * R * tIso / v;
+        const x = margin.left + (v / vMax) * plotW;
+        const y = margin.top + plotH - (p / pMax) * plotH;
+        if (i === 0) pvCtx.moveTo(x, y); else pvCtx.lineTo(x, y);
+      }
+      pvCtx.stroke();
+      pvCtx.setLineDash([]);
+      const labelV = vMax * 0.92;
+      const labelP = nMol * R * tIso / labelV;
+      const lx = margin.left + (labelV / vMax) * plotW;
+      const ly = margin.top + plotH - (labelP / pMax) * plotH;
+      if (ly > margin.top + 5 && ly < margin.top + plotH) {
+        pvCtx.fillStyle = '#8b949e';
+        pvCtx.font = '9px sans-serif';
+        pvCtx.textAlign = 'left';
+        pvCtx.fillText(`${tIso}K`, lx + 2, ly - 3);
+      }
+    });
+
+    const points = getCyclePoints();
+    const totalPts = points.length;
+    const drawCount = running ? Math.floor(animProgress * totalPts) : totalPts;
+
+    for (let step = 0; step < 4; step++) {
+      const stepPts = points.filter(p => p.step === step);
+      if (stepPts.length < 2) continue;
+
+      pvCtx.beginPath();
+      pvCtx.strokeStyle = stepColors[step];
+      pvCtx.lineWidth = (highlightStep === step) ? 3 : 2;
+      pvCtx.globalAlpha = (highlightStep >= 0 && highlightStep !== step) ? 0.3 : 1;
+
+      let drawn = 0;
+      for (let i = 0; i < stepPts.length; i++) {
+        const globalIdx = step * 100 + i;
+        if (running && globalIdx > drawCount) break;
+        const x = margin.left + (stepPts[i].v / vMax) * plotW;
+        const y = margin.top + plotH - (stepPts[i].p / pMax) * plotH;
+        if (i === 0) pvCtx.moveTo(x, y); else pvCtx.lineTo(x, y);
+        drawn = i;
+      }
+      pvCtx.stroke();
+      pvCtx.globalAlpha = 1;
+    }
+
+    const stateLabels = [
+      { v: v1, p: nMol * R * tHot / v1, label: '1' },
+      { v: getV2(), p: nMol * R * tHot / getV2(), label: '2' },
+      { v: getV3(), p: nMol * R * tCold / getV3(), label: '3' },
+      { v: getV4(), p: nMol * R * tCold / getV4(), label: '4' }
+    ];
+
+    stateLabels.forEach(s => {
+      const x = margin.left + (s.v / vMax) * plotW;
+      const y = margin.top + plotH - (s.p / pMax) * plotH;
+      pvCtx.fillStyle = '#ffa657';
+      pvCtx.beginPath(); pvCtx.arc(x, y, 5, 0, 2 * Math.PI); pvCtx.fill();
+      pvCtx.strokeStyle = '#0d1117'; pvCtx.lineWidth = 1.5; pvCtx.stroke();
+      pvCtx.fillStyle = '#ffa657';
+      pvCtx.font = 'bold 13px sans-serif';
+      pvCtx.textAlign = 'center';
+      pvCtx.fillText(s.label, x, y - 10);
+    });
+
+    if (running && drawCount < totalPts) {
+      const pt = points[Math.min(drawCount, totalPts - 1)];
+      const x = margin.left + (pt.v / vMax) * plotW;
+      const y = margin.top + plotH - (pt.p / pMax) * plotH;
+      pvCtx.fillStyle = '#3fb950';
+      pvCtx.beginPath(); pvCtx.arc(x, y, 7, 0, 2 * Math.PI); pvCtx.fill();
+      pvCtx.strokeStyle = '#0d1117'; pvCtx.lineWidth = 2; pvCtx.stroke();
+    }
+
+    pvCtx.fillStyle = '#ffa657';
+    pvCtx.font = 'bold 14px sans-serif';
+    pvCtx.textAlign = 'left';
+    pvCtx.fillText('PV图 — 卡诺循环', margin.left + 10, margin.top - 10);
+
+    updateStats();
+  }
+
+  function drawTs() {
+    resizeTsCanvas();
+    const W = tsCanvas.width / (window.devicePixelRatio || 1);
+    const H = tsCanvas.height / (window.devicePixelRatio || 1);
+    const margin = { top: 15, right: 20, bottom: 35, left: 55 };
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+
+    tsCtx.clearRect(0, 0, W, H);
+
+    const s1 = 0;
+    const s2 = nMol * R * Math.log(getV2() / v1);
+    const sMin = s1 - 1, sMax = s2 + 1;
+    const tMin = 0, tMax = tHot * 1.2;
+
+    tsCtx.strokeStyle = '#30363d';
+    tsCtx.lineWidth = 1;
+    tsCtx.beginPath();
+    tsCtx.moveTo(margin.left, margin.top);
+    tsCtx.lineTo(margin.left, margin.top + plotH);
+    tsCtx.lineTo(margin.left + plotW, margin.top + plotH);
+    tsCtx.stroke();
+
+    tsCtx.fillStyle = '#8b949e';
+    tsCtx.font = '10px sans-serif';
+    tsCtx.textAlign = 'center';
+    for (let i = 0; i <= 4; i++) {
+      const s = sMin + (sMax - sMin) * i / 4;
+      const x = margin.left + ((s - sMin) / (sMax - sMin)) * plotW;
+      tsCtx.fillText(s.toFixed(1), x, margin.top + plotH + 16);
+    }
+    tsCtx.fillText('熵 S (J/K)', margin.left + plotW / 2, margin.top + plotH + 30);
+
+    tsCtx.save();
+    tsCtx.translate(12, margin.top + plotH / 2);
+    tsCtx.rotate(-Math.PI / 2);
+    tsCtx.textAlign = 'center';
+    tsCtx.fillText('温度 T (K)', 0, 0);
+    tsCtx.restore();
+
+    const corners = [
+      { s: s1, t: tHot },
+      { s: s2, t: tHot },
+      { s: s2, t: tCold },
+      { s: s1, t: tCold }
+    ];
+
+    tsCtx.beginPath();
+    tsCtx.strokeStyle = '#3fb950';
+    tsCtx.lineWidth = 2;
+    corners.forEach((c, i) => {
+      const x = margin.left + ((c.s - sMin) / (sMax - sMin)) * plotW;
+      const y = margin.top + plotH - ((c.t - tMin) / (tMax - tMin)) * plotH;
+      if (i === 0) tsCtx.moveTo(x, y); else tsCtx.lineTo(x, y);
+    });
+    tsCtx.closePath();
+
+    tsCtx.fillStyle = 'rgba(63,185,80,0.15)';
+    tsCtx.fill();
+    tsCtx.stroke();
+
+    corners.forEach((c, i) => {
+      const x = margin.left + ((c.s - sMin) / (sMax - sMin)) * plotW;
+      const y = margin.top + plotH - ((c.t - tMin) / (tMax - tMin)) * plotH;
+      tsCtx.fillStyle = '#ffa657';
+      tsCtx.beginPath(); tsCtx.arc(x, y, 4, 0, 2 * Math.PI); tsCtx.fill();
+      tsCtx.font = 'bold 11px sans-serif';
+      tsCtx.textAlign = 'center';
+      tsCtx.fillText(String(i + 1), x, y - 8);
+    });
+
+    const midTopX = margin.left + (((s1 + s2) / 2 - sMin) / (sMax - sMin)) * plotW;
+    const midTopY = margin.top + plotH - ((tHot - tMin) / (tMax - tMin)) * plotH;
+    tsCtx.fillStyle = '#f85149';
+    tsCtx.font = '10px sans-serif';
+    tsCtx.textAlign = 'center';
+    tsCtx.fillText('Q_H', midTopX, midTopY - 8);
+
+    const midBotX = margin.left + (((s1 + s2) / 2 - sMin) / (sMax - sMin)) * plotW;
+    const midBotY = margin.top + plotH - ((tCold - tMin) / (tMax - tMin)) * plotH;
+    tsCtx.fillStyle = '#79c0ff';
+    tsCtx.fillText('Q_C', midBotX, midBotY + 16);
+
+    tsCtx.fillStyle = '#3fb950';
+    tsCtx.fillText('W', midTopX, (midTopY + midBotY) / 2 + 4);
+  }
+
+  function updateStats() {
+    const V2 = getV2(), V3 = getV3(), V4 = getV4();
+    const QH = nMol * R * tHot * Math.log(V2 / v1);
+    const QC = nMol * R * tCold * Math.log(V3 / V4);
+    const W = QH - QC;
+    const eta = 1 - tCold / tHot;
+
+    document.getElementById('statEta').textContent = (eta * 100).toFixed(1) + '%';
+    document.getElementById('statQH').textContent = QH.toFixed(1);
+    document.getElementById('statQC').textContent = QC.toFixed(1);
+    document.getElementById('statW').textContent = W.toFixed(1);
+
+    if (running) {
+      const points = getCyclePoints();
+      const totalPts = points.length;
+      const idx = Math.min(Math.floor(animProgress * totalPts), totalPts - 1);
+      const pt = points[idx];
+      document.getElementById('statState').textContent = stepNames[pt.step];
+      document.getElementById('statP').textContent = pt.p.toFixed(1);
+      document.getElementById('statV').textContent = pt.v.toFixed(2);
+      document.getElementById('statT').textContent = pt.t.toFixed(1);
+    } else {
+      document.getElementById('statState').textContent = '完整循环';
+      document.getElementById('statP').textContent = '—';
+      document.getElementById('statV').textContent = '—';
+      document.getElementById('statT').textContent = '—';
+    }
+  }
+
+  function animate() {
+    if (!running) return;
+    animProgress += 0.003;
+    if (animProgress >= 1) {
+      animProgress = 0;
+    }
+    drawPv();
+    animId = requestAnimationFrame(animate);
+  }
+
+  function startAnim() {
+    if (running) { pauseAnim(); return; }
+    running = true;
+    document.getElementById('btnAnimate').classList.add('active');
+    document.getElementById('btnPause').classList.remove('active');
+    animId = requestAnimationFrame(animate);
+  }
+
+  function pauseAnim() {
+    running = false;
+    document.getElementById('btnAnimate').classList.remove('active');
+    document.getElementById('btnPause').classList.add('active');
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+  }
+
+  function resetAnim() {
+    pauseAnim();
+    animProgress = 0;
+    highlightStep = -1;
+    drawPv();
+    drawTs();
+  }
+
+  document.getElementById('tHot').addEventListener('input', function() {
+    tHot = parseFloat(this.value);
+    document.getElementById('tHotVal').textContent = tHot;
+    if (tHot <= tCold) { tCold = tHot - 50; document.getElementById('tCold').value = tCold; document.getElementById('tColdVal').textContent = tCold; }
+    drawPv(); drawTs();
+  });
+  document.getElementById('tCold').addEventListener('input', function() {
+    tCold = parseFloat(this.value);
+    document.getElementById('tColdVal').textContent = tCold;
+    if (tCold >= tHot) { tHot = tCold + 50; document.getElementById('tHot').value = tHot; document.getElementById('tHotVal').textContent = tHot; }
+    drawPv(); drawTs();
+  });
+  document.getElementById('v1').addEventListener('input', function() {
+    v1 = parseFloat(this.value);
+    document.getElementById('v1Val').textContent = v1.toFixed(1);
+    drawPv(); drawTs();
+  });
+  document.getElementById('vRatio').addEventListener('input', function() {
+    vRatio = parseFloat(this.value);
+    document.getElementById('vRatioVal').textContent = vRatio.toFixed(1);
+    drawPv(); drawTs();
+  });
+  document.getElementById('nMol').addEventListener('input', function() {
+    nMol = parseFloat(this.value);
+    document.getElementById('nMolVal').textContent = nMol.toFixed(1);
+    drawPv(); drawTs();
+  });
+
+  document.getElementById('btnAnimate').addEventListener('click', startAnim);
+  document.getElementById('btnPause').addEventListener('click', pauseAnim);
+  document.getElementById('btnReset').addEventListener('click', resetAnim);
+
+  document.getElementById('btnStep1').addEventListener('click', () => { highlightStep = 0; drawPv(); });
+  document.getElementById('btnStep2').addEventListener('click', () => { highlightStep = 1; drawPv(); });
+  document.getElementById('btnStep3').addEventListener('click', () => { highlightStep = 2; drawPv(); });
+  document.getElementById('btnStep4').addEventListener('click', () => { highlightStep = 3; drawPv(); });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === ' ') { e.preventDefault(); if (running) pauseAnim(); else startAnim(); }
+    if (e.key.toLowerCase() === 'r' && !e.ctrlKey) resetAnim();
+  });
+
+  function init() {
+    resizePvCanvas();
+    resizeTsCanvas();
+    drawPv();
+    drawTs();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>回旋加速器 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>磁场B:</label><input type="range" id="bField" min="0.1" max="2" step="0.1" value="0.5"><input type="number" id="bFieldVal" value="0.5"></div>
+      <div class="ctrl-group"><label>加速电压V:</label><input type="range" id="voltage" min="5" max="100" step="5" value="30"><input type="number" id="voltageVal" value="30"></div>
+      <div class="ctrl-group"><label>粒子质量m:</label><input type="range" id="mass" min="0.5" max="4" step="0.5" value="1"><input type="number" id="massVal" value="1"></div>
+      <div class="ctrl-group"><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">回旋加速器：带电粒子在均匀磁场中做圆周运动（ω=qB/m恒定），每穿越D形盒间隙时被电场加速，速度增大导致轨道半径增大（r=mv/qB），形成螺旋轨道。回旋频率与速度无关是回旋加速器的工作基础。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let px, py, pvx, pvy;
+let trail = [];
+const MAX_TRAIL = 5000;
+const q = 1;
+const SUB_STEPS = 10;
+const DT = 0.015;
+let accelCount = 0;
+let lastSign = 1;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; reset(); }
+}
+
+function reset() {
+  if(animationId) cancelAnimationFrame(animationId);
+  const B = parseFloat(document.getElementById('bField').value);
+  const m = parseFloat(document.getElementById('mass').value);
+  const r0 = 15;
+  const v0 = q * B * r0 / m;
+  px = 0; py = 0;
+  pvx = 0; pvy = v0;
+  trail = [{x: px, y: py}];
+  accelCount = 0;
+  lastSign = 1;
+  draw();
+}
+
+function step() {
+  const B = parseFloat(document.getElementById('bField').value);
+  const m = parseFloat(document.getElementById('mass').value);
+  const V = parseFloat(document.getElementById('voltage').value);
+
+  const t = q * B * DT / (2 * m);
+  const s = 2 * t / (1 + t * t);
+
+  const vmx = pvx;
+  const vmy = pvy;
+
+  const vpx = vmx + vmy * t;
+  const vpy = vmy - vmx * t;
+
+  pvx = vmx + vpy * s;
+  pvy = vmy - vpx * s;
+
+  const newSign = py >= 0 ? 1 : -1;
+  if(newSign !== lastSign) {
+    const dv = Math.sqrt(2 * q * V / m);
+    const speed = Math.sqrt(pvx * pvx + pvy * pvy);
+    if(speed > 0) {
+      pvx *= (speed + dv) / speed;
+      pvy *= (speed + dv) / speed;
+    }
+    accelCount++;
+    lastSign = newSign;
+  }
+
+  px += pvx * DT;
+  py += pvy * DT;
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const B = parseFloat(document.getElementById('bField').value);
+  const m = parseFloat(document.getElementById('mass').value);
+
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const maxR = canvas.height * 0.4;
+
+  for(let s = 0; s < SUB_STEPS; s++) {
+    step();
+    trail.push({x: px, y: py});
+    if(trail.length > MAX_TRAIL) trail.shift();
+  }
+
+  ctx.strokeStyle = 'rgba(88,166,255,0.15)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(88,166,255,0.05)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR, Math.PI / 2, Math.PI * 3 / 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(247,129,102,0.05)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR, -Math.PI / 2, Math.PI / 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - maxR);
+  ctx.lineTo(cx, cy - 5);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 5);
+  ctx.lineTo(cx, cy + maxR);
+  ctx.stroke();
+
+  const speed = Math.sqrt(pvx * pvx + pvy * pvy);
+  const rOrbit = m * speed / (q * B);
+  const scale = maxR / Math.max(rOrbit * 1.2, 30);
+
+  if(trail.length > 1) {
+    for(let i = 1; i < trail.length; i++) {
+      const alpha = (i / trail.length) * 0.8;
+      ctx.strokeStyle = `rgba(88,166,255,${alpha.toFixed(2)})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx + trail[i-1].x * scale, cy - trail[i-1].y * scale);
+      ctx.lineTo(cx + trail[i].x * scale, cy - trail[i].y * scale);
+      ctx.stroke();
+    }
+  }
+
+  const sx = cx + px * scale;
+  const sy = cy - py * scale;
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  const omega = q * B / m;
+  ctx.fillText(`回旋频率 ω = ${omega.toFixed(2)} rad/s`, 10, 20);
+  ctx.fillText(`轨道半径 r = ${rOrbit.toFixed(1)} px`, 10, 40);
+  ctx.fillText(`速度 v = ${speed.toFixed(1)}`, 10, 60);
+  ctx.fillText(`动能 KE = ${(0.5 * m * speed * speed).toFixed(1)}`, 10, 80);
+  ctx.fillText(`加速次数: ${accelCount}`, 10, 100);
+
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(`ω = qB/m = 常数 (与速度无关)`, 10, 125);
+
+  if(rOrbit * scale > maxR * 0.95) {
+    ctx.fillStyle = '#f78166';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('粒子已到达加速器边缘!', cx - 80, canvas.height - 20);
+  }
+
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('bField').addEventListener('input', e => { document.getElementById('bFieldVal').value = e.target.value; });
+document.getElementById('voltage').addEventListener('input', e => { document.getElementById('voltageVal').value = e.target.value; });
+document.getElementById('mass').addEventListener('input', e => { document.getElementById('massVal').value = e.target.value; });
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+</script>
+</body>
+</html>

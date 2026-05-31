@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>超导电流引线 - 物理数值仿真平台</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0d1117; color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px;
+}
+.header {
+  width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 24px;
+}
+.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #ffa657; line-height: 1.2; }
+.header-left .subtitle { font-size: 0.82rem; color: #8b949e; margin-top: 2px; }
+.back-link {
+  color: #58a6ff; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
+  border: 1px solid #30363d; border-radius: 6px; transition: background 0.2s;
+}
+.back-link:hover { background: #1f2937; }
+.main-container { width: 100%; max-width: 1100px; display: flex; gap: 12px; flex: 1; }
+.canvas-panel {
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px;
+  display: flex; align-items: center; justify-content: center; flex: 1;
+}
+canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; }
+.side-panel { width: 300px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
+.panel-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
+.panel-box h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+.control-row label { font-size: 0.82rem; color: #c9d1d9; white-space: nowrap; }
+.control-row input[type="range"] { flex: 1; accent-color: #ffa657; height: 4px; }
+.control-row .val { font-size: 0.78rem; color: #ffa657; min-width: 50px; text-align: right; font-weight: 600; }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.btn {
+  padding: 7px 12px; border: 1px solid #30363d; border-radius: 6px; background: #21262d;
+  color: #c9d1d9; cursor: pointer; font-size: 0.82rem; font-family: inherit;
+  transition: background 0.15s, border-color 0.15s; flex: 1; text-align: center; min-width: 48px;
+}
+.btn:hover { background: #30363d; }
+.btn.active { background: #ffa65733; border-color: #ffa657; color: #ffa657; }
+.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; font-size: 0.82rem; }
+.stat-item:last-child { border-bottom: none; }
+.stat-label { color: #8b949e; }
+.stat-value { color: #ffa657; font-weight: 600; font-variant-numeric: tabular-nums; }
+.check-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 0.82rem; cursor: pointer; }
+.check-row input[type="checkbox"] { accent-color: #ffa657; width: 15px; height: 15px; }
+.diagram-panel {
+  width: 100%; max-width: 1100px; background: #161b22; border: 1px solid #30363d;
+  border-radius: 8px; padding: 14px 20px;
+}
+.diagram-panel h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 6px; font-weight: 600; }
+canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
+@media (max-width: 900px) {
+  .main-container { flex-direction: column; }
+  .side-panel { width: 100%; min-width: unset; flex-direction: row; flex-wrap: wrap; }
+  .side-panel .panel-box { flex: 1; min-width: 200px; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>超导电流引线</h1>
+    <div class="subtitle">Superconducting Current Leads — 热传导与焦耳热耦合模拟</div>
+  </div>
+  <a class="back-link" href="index.html">← 返回首页</a>
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 控制参数</h3>
+      <div class="control-row">
+        <label>传输电流 I (A)</label>
+        <input type="range" id="current" min="0" max="200" value="100" step="5">
+        <span class="val" id="currentVal">100</span>
+      </div>
+      <div class="control-row">
+        <label>引线长度 L (cm)</label>
+        <input type="range" id="length" min="5" max="50" value="20" step="1">
+        <span class="val" id="lengthVal">20</span>
+      </div>
+      <div class="control-row">
+        <label>截面积 A (mm²)</label>
+        <input type="range" id="area" min="1" max="20" value="5" step="0.5">
+        <span class="val" id="areaVal">5.0</span>
+      </div>
+      <div class="control-row">
+        <label>热端温度 T_H (K)</label>
+        <input type="range" id="tHot" min="50" max="300" value="300" step="10">
+        <span class="val" id="tHotVal">300</span>
+      </div>
+      <div class="control-row">
+        <label>冷端温度 T_C (K)</label>
+        <input type="range" id="tCold" min="4" max="77" value="4" step="1">
+        <span class="val" id="tColdVal">4</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn active" id="btnStart">▶ 开始</button>
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn" id="btnReset">↺ 重置</button>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="showNormal" checked>
+        <span>显示铜引线对比</span>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h3>📊 实时物理量</h3>
+      <div class="stat-item"><span class="stat-label">超导引线热漏 (W)</span><span class="stat-value" id="statSCHeat">—</span></div>
+      <div class="stat-item"><span class="stat-label">铜引线热漏 (W)</span><span class="stat-value" id="statCuHeat">—</span></div>
+      <div class="stat-item"><span class="stat-label">超导引线焦耳热 (W)</span><span class="stat-value" id="statSCJoule">—</span></div>
+      <div class="stat-item"><span class="stat-label">铜引线焦耳热 (W)</span><span class="stat-value" id="statCuJoule">—</span></div>
+      <div class="stat-item"><span class="stat-label">超导总热耗 (W)</span><span class="stat-value" id="statSCTotal">—</span></div>
+      <div class="stat-item"><span class="stat-label">铜引线总热耗 (W)</span><span class="stat-value" id="statCuTotal">—</span></div>
+      <div class="stat-item"><span class="stat-label">热漏比 SC/Cu</span><span class="stat-value" id="statRatio">—</span></div>
+    </div>
+    <div class="panel-box">
+      <h3>📖 物理说明</h3>
+      <div style="font-size:0.78rem;color:#8b949e;line-height:1.6;">
+        超导电流引线利用超导体零电阻特性，<br>
+        消除焦耳热，仅通过热传导向低温端<br>
+        传递热量。铜引线既有热传导又有焦耳<br>
+        热，总热耗远大于超导引线。<br><br>
+        <span style="color:#79c0ff">蓝色</span>：超导引线 (ρ=0)<br>
+        <span style="color:#f85149">红色</span>：铜引线 (ρ>0)
+      </div>
+    </div>
+  </div>
+</div>
+<div class="diagram-panel">
+  <h3>📈 温度分布 T(x)</h3>
+  <canvas id="profileCanvas"></canvas>
+</div>
+<script>
+(function() {
+  const simCanvas = document.getElementById('simCanvas');
+  const simCtx = simCanvas.getContext('2d');
+  const profileCanvas = document.getElementById('profileCanvas');
+  const profileCtx = profileCanvas.getContext('2d');
+
+  const SIM_W = 680, SIM_H = 420;
+  const NX = 100;
+  let currentI = 100, leadLength = 20, crossArea = 5, tHot = 300, tCold = 4;
+  let showNormal = true;
+  let running = true, animId = null, simTime = 0;
+
+  let scTemp = [], cuTemp = [];
+
+  function resizeSimCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    simCanvas.style.width = SIM_W + 'px';
+    simCanvas.style.height = SIM_H + 'px';
+    simCanvas.width = SIM_W * dpr;
+    simCanvas.height = SIM_H * dpr;
+    simCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function resizeProfileCanvas() {
+    const panel = profileCanvas.parentElement;
+    const w = panel.clientWidth - 40, h = 200;
+    const dpr = window.devicePixelRatio || 1;
+    profileCanvas.style.width = w + 'px';
+    profileCanvas.style.height = h + 'px';
+    profileCanvas.width = w * dpr;
+    profileCanvas.height = h * dpr;
+    profileCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function scThermalConductivity(t) {
+    return 0.5 + 200 * Math.exp(-((t - 80) * (t - 80)) / 2000);
+  }
+
+  function cuThermalConductivity(t) {
+    if (t < 20) return 500;
+    if (t < 100) return 400 + 2 * t;
+    return 400;
+  }
+
+  function cuResistivity(t) {
+    return 1.7e-8 * (t / 300);
+  }
+
+  function initTemp() {
+    scTemp = []; cuTemp = [];
+    for (let i = 0; i <= NX; i++) {
+      const t = tCold + (tHot - tCold) * i / NX;
+      scTemp.push(t);
+      cuTemp.push(t);
+    }
+    simTime = 0;
+  }
+
+  function stepSimulation() {
+    const dx = leadLength / NX;
+    const dt = 0.001;
+    const newSc = [...scTemp];
+    const newCu = [...cuTemp];
+
+    newSc[0] = tCold; newSc[NX] = tHot;
+    newCu[0] = tCold; newCu[NX] = tHot;
+
+    for (let i = 1; i < NX; i++) {
+      const kScL = scThermalConductivity(scTemp[i - 1]);
+      const kScR = scThermalConductivity(scTemp[i + 1]);
+      const kScAvg = (kScL + kScR) / 2;
+      const scLaplacian = (kScL * (scTemp[i + 1] - scTemp[i]) - kScR * (scTemp[i] - scTemp[i - 1])) / (dx * dx);
+      newSc[i] = scTemp[i] + dt * scLaplacian / (1.0);
+
+      const kCuL = cuThermalConductivity(cuTemp[i - 1]);
+      const kCuR = cuThermalConductivity(cuTemp[i + 1]);
+      const kCuAvg = (kCuL + kCuR) / 2;
+      const rhoCu = cuResistivity(cuTemp[i]);
+      const jouleHeat = currentI * currentI * rhoCu / (crossArea * 1e-6);
+      const cuLaplacian = (kCuL * (cuTemp[i + 1] - cuTemp[i]) - kCuR * (cuTemp[i] - cuTemp[i - 1])) / (dx * dx);
+      newCu[i] = cuTemp[i] + dt * (cuLaplacian + jouleHeat) / (1.0);
+    }
+
+    for (let i = 0; i <= NX; i++) {
+      scTemp[i] = Math.max(tCold, Math.min(tHot * 2, newSc[i]));
+      cuTemp[i] = Math.max(tCold, Math.min(tHot * 3, newCu[i]));
+    }
+    simTime += dt;
+  }
+
+  function tempToColor(t, tMin, tMax) {
+    const norm = Math.max(0, Math.min(1, (t - tMin) / (tMax - tMin + 0.001)));
+    const r = Math.floor(norm * 255);
+    const g = Math.floor((1 - Math.abs(norm - 0.5) * 2) * 150 + 30);
+    const b = Math.floor((1 - norm) * 255);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function drawSim() {
+    simCtx.clearRect(0, 0, SIM_W, SIM_H);
+
+    const margin = { top: 40, bottom: 40, left: 80, right: 40 };
+    const leadW = SIM_W - margin.left - margin.right;
+    const leadH = 60;
+    const scY = margin.top + 30;
+    const cuY = scY + leadH + 60;
+
+    simCtx.fillStyle = '#8b949e';
+    simCtx.font = 'bold 12px sans-serif';
+    simCtx.textAlign = 'center';
+    simCtx.fillText('超导引线 (零电阻)', SIM_W / 2, scY - 8);
+    if (showNormal) {
+      simCtx.fillText('铜引线 (有电阻)', SIM_W / 2, cuY - 8);
+    }
+
+    const cellW = leadW / NX;
+    const tMin = tCold, tMax = Math.max(tHot, ...cuTemp, ...scTemp);
+
+    for (let i = 0; i < NX; i++) {
+      simCtx.fillStyle = tempToColor(scTemp[i], tMin, tMax);
+      simCtx.fillRect(margin.left + i * cellW, scY, cellW + 0.5, leadH);
+
+      if (showNormal) {
+        simCtx.fillStyle = tempToColor(cuTemp[i], tMin, tMax);
+        simCtx.fillRect(margin.left + i * cellW, cuY, cellW + 0.5, leadH);
+      }
+    }
+
+    simCtx.strokeStyle = '#79c0ff';
+    simCtx.lineWidth = 2;
+    simCtx.strokeRect(margin.left, scY, leadW, leadH);
+
+    if (showNormal) {
+      simCtx.strokeStyle = '#f85149';
+      simCtx.lineWidth = 2;
+      simCtx.strokeRect(margin.left, cuY, leadW, leadH);
+    }
+
+    simCtx.fillStyle = '#79c0ff';
+    simCtx.font = '11px sans-serif';
+    simCtx.textAlign = 'center';
+    simCtx.fillText(`${tCold}K`, margin.left, scY + leadH + 16);
+    simCtx.fillText(`${tHot}K`, margin.left + leadW, scY + leadH + 16);
+    simCtx.fillText('冷端', margin.left, scY + leadH + 30);
+    simCtx.fillText('热端', margin.left + leadW, scY + leadH + 30);
+
+    if (showNormal) {
+      simCtx.fillStyle = '#f85149';
+      simCtx.fillText(`${cuTemp[0].toFixed(0)}K`, margin.left, cuY + leadH + 16);
+      simCtx.fillText(`${cuTemp[NX].toFixed(0)}K`, margin.left + leadW, cuY + leadH + 16);
+    }
+
+    const arrowY = scY + leadH / 2;
+    simCtx.strokeStyle = '#ffa657';
+    simCtx.lineWidth = 2;
+    simCtx.beginPath();
+    simCtx.moveTo(margin.left + 20, arrowY);
+    simCtx.lineTo(margin.left + leadW - 20, arrowY);
+    simCtx.stroke();
+    simCtx.beginPath();
+    simCtx.moveTo(margin.left + leadW - 20, arrowY);
+    simCtx.lineTo(margin.left + leadW - 30, arrowY - 5);
+    simCtx.lineTo(margin.left + leadW - 30, arrowY + 5);
+    simCtx.closePath();
+    simCtx.fillStyle = '#ffa657';
+    simCtx.fill();
+    simCtx.font = '10px sans-serif';
+    simCtx.textAlign = 'center';
+    simCtx.fillText(`I = ${currentI}A`, margin.left + leadW / 2, arrowY - 8);
+
+    if (showNormal) {
+      const cuArrowY = cuY + leadH / 2;
+      simCtx.strokeStyle = '#ffa657';
+      simCtx.lineWidth = 2;
+      simCtx.beginPath();
+      simCtx.moveTo(margin.left + 20, cuArrowY);
+      simCtx.lineTo(margin.left + leadW - 20, cuArrowY);
+      simCtx.stroke();
+      simCtx.beginPath();
+      simCtx.moveTo(margin.left + leadW - 20, cuArrowY);
+      simCtx.lineTo(margin.left + leadW - 30, cuArrowY - 5);
+      simCtx.lineTo(margin.left + leadW - 30, cuArrowY + 5);
+      simCtx.closePath();
+      simCtx.fillStyle = '#ffa657';
+      simCtx.fill();
+      simCtx.fillText(`I = ${currentI}A`, margin.left + leadW / 2, cuArrowY - 8);
+    }
+
+    const colorbarX = margin.left;
+    const colorbarY = SIM_H - 25;
+    const colorbarW = leadW;
+    const colorbarH = 12;
+    for (let x = 0; x < colorbarW; x++) {
+      const t = tMin + (tMax - tMin) * x / colorbarW;
+      simCtx.fillStyle = tempToColor(t, tMin, tMax);
+      simCtx.fillRect(colorbarX + x, colorbarY, 1, colorbarH);
+    }
+    simCtx.strokeStyle = '#30363d';
+    simCtx.lineWidth = 1;
+    simCtx.strokeRect(colorbarX, colorbarY, colorbarW, colorbarH);
+    simCtx.fillStyle = '#8b949e';
+    simCtx.font = '9px sans-serif';
+    simCtx.textAlign = 'left';
+    simCtx.fillText(`${tMin.toFixed(0)}K`, colorbarX, colorbarY - 3);
+    simCtx.textAlign = 'right';
+    simCtx.fillText(`${tMax.toFixed(0)}K`, colorbarX + colorbarW, colorbarY - 3);
+
+    updateStats();
+  }
+
+  function drawProfile() {
+    resizeProfileCanvas();
+    const W = profileCanvas.width / (window.devicePixelRatio || 1);
+    const H = profileCanvas.height / (window.devicePixelRatio || 1);
+    const margin = { top: 15, right: 20, bottom: 35, left: 55 };
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+
+    profileCtx.clearRect(0, 0, W, H);
+
+    profileCtx.strokeStyle = '#30363d';
+    profileCtx.lineWidth = 1;
+    profileCtx.beginPath();
+    profileCtx.moveTo(margin.left, margin.top);
+    profileCtx.lineTo(margin.left, margin.top + plotH);
+    profileCtx.lineTo(margin.left + plotW, margin.top + plotH);
+    profileCtx.stroke();
+
+    const tMax = Math.max(tHot, ...cuTemp, ...scTemp) * 1.1;
+
+    profileCtx.fillStyle = '#8b949e';
+    profileCtx.font = '10px sans-serif';
+    profileCtx.textAlign = 'center';
+    for (let i = 0; i <= 4; i++) {
+      const x = margin.left + plotW * i / 4;
+      const pos = (leadLength * i / 4).toFixed(0);
+      profileCtx.fillText(pos + 'cm', x, margin.top + plotH + 16);
+    }
+    profileCtx.fillText('位置 x', margin.left + plotW / 2, margin.top + plotH + 28);
+
+    profileCtx.save();
+    profileCtx.translate(12, margin.top + plotH / 2);
+    profileCtx.rotate(-Math.PI / 2);
+    profileCtx.textAlign = 'center';
+    profileCtx.fillText('温度 T (K)', 0, 0);
+    profileCtx.restore();
+
+    profileCtx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const t = tMax * i / 4;
+      const y = margin.top + plotH - (t / tMax) * plotH;
+      profileCtx.fillText(t.toFixed(0), margin.left - 5, y + 4);
+    }
+
+    profileCtx.beginPath();
+    profileCtx.strokeStyle = '#79c0ff';
+    profileCtx.lineWidth = 2;
+    for (let i = 0; i <= NX; i++) {
+      const x = margin.left + (i / NX) * plotW;
+      const y = margin.top + plotH - (scTemp[i] / tMax) * plotH;
+      if (i === 0) profileCtx.moveTo(x, y); else profileCtx.lineTo(x, y);
+    }
+    profileCtx.stroke();
+
+    if (showNormal) {
+      profileCtx.beginPath();
+      profileCtx.strokeStyle = '#f85149';
+      profileCtx.lineWidth = 2;
+      for (let i = 0; i <= NX; i++) {
+        const x = margin.left + (i / NX) * plotW;
+        const y = margin.top + plotH - (cuTemp[i] / tMax) * plotH;
+        if (i === 0) profileCtx.moveTo(x, y); else profileCtx.lineTo(x, y);
+      }
+      profileCtx.stroke();
+    }
+
+    profileCtx.fillStyle = '#79c0ff';
+    profileCtx.font = '10px sans-serif';
+    profileCtx.textAlign = 'left';
+    profileCtx.fillText('— 超导引线', margin.left + 10, margin.top + 14);
+    if (showNormal) {
+      profileCtx.fillStyle = '#f85149';
+      profileCtx.fillText('— 铜引线', margin.left + 100, margin.top + 14);
+    }
+  }
+
+  function updateStats() {
+    const dx = leadLength / NX;
+    const kScCold = scThermalConductivity(scTemp[1]);
+    const scHeatLeak = kScCold * (scTemp[1] - scTemp[0]) / dx * crossArea * 1e-6;
+
+    const kCuCold = cuThermalConductivity(cuTemp[1]);
+    const cuHeatLeak = kCuCold * (cuTemp[1] - cuTemp[0]) / dx * crossArea * 1e-6;
+
+    let cuJouleTotal = 0;
+    for (let i = 0; i <= NX; i++) {
+      const rhoCu = cuResistivity(cuTemp[i]);
+      cuJouleTotal += currentI * currentI * rhoCu * dx / (crossArea * 1e-6);
+    }
+
+    document.getElementById('statSCHeat').textContent = scHeatLeak.toFixed(4);
+    document.getElementById('statCuHeat').textContent = cuHeatLeak.toFixed(4);
+    document.getElementById('statSCJoule').textContent = '0.0000';
+    document.getElementById('statCuJoule').textContent = cuJouleTotal.toFixed(4);
+    document.getElementById('statSCTotal').textContent = scHeatLeak.toFixed(4);
+    document.getElementById('statCuTotal').textContent = (cuHeatLeak + cuJouleTotal).toFixed(4);
+    const ratio = (cuHeatLeak + cuJouleTotal) > 0 ? scHeatLeak / (cuHeatLeak + cuJouleTotal) : 0;
+    document.getElementById('statRatio').textContent = (ratio * 100).toFixed(1) + '%';
+  }
+
+  function simulateFrame() {
+    if (!running) return;
+    for (let s = 0; s < 50; s++) stepSimulation();
+    drawSim();
+    drawProfile();
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  function startSim() {
+    if (running) { pauseSim(); return; }
+    running = true;
+    document.getElementById('btnStart').classList.add('active');
+    document.getElementById('btnPause').classList.remove('active');
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  function pauseSim() {
+    running = false;
+    document.getElementById('btnStart').classList.remove('active');
+    document.getElementById('btnPause').classList.add('active');
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+  }
+
+  function resetSim() {
+    pauseSim();
+    initTemp();
+    drawSim();
+    drawProfile();
+  }
+
+  document.getElementById('current').addEventListener('input', function() {
+    currentI = parseFloat(this.value);
+    document.getElementById('currentVal').textContent = currentI;
+  });
+  document.getElementById('length').addEventListener('input', function() {
+    leadLength = parseFloat(this.value);
+    document.getElementById('lengthVal').textContent = leadLength;
+  });
+  document.getElementById('area').addEventListener('input', function() {
+    crossArea = parseFloat(this.value);
+    document.getElementById('areaVal').textContent = crossArea.toFixed(1);
+  });
+  document.getElementById('tHot').addEventListener('input', function() {
+    tHot = parseFloat(this.value);
+    document.getElementById('tHotVal').textContent = tHot;
+  });
+  document.getElementById('tCold').addEventListener('input', function() {
+    tCold = parseFloat(this.value);
+    document.getElementById('tColdVal').textContent = tCold;
+  });
+
+  document.getElementById('btnStart').addEventListener('click', startSim);
+  document.getElementById('btnPause').addEventListener('click', pauseSim);
+  document.getElementById('btnReset').addEventListener('click', resetSim);
+
+  document.getElementById('showNormal').addEventListener('change', function() {
+    showNormal = this.checked;
+    if (!running) { drawSim(); drawProfile(); }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === ' ') { e.preventDefault(); if (running) pauseSim(); else startSim(); }
+    if (e.key.toLowerCase() === 'r' && !e.ctrlKey) resetSim();
+  });
+
+  function init() {
+    resizeSimCanvas();
+    resizeProfileCanvas();
+    initTemp();
+    drawSim();
+    drawProfile();
+    startSim();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

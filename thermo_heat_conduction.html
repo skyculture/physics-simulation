@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>平面热传导 - 物理数值仿真平台</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0d1117; color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px;
+}
+.header {
+  width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 24px;
+}
+.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #ffa657; line-height: 1.2; }
+.header-left .subtitle { font-size: 0.82rem; color: #8b949e; margin-top: 2px; }
+.back-link {
+  color: #58a6ff; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
+  border: 1px solid #30363d; border-radius: 6px; transition: background 0.2s;
+}
+.back-link:hover { background: #1f2937; }
+.main-container { width: 100%; max-width: 1100px; display: flex; gap: 12px; flex: 1; }
+.canvas-panel {
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px;
+  display: flex; align-items: center; justify-content: center; flex: 1; flex-direction: column; gap: 8px;
+}
+canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; cursor: crosshair; }
+.side-panel { width: 300px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
+.panel-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
+.panel-box h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+.control-row label { font-size: 0.82rem; color: #c9d1d9; white-space: nowrap; }
+.control-row input[type="range"] { flex: 1; accent-color: #ffa657; height: 4px; }
+.control-row .val { font-size: 0.78rem; color: #ffa657; min-width: 42px; text-align: right; font-weight: 600; }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.btn {
+  padding: 7px 12px; border: 1px solid #30363d; border-radius: 6px; background: #21262d;
+  color: #c9d1d9; cursor: pointer; font-size: 0.82rem; font-family: inherit;
+  transition: background 0.15s, border-color 0.15s; flex: 1; text-align: center; min-width: 48px;
+}
+.btn:hover { background: #30363d; }
+.btn.active { background: #ffa65733; border-color: #ffa657; color: #ffa657; }
+.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; font-size: 0.82rem; }
+.stat-item:last-child { border-bottom: none; }
+.stat-label { color: #8b949e; }
+.stat-value { color: #ffa657; font-weight: 600; font-variant-numeric: tabular-nums; }
+.check-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 0.82rem; cursor: pointer; }
+.check-row input[type="checkbox"] { accent-color: #ffa657; width: 15px; height: 15px; }
+.colorbar { display: flex; align-items: center; gap: 8px; width: 100%; }
+.colorbar canvas { height: 20px; border-radius: 3px; }
+.colorbar span { font-size: 0.72rem; color: #8b949e; white-space: nowrap; }
+@media (max-width: 900px) {
+  .main-container { flex-direction: column; }
+  .side-panel { width: 100%; min-width: unset; flex-direction: row; flex-wrap: wrap; }
+  .side-panel .panel-box { flex: 1; min-width: 200px; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>平面热传导</h1>
+    <div class="subtitle">二维热传导方程 ∂T/∂t = α∇²T — 有限差分法数值模拟</div>
+  </div>
+  <a class="back-link" href="index.html">← 返回首页</a>
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+    <div class="colorbar">
+      <span>0°C</span>
+      <canvas id="cbCanvas" width="400" height="20"></canvas>
+      <span>100°C</span>
+    </div>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 控制参数</h3>
+      <div class="control-row">
+        <label>热扩散率 α</label>
+        <input type="range" id="alpha" min="0.1" max="5" value="1" step="0.1">
+        <span class="val" id="alphaVal">1.0</span>
+      </div>
+      <div class="control-row">
+        <label>左边界温度 (°C)</label>
+        <input type="range" id="leftTemp" min="0" max="100" value="100" step="5">
+        <span class="val" id="leftTempVal">100</span>
+      </div>
+      <div class="control-row">
+        <label>右边界温度 (°C)</label>
+        <input type="range" id="rightTemp" min="0" max="100" value="0" step="5">
+        <span class="val" id="rightTempVal">0</span>
+      </div>
+      <div class="control-row">
+        <label>上边界温度 (°C)</label>
+        <input type="range" id="topTemp" min="0" max="100" value="0" step="5">
+        <span class="val" id="topTempVal">0</span>
+      </div>
+      <div class="control-row">
+        <label>下边界温度 (°C)</label>
+        <input type="range" id="bottomTemp" min="0" max="100" value="0" step="5">
+        <span class="val" id="bottomTempVal">0</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn active" id="btnStart">▶ 开始</button>
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn" id="btnReset">↺ 重置</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btnHeat">🔥 热源</button>
+        <button class="btn" id="btnCool">❄ 冷源</button>
+        <button class="btn" id="btnClear">🗑 清除</button>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="showIsotherms">
+        <span>显示等温线</span>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="showHeatFlux">
+        <span>显示热流矢量</span>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h3>📊 实时物理量</h3>
+      <div class="stat-item"><span class="stat-label">模拟时间 t</span><span class="stat-value" id="statTime">0.00</span></div>
+      <div class="stat-item"><span class="stat-label">最高温度 (°C)</span><span class="stat-value" id="statMaxT">—</span></div>
+      <div class="stat-item"><span class="stat-label">最低温度 (°C)</span><span class="stat-value" id="statMinT">—</span></div>
+      <div class="stat-item"><span class="stat-label">平均温度 (°C)</span><span class="stat-value" id="statAvgT">—</span></div>
+      <div class="stat-item"><span class="stat-label">鼠标位置温度</span><span class="stat-value" id="statMouseT">—</span></div>
+      <div class="stat-item"><span class="stat-label">网格大小</span><span class="stat-value" id="statGrid">—</span></div>
+    </div>
+    <div class="panel-box">
+      <h3>💡 操作提示</h3>
+      <div style="font-size:0.78rem;color:#8b949e;line-height:1.6;">
+        点击画布添加热源/冷源。<br>
+        选择"热源"模式后点击添加100°C热点。<br>
+        选择"冷源"模式后点击添加0°C冷点。<br>
+        选择"清除"模式后点击擦除热点/冷点。
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  const simCanvas = document.getElementById('simCanvas');
+  const simCtx = simCanvas.getContext('2d');
+  const cbCanvas = document.getElementById('cbCanvas');
+  const cbCtx = cbCanvas.getContext('2d');
+
+  const NX = 80, NY = 80;
+  const SIM_SIZE = 560;
+  let grid = [], fixedPoints = [];
+  let alpha = 1.0, leftT = 100, rightT = 0, topT = 0, bottomT = 0;
+  let running = true, animId = null, simTime = 0;
+  let mouseX = -1, mouseY = -1;
+  let paintMode = 'heat';
+  let showIsotherms = false, showHeatFlux = false;
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    simCanvas.style.width = SIM_SIZE + 'px';
+    simCanvas.style.height = SIM_SIZE + 'px';
+    simCanvas.width = SIM_SIZE * dpr;
+    simCanvas.height = SIM_SIZE * dpr;
+    simCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function tempToColor(t) {
+    const norm = Math.max(0, Math.min(1, t / 100));
+    let r, g, b;
+    if (norm < 0.25) {
+      const f = norm / 0.25;
+      r = 0; g = Math.floor(f * 100); b = Math.floor(100 + f * 155);
+    } else if (norm < 0.5) {
+      const f = (norm - 0.25) / 0.25;
+      r = 0; g = Math.floor(100 + f * 155); b = Math.floor(255 - f * 155);
+    } else if (norm < 0.75) {
+      const f = (norm - 0.5) / 0.25;
+      r = Math.floor(f * 255); g = 255; b = 0;
+    } else {
+      const f = (norm - 0.75) / 0.25;
+      r = 255; g = Math.floor(255 - f * 200); b = 0;
+    }
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function drawColorbar() {
+    const w = cbCanvas.width, h = cbCanvas.height;
+    for (let x = 0; x < w; x++) {
+      cbCtx.fillStyle = tempToColor((x / w) * 100);
+      cbCtx.fillRect(x, 0, 1, h);
+    }
+  }
+
+  function initGrid() {
+    grid = [];
+    fixedPoints = [];
+    for (let i = 0; i < NX; i++) {
+      grid[i] = [];
+      fixedPoints[i] = [];
+      for (let j = 0; j < NY; j++) {
+        grid[i][j] = 0;
+        fixedPoints[i][j] = false;
+      }
+    }
+    simTime = 0;
+  }
+
+  function applyBoundary() {
+    for (let j = 0; j < NY; j++) { grid[0][j] = leftT; grid[NX-1][j] = rightT; }
+    for (let i = 0; i < NX; i++) { grid[i][0] = topT; grid[i][NY-1] = bottomT; }
+  }
+
+  function step() {
+    const dt = 0.2 * (1 / (4 * alpha + 0.001));
+    const dx = 1.0;
+    const newGrid = [];
+    for (let i = 0; i < NX; i++) {
+      newGrid[i] = [];
+      for (let j = 0; j < NY; j++) {
+        if (i === 0 || i === NX-1 || j === 0 || j === NY-1 || fixedPoints[i][j]) {
+          newGrid[i][j] = grid[i][j];
+        } else {
+          const laplacian = (grid[i+1][j] + grid[i-1][j] + grid[i][j+1] + grid[i][j-1] - 4 * grid[i][j]) / (dx * dx);
+          newGrid[i][j] = grid[i][j] + alpha * dt * laplacian;
+        }
+      }
+    }
+    grid = newGrid;
+    simTime += dt;
+  }
+
+  function draw() {
+    simCtx.clearRect(0, 0, SIM_SIZE, SIM_SIZE);
+    const cellW = SIM_SIZE / NX, cellH = SIM_SIZE / NY;
+
+    for (let i = 0; i < NX; i++) {
+      for (let j = 0; j < NY; j++) {
+        simCtx.fillStyle = tempToColor(grid[i][j]);
+        simCtx.fillRect(i * cellW, j * cellH, cellW + 0.5, cellH + 0.5);
+      }
+    }
+
+    if (showIsotherms) {
+      const levels = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+      simCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+      simCtx.lineWidth = 0.8;
+      for (const level of levels) {
+        for (let i = 0; i < NX - 1; i++) {
+          for (let j = 0; j < NY - 1; j++) {
+            const v00 = grid[i][j], v10 = grid[i+1][j], v01 = grid[i][j+1], v11 = grid[i+1][j+1];
+            const edges = [];
+            if ((v00 - level) * (v10 - level) < 0) {
+              const t = (level - v00) / (v10 - v00);
+              edges.push({ x: (i + t) * cellW, y: j * cellH });
+            }
+            if ((v10 - level) * (v11 - level) < 0) {
+              const t = (level - v10) / (v11 - v10);
+              edges.push({ x: (i + 1) * cellW, y: (j + t) * cellH });
+            }
+            if ((v01 - level) * (v11 - level) < 0) {
+              const t = (level - v01) / (v11 - v01);
+              edges.push({ x: (i + t) * cellW, y: (j + 1) * cellH });
+            }
+            if ((v00 - level) * (v01 - level) < 0) {
+              const t = (level - v00) / (v01 - v00);
+              edges.push({ x: i * cellW, y: (j + t) * cellH });
+            }
+            if (edges.length >= 2) {
+              simCtx.beginPath();
+              simCtx.moveTo(edges[0].x, edges[0].y);
+              simCtx.lineTo(edges[1].x, edges[1].y);
+              simCtx.stroke();
+            }
+          }
+        }
+      }
+    }
+
+    if (showHeatFlux) {
+      const step = 5;
+      simCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+      simCtx.lineWidth = 1;
+      for (let i = step; i < NX - step; i += step) {
+        for (let j = step; j < NY - step; j += step) {
+          const qx = -(grid[i+1][j] - grid[i-1][j]) / 2;
+          const qy = -(grid[i][j+1] - grid[i][j-1]) / 2;
+          const mag = Math.sqrt(qx * qx + qy * qy);
+          if (mag > 0.5) {
+            const scale = Math.min(mag * 2, cellW * step * 0.8) / mag;
+            const cx = (i + 0.5) * cellW, cy = (j + 0.5) * cellH;
+            simCtx.beginPath();
+            simCtx.moveTo(cx, cy);
+            simCtx.lineTo(cx + qx * scale, cy + qy * scale);
+            simCtx.stroke();
+            const angle = Math.atan2(qy, qx);
+            simCtx.beginPath();
+            simCtx.moveTo(cx + qx * scale, cy + qy * scale);
+            simCtx.lineTo(cx + qx * scale - 4 * Math.cos(angle - 0.4), cy + qy * scale - 4 * Math.sin(angle - 0.4));
+            simCtx.stroke();
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < NX; i++) {
+      for (let j = 0; j < NY; j++) {
+        if (fixedPoints[i][j]) {
+          simCtx.strokeStyle = grid[i][j] > 50 ? '#f85149' : '#79c0ff';
+          simCtx.lineWidth = 1.5;
+          simCtx.strokeRect(i * cellW + 1, j * cellH + 1, cellW - 2, cellH - 2);
+        }
+      }
+    }
+
+    simCtx.strokeStyle = '#30363d';
+    simCtx.lineWidth = 2;
+    simCtx.strokeRect(0, 0, SIM_SIZE, SIM_SIZE);
+
+    simCtx.fillStyle = '#8b949e';
+    simCtx.font = '11px sans-serif';
+    simCtx.fillText(`左 ${leftT}°C`, 4, SIM_SIZE - 6);
+    simCtx.fillText(`右 ${rightT}°C`, SIM_SIZE - 50, SIM_SIZE - 6);
+    simCtx.fillText(`上 ${topT}°C`, 4, 14);
+    simCtx.fillText(`下 ${bottomT}°C`, SIM_SIZE - 50, 14);
+
+    updateStats();
+  }
+
+  function updateStats() {
+    let maxT = -Infinity, minT = Infinity, sumT = 0;
+    for (let i = 0; i < NX; i++) {
+      for (let j = 0; j < NY; j++) {
+        const t = grid[i][j];
+        if (t > maxT) maxT = t;
+        if (t < minT) minT = t;
+        sumT += t;
+      }
+    }
+    document.getElementById('statTime').textContent = simTime.toFixed(2);
+    document.getElementById('statMaxT').textContent = maxT.toFixed(1) + '°C';
+    document.getElementById('statMinT').textContent = minT.toFixed(1) + '°C';
+    document.getElementById('statAvgT').textContent = (sumT / (NX * NY)).toFixed(1) + '°C';
+    document.getElementById('statGrid').textContent = `${NX}×${NY}`;
+
+    if (mouseX >= 0 && mouseX < SIM_SIZE && mouseY >= 0 && mouseY < SIM_SIZE) {
+      const gi = Math.floor(mouseX / (SIM_SIZE / NX));
+      const gj = Math.floor(mouseY / (SIM_SIZE / NY));
+      if (gi >= 0 && gi < NX && gj >= 0 && gj < NY) {
+        document.getElementById('statMouseT').textContent = grid[gi][gj].toFixed(1) + '°C';
+      }
+    }
+  }
+
+  function simulateFrame() {
+    if (!running) return;
+    for (let s = 0; s < 5; s++) step();
+    draw();
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  function startSim() {
+    if (running) { pauseSim(); return; }
+    running = true;
+    document.getElementById('btnStart').classList.add('active');
+    document.getElementById('btnPause').classList.remove('active');
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  function pauseSim() {
+    running = false;
+    document.getElementById('btnStart').classList.remove('active');
+    document.getElementById('btnPause').classList.add('active');
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+  }
+
+  function resetSim() {
+    pauseSim();
+    initGrid();
+    applyBoundary();
+    draw();
+  }
+
+  simCanvas.addEventListener('mousemove', (e) => {
+    const rect = simCanvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+  });
+
+  simCanvas.addEventListener('click', (e) => {
+    const rect = simCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const gi = Math.floor(x / (SIM_SIZE / NX));
+    const gj = Math.floor(y / (SIM_SIZE / NY));
+    if (gi > 0 && gi < NX - 1 && gj > 0 && gj < NY - 1) {
+      const brushSize = 2;
+      for (let di = -brushSize; di <= brushSize; di++) {
+        for (let dj = -brushSize; dj <= brushSize; dj++) {
+          const ni = gi + di, nj = gj + dj;
+          if (ni > 0 && ni < NX - 1 && nj > 0 && nj < NY - 1) {
+            if (paintMode === 'heat') {
+              grid[ni][nj] = 100; fixedPoints[ni][nj] = true;
+            } else if (paintMode === 'cool') {
+              grid[ni][nj] = 0; fixedPoints[ni][nj] = true;
+            } else if (paintMode === 'clear') {
+              fixedPoints[ni][nj] = false;
+            }
+          }
+        }
+      }
+      if (!running) draw();
+    }
+  });
+
+  simCanvas.addEventListener('mouseleave', () => { mouseX = -1; mouseY = -1; });
+
+  document.getElementById('alpha').addEventListener('input', function() {
+    alpha = parseFloat(this.value);
+    document.getElementById('alphaVal').textContent = alpha.toFixed(1);
+  });
+  document.getElementById('leftTemp').addEventListener('input', function() {
+    leftT = parseFloat(this.value);
+    document.getElementById('leftTempVal').textContent = leftT;
+    applyBoundary(); if (!running) draw();
+  });
+  document.getElementById('rightTemp').addEventListener('input', function() {
+    rightT = parseFloat(this.value);
+    document.getElementById('rightTempVal').textContent = rightT;
+    applyBoundary(); if (!running) draw();
+  });
+  document.getElementById('topTemp').addEventListener('input', function() {
+    topT = parseFloat(this.value);
+    document.getElementById('topTempVal').textContent = topT;
+    applyBoundary(); if (!running) draw();
+  });
+  document.getElementById('bottomTemp').addEventListener('input', function() {
+    bottomT = parseFloat(this.value);
+    document.getElementById('bottomTempVal').textContent = bottomT;
+    applyBoundary(); if (!running) draw();
+  });
+
+  document.getElementById('btnStart').addEventListener('click', startSim);
+  document.getElementById('btnPause').addEventListener('click', pauseSim);
+  document.getElementById('btnReset').addEventListener('click', resetSim);
+
+  document.getElementById('btnHeat').addEventListener('click', function() {
+    paintMode = 'heat';
+    this.style.borderColor = '#f85149'; this.style.color = '#f85149';
+    document.getElementById('btnCool').style.borderColor = ''; document.getElementById('btnCool').style.color = '';
+    document.getElementById('btnClear').style.borderColor = ''; document.getElementById('btnClear').style.color = '';
+  });
+  document.getElementById('btnCool').addEventListener('click', function() {
+    paintMode = 'cool';
+    this.style.borderColor = '#79c0ff'; this.style.color = '#79c0ff';
+    document.getElementById('btnHeat').style.borderColor = ''; document.getElementById('btnHeat').style.color = '';
+    document.getElementById('btnClear').style.borderColor = ''; document.getElementById('btnClear').style.color = '';
+  });
+  document.getElementById('btnClear').addEventListener('click', function() {
+    paintMode = 'clear';
+    this.style.borderColor = '#8b949e'; this.style.color = '#8b949e';
+    document.getElementById('btnHeat').style.borderColor = ''; document.getElementById('btnHeat').style.color = '';
+    document.getElementById('btnCool').style.borderColor = ''; document.getElementById('btnCool').style.color = '';
+  });
+
+  document.getElementById('showIsotherms').addEventListener('change', function() {
+    showIsotherms = this.checked; if (!running) draw();
+  });
+  document.getElementById('showHeatFlux').addEventListener('change', function() {
+    showHeatFlux = this.checked; if (!running) draw();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === ' ') { e.preventDefault(); if (running) pauseSim(); else startSim(); }
+    if (e.key.toLowerCase() === 'r' && !e.ctrlKey) resetSim();
+  });
+
+  function init() {
+    resizeCanvas();
+    initGrid();
+    applyBoundary();
+    drawColorbar();
+    draw();
+    startSim();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📏 四点法测电阻</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📏 四点法测量电阻（开尔文电桥）</h1>
+  <p>消除接触电阻影响，精确测量低电阻</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>待测电阻 Rₓ (Ω): <span id="rxVal">0.01</span></label>
+      <input type="range" id="rx" min="0.001" max="1" step="0.001" value="0.01">
+    </div>
+    <div class="control-group">
+      <label>接触电阻 Rc (Ω): <span id="rcVal">0.1</span></label>
+      <input type="range" id="rc" min="0" max="1" step="0.01" value="0.1">
+    </div>
+    <div class="control-group">
+      <label>电流源 I (mA): <span id="currentVal">100</span></label>
+      <input type="range" id="current" min="10" max="500" step="10" value="100">
+    </div>
+    <div class="control-group">
+      <button id="measureBtn">📐 开始测量</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">电流端电压:</span><span class="value" id="vCurrent">0 mV</span></div>
+      <div class="item"><span class="label">电压端电压:</span><span class="value" id="vVoltage">0 mV</span></div>
+      <div class="item"><span class="label">传统法测量值:</span><span class="value" id="rTraditional">0 Ω</span></div>
+      <div class="item"><span class="label">四点法测量值:</span><span class="value" id="rFourPoint">0 Ω</span></div>
+      <div class="item"><span class="label">误差:</span><span class="value" id="error">0%</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let R_x = 0.01;
+let R_c = 0.1;
+let I = 0.1;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // 待测样品
+  const sampleX = 200;
+  const sampleY = 150;
+  const sampleW = 200;
+  const sampleH = 80;
+  
+  ctx.fillStyle = '#4a5568';
+  ctx.fillRect(sampleX, sampleY, sampleW, sampleH);
+  ctx.strokeStyle = '#718096';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(sampleX, sampleY, sampleW, sampleH);
+  
+  // 四个探针
+  const probeSpacing = 50;
+  const probes = [];
+  for (let i = 0; i < 4; i++) {
+    probes.push({
+      x: sampleX + 25 + i * probeSpacing,
+      y: sampleY - 20
+    });
+  }
+  
+  // 探针连线
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 3;
+  
+  // 电流端 (外侧两个探针)
+  ctx.beginPath();
+  ctx.moveTo(probes[0].x, probes[0].y);
+  ctx.lineTo(probes[0].x, sampleY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(probes[3].x, probes[3].y);
+  ctx.lineTo(probes[3].x, sampleY);
+  ctx.stroke();
+  
+  // 电压端 (内侧两个探针)
+  ctx.strokeStyle = '#f78166';
+  ctx.beginPath();
+  ctx.moveTo(probes[1].x, probes[1].y);
+  ctx.lineTo(probes[1].x, sampleY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(probes[2].x, probes[2].y);
+  ctx.lineTo(probes[2].x, sampleY);
+  ctx.stroke();
+  
+  // 探针点
+  probes.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 === 0 ? '#58a6ff' : '#f78166';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+  
+  // 恒流源
+  const sourceX = 80;
+  const sourceY = 80;
+  ctx.fillStyle = '#3fb950';
+  ctx.beginPath();
+  ctx.moveTo(sourceX, sourceY);
+  ctx.lineTo(sourceX + 30, sourceY - 15);
+  ctx.lineTo(sourceX + 30, sourceY + 15);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('I', sourceX + 15, sourceY + 4);
+  
+  // 电流表
+  const ammeterX = 130;
+  const ammeterY = 80;
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(ammeterX, ammeterY, 15, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillText('A', ammeterX, ammeterY + 4);
+  
+  // 电压表
+  const voltmeterX = 500;
+  const voltmeterY = 80;
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(voltmeterX, voltmeterY, 15, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#f78166';
+  ctx.fillText('V', voltmeterX, voltmeterY + 4);
+  
+  // 电路连线
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  
+  // 电流回路
+  ctx.beginPath();
+  ctx.moveTo(sourceX, sourceY);
+  ctx.lineTo(ammeterX, sourceY);
+  ctx.lineTo(ammeterX, probes[0].y);
+  ctx.lineTo(probes[0].x, probes[0].y);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(sourceX + 30, sourceY);
+  ctx.lineTo(sourceX + 60, sourceY);
+  ctx.lineTo(sourceX + 60, 280);
+  ctx.lineTo(probes[3].x, 280);
+  ctx.lineTo(probes[3].x, probes[3].y);
+  ctx.stroke();
+  
+  // 电压测量回路
+  ctx.strokeStyle = '#f78166';
+  ctx.beginPath();
+  ctx.moveTo(probes[1].x, probes[1].y);
+  ctx.lineTo(probes[1].x, 80);
+  ctx.lineTo(voltmeterX - 15, 80);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(probes[2].x, probes[2].y);
+  ctx.lineTo(probes[2].x, 80);
+  ctx.lineTo(voltmeterX + 15, 80);
+  ctx.stroke();
+  
+  // 标注
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('电流端 (CC)', 80, 330);
+  ctx.fillText('电压端 (VV)', 350, 330);
+  
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText('Rₓ = ' + R_x.toFixed(4) + ' Ω', 250, 110);
+}
+
+function measure() {
+  const V_current = I * (R_x + 2 * R_c);
+  const V_voltage = I * R_x;
+  
+  const R_traditional = V_current / I;
+  const R_four_point = V_voltage / I;
+  const error = ((R_traditional - R_x) / R_x * 100);
+  
+  document.getElementById('vCurrent').textContent = (V_current * 1000).toFixed(2) + ' mV';
+  document.getElementById('vVoltage').textContent = (V_voltage * 1000).toFixed(4) + ' mV';
+  document.getElementById('rTraditional').textContent = R_traditional.toFixed(4) + ' Ω';
+  document.getElementById('rFourPoint').textContent = R_four_point.toFixed(4) + ' Ω';
+  document.getElementById('error').textContent = error.toFixed(2) + '%';
+}
+
+document.getElementById('rx').addEventListener('input', (e) => {
+  R_x = parseFloat(e.target.value);
+  document.getElementById('rxVal').textContent = R_x;
+  draw();
+});
+
+document.getElementById('rc').addEventListener('input', (e) => {
+  R_c = parseFloat(e.target.value);
+  document.getElementById('rcVal').textContent = R_c;
+});
+
+document.getElementById('current').addEventListener('input', (e) => {
+  I = parseFloat(e.target.value) / 1000;
+  document.getElementById('currentVal').textContent = e.target.value;
+});
+
+document.getElementById('measureBtn').addEventListener('click', measure);
+
+draw();
+measure();
+</script>
+</body>
+</html>

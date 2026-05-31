@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宇宙微波背景 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>温度波动:</label><input type="range" id="fluctuation" min="10" max="100" step="10" value="50"><span id="fluctuationVal">50</span>%</div>
+    <div class="ctrl-group"><label>分辨率:</label><input type="range" id="resolution" min="32" max="128" step="16" value="64"><span id="resolutionVal">64</span>×64</div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">宇宙微波背景：宇宙大爆炸后约38万年形成的黑体辐射，温度约2.725K。其微小的温度波动（约10⁻⁵）揭示了早期宇宙的密度扰动，是宇宙学标准模型的重要验证。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let pixels = [];
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function initPixels() {
+  const res = parseInt(document.getElementById('resolution').value);
+  pixels = [];
+  for (let i = 0; i < res; i++) {
+    pixels[i] = [];
+    for (let j = 0; j < res; j++) {
+      const noise = (Math.random() - 0.5) * 2;
+      pixels[i][j] = noise;
+    }
+  }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const fluctuation = parseFloat(document.getElementById('fluctuation').value) / 100;
+  const res = parseInt(document.getElementById('resolution').value);
+
+  if (pixels.length !== res) {
+    initPixels();
+  }
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, w, h);
+
+  const mapSize = S;
+  const mapX = cx - mapSize / 2;
+  const mapY = cy - mapSize / 2;
+  const pixelSize = mapSize / res;
+
+  for (let i = 0; i < res; i++) {
+    for (let j = 0; j < res; j++) {
+      const baseTemp = 2.725;
+      const deltaT = pixels[i][j] * fluctuation * 0.00005;
+      const temp = baseTemp + deltaT;
+
+      let r, g, b;
+      if (deltaT > 0) {
+        r = Math.round(139 + deltaT * 10000);
+        g = Math.round(148 + deltaT * 8000);
+        b = Math.round(158 + deltaT * 6000);
+      } else {
+        r = Math.round(139 + deltaT * 5000);
+        g = Math.round(148 + deltaT * 4000);
+        b = Math.round(158);
+      }
+
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(mapX + j * pixelSize, mapY + i * pixelSize, pixelSize + 1, pixelSize + 1);
+    }
+  }
+
+  const fs = S * 0.03;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'left';
+  ctx.fillText(`平均温度: 2.725 K`, mapX + S * 0.02, mapY + fs + S * 0.02);
+  ctx.fillText(`温度波动: ±${(fluctuation * 2.5e-5).toExponential(1)} K`, mapX + S * 0.02, mapY + fs * 2 + S * 0.02);
+  ctx.fillText(`分辨率: ${res}×${res}`, mapX + S * 0.02, mapY + fs * 3 + S * 0.02);
+
+  ctx.fillStyle = '#ffa657';
+  ctx.fillText(`红移: z ≈ 1100`, mapX + S * 0.02, mapY + fs * 4 + S * 0.02);
+
+  const graphW = S * 0.25;
+  const graphH = S * 0.15;
+  const graphX = mapX + mapSize - graphW - S * 0.02;
+  const graphY = mapY + S * 0.05;
+
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(graphX, graphY, graphW, graphH);
+
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const x = graphX + i / 100 * graphW;
+    const freq = i / 100 * 1000;
+    const blackbody = Math.pow(freq, 3) / (Math.exp(1.4388 / (freq * 0.002725)) - 1);
+    const y = graphY + graphH * (1 - blackbody / 5000);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.fill();
+
+  ctx.font = `${fs * 0.7}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText('黑体谱', graphX + graphW / 2, graphY + graphH + fs);
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('fluctuation').addEventListener('input', e => {
+  document.getElementById('fluctuationVal').textContent = e.target.value;
+});
+document.getElementById('resolution').addEventListener('input', e => {
+  document.getElementById('resolutionVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('fluctuation').value = 50;
+  document.getElementById('fluctuationVal').textContent = '50';
+  document.getElementById('resolution').value = 64;
+  document.getElementById('resolutionVal').textContent = '64';
+  initPixels();
+});
+
+resize();
+window.addEventListener('resize', resize);
+initPixels();
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>引力透镜 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>透镜质量:</label><input type="range" id="mass" min="1" max="10" step="1" value="5"><span id="massVal">5</span> ×10¹¹ M☉</div>
+    <div class="ctrl-group"><label>源距离:</label><input type="range" id="sourceDist" min="1" max="10" step="1" value="8"><span id="sourceDistVal">8</span> Gpc</div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">引力透镜：根据广义相对论，引力场会弯曲光线。当光源、引力透镜和观测者成一条直线时，会产生爱因斯坦环、多重像等现象，是探测暗物质和宇宙结构的重要工具。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const mass = parseFloat(document.getElementById('mass').value);
+  const sourceDist = parseFloat(document.getElementById('sourceDist').value);
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = '#ffa657';
+  for (let i = 0; i < 60; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * w, Math.random() * h, S * 0.003 + Math.random() * S * 0.003, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#f78166';
+  ctx.beginPath();
+  ctx.arc(cx, cy, S * 0.03, 0, Math.PI * 2);
+  ctx.fill();
+
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * 0.15);
+  grad.addColorStop(0, 'rgba(210,168,255,0.3)');
+  grad.addColorStop(0.7, 'rgba(139,92,246,0.15)');
+  grad.addColorStop(1, 'rgba(139,92,246,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, S * 0.15, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = S * 0.002;
+  ctx.beginPath();
+  ctx.arc(cx, cy, S * 0.1, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const sourceY = cy - S * 0.35;
+  ctx.fillStyle = '#d2a8ff';
+  ctx.beginPath();
+  ctx.arc(cx, sourceY, S * 0.015, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(210,168,255,0.5)';
+  ctx.lineWidth = S * 0.004;
+  for (let i = -3; i <= 3; i++) {
+    if (i === 0) continue;
+    const offset = i * S * 0.08;
+    ctx.beginPath();
+    ctx.moveTo(cx + offset, 0);
+
+    const d = Math.abs(offset);
+    const deflection = mass * 0.02 / (d / S + 0.1);
+    const bulge = deflection * Math.sign(offset);
+
+    ctx.quadraticCurveTo(cx + offset * 0.5, cy + bulge * 2, cx + offset + bulge, h);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#d2a8ff';
+  for (let i = -2; i <= 2; i++) {
+    if (i === 0) {
+      ctx.beginPath();
+      ctx.arc(cx, h * 0.85, S * 0.015, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      const offset = i * mass * S * 0.03;
+      ctx.beginPath();
+      ctx.arc(cx + offset, h * 0.85, S * 0.012, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const fs = S * 0.03;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'left';
+  ctx.fillText(`透镜质量: ${mass} ×10¹¹ M☉`, w * 0.02, fs + 5);
+  ctx.fillText(`源距离: ${sourceDist} Gpc`, w * 0.02, fs * 2 + 5);
+
+  const deflectionAngle = mass * 4 / sourceDist;
+  ctx.fillStyle = '#ffa657';
+  ctx.fillText(`偏转角: ${deflectionAngle.toFixed(2)} 角秒`, w * 0.02, fs * 3 + 5);
+
+  ctx.fillStyle = '#d2a8ff';
+  ctx.fillText('爱因斯坦环半径: 取决于质量和距离', w * 0.02, fs * 4 + 5);
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('mass').addEventListener('input', e => {
+  document.getElementById('massVal').textContent = e.target.value;
+});
+document.getElementById('sourceDist').addEventListener('input', e => {
+  document.getElementById('sourceDistVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('mass').value = 5;
+  document.getElementById('massVal').textContent = '5';
+  document.getElementById('sourceDist').value = 8;
+  document.getElementById('sourceDistVal').textContent = '8';
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

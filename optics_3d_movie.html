@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>偏振式3D电影 - 物理数值仿真平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+.container{width:100%;max-width:1100px}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.canvas-row{display:flex;gap:16px;margin-bottom:20px}
+@media(max-width:860px){.canvas-row{flex-direction:column}}
+.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
+.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
+.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+.info-item{display:flex;align-items:baseline;gap:6px}
+.info-item .info-label{color:#8b949e}
+.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.btn-row{display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn-start{background:#238636;color:#fff;border-color:#2ea043}
+.btn-start:hover{background:#2ea043}
+.btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
+.btn-pause:hover{background:#bb8009}
+.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
+.btn-reset:hover{background:#30363d}
+.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>偏振式3D电影</h1>
+    <p class="subtitle">偏振式3D电影利用光的偏振特性，让左右眼分别接收不同偏振方向的图像，从而产生立体视觉效果。</p>
+  </div>
+  <div class="canvas-row">
+    <div class="panel">
+      <h2>🎬 3D成像原理</h2>
+      <canvas id="canvasSetup" width="680" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h2>📊 透射光强</h2>
+      <canvas id="canvasIntensity" width="680" height="420"></canvas>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>左眼偏振角 <span class="val" id="valLeft">0°</span></label>
+      <input type="range" id="sliderLeft" min="0" max="180" step="1" value="0">
+    </div>
+    <div class="control-group">
+      <label>右眼偏振角 <span class="val" id="valRight">90°</span></label>
+      <input type="range" id="sliderRight" min="0" max="180" step="1" value="90">
+    </div>
+    <div class="control-group">
+      <label>眼镜偏振角 <span class="val" id="valGlass">0°</span></label>
+      <input type="range" id="sliderGlass" min="0" max="180" step="1" value="0">
+    </div>
+  </div>
+  <div class="info-bar">
+    <div class="info-item"><span class="info-label">左眼透射率=</span><span class="info-value" id="infoLeft">1.00</span></div>
+    <div class="info-item"><span class="info-label">右眼透射率=</span><span class="info-value" id="infoRight">0.00</span></div>
+    <div class="info-item"><span class="info-label">串扰率=</span><span class="info-value" id="infoCrosstalk">0.00</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart">▶ 动画</button>
+    <button class="btn btn-pause" id="btnPause">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset">↺ 重置</button>
+  </div>
+  <p class="legend-note">💡 提示：偏振式3D电影使用相互正交的偏振光（通常0°和90°），观众佩戴对应偏振方向的眼镜即可看到立体效果。<br>串扰率越低，3D效果越好。理想情况下串扰率为0。</p>
+</div>
+<script>
+var canvasSetup=document.getElementById('canvasSetup');
+var ctxS=canvasSetup.getContext('2d');
+var canvasIntensity=document.getElementById('canvasIntensity');
+var ctxI=canvasIntensity.getContext('2d');
+var sliderLeft=document.getElementById('sliderLeft');
+var sliderRight=document.getElementById('sliderRight');
+var sliderGlass=document.getElementById('sliderGlass');
+var valLeft=document.getElementById('valLeft');
+var valRight=document.getElementById('valRight');
+var valGlass=document.getElementById('valGlass');
+var infoLeft=document.getElementById('infoLeft');
+var infoRight=document.getElementById('infoRight');
+var infoCrosstalk=document.getElementById('infoCrosstalk');
+var btnStart=document.getElementById('btnStart');
+var btnPause=document.getElementById('btnPause');
+var btnReset=document.getElementById('btnReset');
+
+var angleL=0,angleR=90,angleG=0;
+var running=false,animTime=0,lastFrameTime=null,animFrameId=null;
+
+function updateUI(){
+  valLeft.textContent=angleL+'°';
+  valRight.textContent=angleR+'°';
+  valGlass.textContent=angleG+'°';
+  var tL=Math.pow(Math.cos((angleG-angleL)*Math.PI/180),2);
+  var tR=Math.pow(Math.cos((angleG-angleR)*Math.PI/180),2);
+  infoLeft.textContent=tL.toFixed(2);
+  infoRight.textContent=tR.toFixed(2);
+  var cross=Math.min(tL,tR)/(Math.max(tL,tR)+0.001);
+  infoCrosstalk.textContent=cross.toFixed(2);
+}
+
+sliderLeft.addEventListener('input',function(){angleL=+sliderLeft.value;updateUI();if(!running)draw()});
+sliderRight.addEventListener('input',function(){angleR=+sliderRight.value;updateUI();if(!running)draw()});
+sliderGlass.addEventListener('input',function(){angleG=+sliderGlass.value;updateUI();if(!running)draw()});
+
+btnStart.addEventListener('click',function(){
+  if(running){pause();return}
+  running=true;btnStart.classList.add('active');btnPause.classList.remove('active');
+  if(!animFrameId)animFrameId=requestAnimationFrame(animate);
+});
+btnPause.addEventListener('click',pause);
+function pause(){running=false;btnStart.classList.remove('active');btnPause.classList.add('active')}
+btnReset.addEventListener('click',function(){
+  angleL=0;angleR=90;angleG=0;animTime=0;lastFrameTime=null;
+  sliderLeft.value=0;sliderRight.value=90;sliderGlass.value=0;
+  updateUI();if(!running)draw();
+});
+
+function drawSetup(){
+  var W=canvasSetup.width,H=canvasSetup.height;
+  ctxS.clearRect(0,0,W,H);
+  ctxS.fillStyle='#0d1117';ctxS.fillRect(0,0,W,H);
+  var cx=W/2,cy=H/2;
+
+  ctxS.fillStyle='#ffa657';ctxS.beginPath();ctxS.arc(W*0.08,cy,12,0,Math.PI*2);ctxS.fill();
+  ctxS.strokeStyle='rgba(255,166,87,0.4)';ctxS.lineWidth=1;
+  for(var a=0;a<Math.PI*2;a+=0.6){ctxS.beginPath();ctxS.moveTo(W*0.08+Math.cos(a)*14,cy+Math.sin(a)*14);ctxS.lineTo(W*0.08+Math.cos(a)*24,cy+Math.sin(a)*24);ctxS.stroke()}
+
+  var projX=W*0.25;
+  ctxS.strokeStyle='#f85149';ctxS.lineWidth=3;
+  ctxS.save();ctxS.translate(projX,cy-20);ctxS.rotate(angleL*Math.PI/180);
+  ctxS.beginPath();ctxS.moveTo(-15,0);ctxS.lineTo(15,0);ctxS.stroke();
+  ctxS.restore();
+  ctxS.strokeStyle='#58a6ff';ctxS.lineWidth=3;
+  ctxS.save();ctxS.translate(projX,cy+20);ctxS.rotate(angleR*Math.PI/180);
+  ctxS.beginPath();ctxS.moveTo(-15,0);ctxS.lineTo(15,0);ctxS.stroke();
+  ctxS.restore();
+
+  ctxS.fillStyle='#c9d1d9';ctxS.font='11px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('投影仪',projX,cy+55);
+  ctxS.fillStyle='#f85149';ctxS.fillText('左画面',projX+35,cy-20);
+  ctxS.fillStyle='#58a6ff';ctxS.fillText('右画面',projX+35,cy+20);
+
+  var screenX=W*0.5;
+  ctxS.strokeStyle='#8b949e';ctxS.lineWidth=3;
+  ctxS.beginPath();ctxS.moveTo(screenX,cy-60);ctxS.lineTo(screenX,cy+60);ctxS.stroke();
+  ctxS.fillStyle='#c9d1d9';ctxS.font='11px sans-serif';ctxS.fillText('银幕',screenX,cy+75);
+
+  ctxS.strokeStyle='rgba(248,81,73,0.5)';ctxS.lineWidth=1.5;
+  ctxS.beginPath();ctxS.moveTo(projX+15,cy-20);ctxS.lineTo(screenX,cy-15);ctxS.stroke();
+  ctxS.beginPath();ctxS.moveTo(projX+15,cy-20);ctxS.lineTo(screenX,cy+15);ctxS.stroke();
+  ctxS.strokeStyle='rgba(88,166,255,0.5)';ctxS.lineWidth=1.5;
+  ctxS.beginPath();ctxS.moveTo(projX+15,cy+20);ctxS.lineTo(screenX,cy-15);ctxS.stroke();
+  ctxS.beginPath();ctxS.moveTo(projX+15,cy+20);ctxS.lineTo(screenX,cy+15);ctxS.stroke();
+
+  var eyeX=W*0.75;
+  ctxS.strokeStyle='#f85149';ctxS.lineWidth=2;
+  ctxS.save();ctxS.translate(eyeX,cy-15);ctxS.rotate(angleL*Math.PI/180);
+  ctxS.beginPath();ctxS.ellipse(0,0,12,8,0,0,Math.PI*2);ctxS.stroke();ctxS.restore();
+  ctxS.strokeStyle='#58a6ff';ctxS.lineWidth=2;
+  ctxS.save();ctxS.translate(eyeX,cy+15);ctxS.rotate(angleR*Math.PI/180);
+  ctxS.beginPath();ctxS.ellipse(0,0,12,8,0,0,Math.PI*2);ctxS.stroke();ctxS.restore();
+
+  ctxS.fillStyle='#f85149';ctxS.beginPath();ctxS.arc(W*0.88,cy-15,8,0,Math.PI*2);ctxS.fill();
+  ctxS.fillStyle='#58a6ff';ctxS.beginPath();ctxS.arc(W*0.88,cy+15,8,0,Math.PI*2);ctxS.fill();
+  ctxS.fillStyle='#c9d1d9';ctxS.font='11px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('3D眼镜',eyeX,cy+45);
+  ctxS.fillText('左眼',W*0.88,cy-28);
+  ctxS.fillText('右眼',W*0.88,cy+35);
+
+  ctxS.strokeStyle='rgba(248,81,73,0.3)';ctxS.lineWidth=1;
+  ctxS.beginPath();ctxS.moveTo(screenX,cy-15);ctxS.lineTo(eyeX-12,cy-15);ctxS.stroke();
+  ctxS.strokeStyle='rgba(88,166,255,0.3)';
+  ctxS.beginPath();ctxS.moveTo(screenX,cy+15);ctxS.lineTo(eyeX-12,cy+15);ctxS.stroke();
+}
+
+function drawIntensity(){
+  var W=canvasIntensity.width,H=canvasIntensity.height;
+  ctxI.clearRect(0,0,W,H);
+  ctxI.fillStyle='#0d1117';ctxI.fillRect(0,0,W,H);
+  var ml=60,mt=30,mr=30,mb=50;
+  var pw=W-ml-mr,ph=H-mt-mb;
+
+  ctxI.strokeStyle='#484f58';ctxI.lineWidth=1.5;
+  ctxI.beginPath();ctxI.moveTo(ml,mt+ph);ctxI.lineTo(ml,mt);ctxI.stroke();
+  ctxI.beginPath();ctxI.moveTo(ml,mt+ph);ctxI.lineTo(ml+pw,mt+ph);ctxI.stroke();
+
+  ctxI.strokeStyle='#30363d';ctxI.lineWidth=0.8;ctxI.setLineDash([4,4]);
+  for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxI.beginPath();ctxI.moveTo(ml,y);ctxI.lineTo(ml+pw,y);ctxI.stroke()}
+  ctxI.setLineDash([]);
+
+  ctxI.fillStyle='#8b949e';ctxI.font='11px sans-serif';ctxI.textAlign='right';
+  for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxI.fillText((i/4).toFixed(1),ml-6,y+4)}
+  ctxI.textAlign='center';
+  for(var i=0;i<=4;i++){var x=ml+i*pw/4;ctxI.fillText((i*45)+'°',x,mt+ph+18)}
+  ctxI.fillText('偏振片角度',ml+pw/2,mt+ph+38);
+  ctxI.save();ctxI.translate(15,mt+ph/2);ctxI.rotate(-Math.PI/2);ctxI.fillText('透射率',0,0);ctxI.restore();
+
+  ctxI.strokeStyle='#f85149';ctxI.lineWidth=2.5;ctxI.shadowColor='#f85149';ctxI.shadowBlur=6;
+  ctxI.beginPath();
+  for(var i=0;i<=200;i++){
+    var theta=i/200*180;
+    var tL=Math.pow(Math.cos((theta-angleL)*Math.PI/180),2);
+    var px=ml+i/200*pw,py=mt+ph-tL*ph;
+    if(i===0)ctxI.moveTo(px,py);else ctxI.lineTo(px,py);
+  }
+  ctxI.stroke();ctxI.shadowBlur=0;
+
+  ctxI.strokeStyle='#58a6ff';ctxI.lineWidth=2.5;ctxI.shadowColor='#58a6ff';ctxI.shadowBlur=6;
+  ctxI.beginPath();
+  for(var i=0;i<=200;i++){
+    var theta=i/200*180;
+    var tR=Math.pow(Math.cos((theta-angleR)*Math.PI/180),2);
+    var px=ml+i/200*pw,py=mt+ph-tR*ph;
+    if(i===0)ctxI.moveTo(px,py);else ctxI.lineTo(px,py);
+  }
+  ctxI.stroke();ctxI.shadowBlur=0;
+
+  var gL=Math.pow(Math.cos((angleG-angleL)*Math.PI/180),2);
+  var gR=Math.pow(Math.cos((angleG-angleR)*Math.PI/180),2);
+  var pxG=ml+angleG/180*pw;
+  ctxI.strokeStyle='#ffa657';ctxI.lineWidth=2;ctxI.setLineDash([5,3]);
+  ctxI.beginPath();ctxI.moveTo(pxG,mt);ctxI.lineTo(pxG,mt+ph);ctxI.stroke();ctxI.setLineDash([]);
+
+  ctxI.fillStyle='#f85149';ctxI.beginPath();ctxI.arc(pxG,mt+ph-gL*ph,6,0,Math.PI*2);ctxI.fill();
+  ctxI.fillStyle='#58a6ff';ctxI.beginPath();ctxI.arc(pxG,mt+ph-gR*ph,6,0,Math.PI*2);ctxI.fill();
+
+  ctxI.fillStyle='#f85149';ctxI.font='10px sans-serif';ctxI.textAlign='left';ctxI.fillText('左眼',ml+pw-50,mt+15);
+  ctxI.fillStyle='#58a6ff';ctxI.fillText('右眼',ml+pw-50,mt+30);
+  ctxI.fillStyle='#ffa657';ctxI.fillText('眼镜',ml+pw-50,mt+45);
+}
+
+function draw(){drawSetup();drawIntensity()}
+
+function animate(timestamp){
+  if(!running){animFrameId=null;return}
+  if(lastFrameTime===null)lastFrameTime=timestamp;
+  var dt=Math.min((timestamp-lastFrameTime)/1000,0.1);
+  lastFrameTime=timestamp;animTime+=dt;
+  angleG=(angleG+dt*20)%180;
+  sliderGlass.value=Math.round(angleG);
+  updateUI();draw();
+  if(running)animFrameId=requestAnimationFrame(animate);
+}
+
+function resizeCanvases(){
+  var rowW=document.querySelector('.canvas-row').clientWidth;var cw=Math.floor((rowW-16)/2)-26;if(cw>680)cw=680;if(cw<200)cw=200;
+  var sw=cw,sh=Math.round(sw*420/680);
+  canvasSetup.width=sw;canvasSetup.height=sh;
+  canvasSetup.style.width=sw+'px';canvasSetup.style.height=sh+'px';
+  var iw=cw,ih=Math.round(iw*420/680);
+  canvasIntensity.width=iw;canvasIntensity.height=ih;
+  canvasIntensity.style.width=iw+'px';canvasIntensity.style.height=ih+'px';
+}
+window.addEventListener('resize',resizeCanvases);resizeCanvases();
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(running)pause();else btnStart.click()}
+  else if(e.code==='KeyR'){e.preventDefault();btnReset.click()}
+});
+updateUI();draw();
+</script>
+</body>
+</html>

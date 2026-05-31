@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔌 半导体</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(63,185,80,0.1); border:1px solid rgba(63,185,80,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔌 PN结与二极管</h1>
+  <p>半导体PN结的能带图与载流子输运</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>偏置电压 V (V): <span id="vVal">0</span></label>
+      <input type="range" id="voltage" min="-2" max="2" step="0.1" value="0">
+    </div>
+    <div class="control-group">
+      <label>温度 T (K): <span id="tVal">300</span></label>
+      <input type="range" id="temperature" min="100" max="600" step="10" value="300">
+    </div>
+    <div class="control-group">
+      <button id="pauseBtn">⏸️ 暂停</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">正向电流 I:</span><span class="value" id="current">0 μA</span></div>
+      <div class="item"><span class="label">热电压 kT/q:</span><span class="value" id="vt">0 mV</span></div>
+      <div class="item"><span class="label">势垒高度:</span><span class="value" id="barrier">0 eV</span></div>
+      <div class="item"><span class="label">状态:</span><span class="value" id="state">零偏</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let V = 0;
+let T = 300;
+let paused = false;
+
+const k = 1.38e-23;
+const e = 1.6e-19;
+const Eg = 1.1; // eV
+const phi0 = 0.7;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = 100;
+
+  const leftX = 100, rightX = 400;
+  const topY = 80, bottomY = 220;
+  const centerX = (leftX + rightX) / 2;
+
+  const phi = phi0 - V;
+  const vt = k * T / e;
+
+  ctx.fillStyle = '#2d4a7a';
+  ctx.fillRect(leftX, topY, (rightX - leftX) / 2, bottomY - topY);
+  ctx.fillStyle = '#7a4a2d';
+  ctx.fillRect(centerX, topY, (rightX - leftX) / 2, bottomY - topY);
+
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(leftX, topY + 20);
+  ctx.lineTo(centerX, topY + 20 + phi * 40);
+  ctx.lineTo(rightX, topY + 20);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.moveTo(leftX, topY + 80);
+  ctx.lineTo(centerX, topY + 80 + phi * 40);
+  ctx.lineTo(rightX, topY + 80);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(leftX, topY + 50);
+  ctx.lineTo(centerX, topY + 50 + phi * 40);
+  ctx.lineTo(rightX, topY + 50);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (!paused) {
+    const time = Date.now() * 0.003;
+
+    for (let i = 0; i < 15; i++) {
+      const t = (i / 15) + time / 5;
+      let x = leftX + (t % 1) * (rightX - leftX);
+      let type = (i % 3 === 0) ? 'hole' : (i % 3 === 1 ? 'electron' : 'ion');
+
+      if (V > 0) {
+        if (type === 'electron') x = leftX + ((t * 1.2) % 1) * (rightX - leftX);
+        else x = rightX - ((t * 1.2) % 1) * (rightX - leftX);
+      } else if (V < 0) {
+        if (type === 'electron') x = centerX - 20 + Math.sin(t * 3) * 10;
+        else x = centerX + 20 + Math.sin(t * 3) * 10;
+      }
+
+      let y = type === 'electron' ? topY + 30 : type === 'hole' ? topY + 90 : topY + 55;
+      const offset = Math.sin(t * 2 + i) * 5;
+      y += offset;
+
+      ctx.beginPath();
+      ctx.arc(x, y, type === 'ion' ? 3 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = type === 'electron' ? '#58a6ff' : (type === 'hole' ? '#f78166' : '#c4c4c4');
+      ctx.fill();
+    }
+  }
+
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('P 型', (leftX + centerX) / 2, bottomY + 20);
+  ctx.fillText('N 型', (centerX + rightX) / 2, bottomY + 20);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText('导带 Ec', leftX, topY + 10);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText('价带 Ev', leftX, topY + 100);
+  ctx.fillStyle = '#f78166';
+  ctx.fillText('费米能级 Ef', leftX, topY + 45);
+
+  const graphY = 260;
+  const graphHeight = 120;
+  const graphWidth = canvas.width - 40;
+
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(20, graphY, graphWidth, graphHeight);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20, graphY + graphHeight / 2);
+  ctx.lineTo(canvas.width - 20, graphY + graphHeight / 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const vGraph = -2 + (i / 100) * 4;
+    const x = 20 + (i / 100) * graphWidth;
+    let y;
+    if (vGraph > 0) {
+      y = graphY + graphHeight - Math.min(1, (Math.exp(vGraph / vt) - 1) * 0.1) * (graphHeight - 20);
+    } else {
+      y = graphY + graphHeight / 2 + 2;
+    }
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  const curX = 20 + ((V + 2) / 4) * graphWidth;
+  ctx.beginPath();
+  ctx.moveTo(curX, graphY + 10);
+  ctx.lineTo(curX, graphY + graphHeight - 10);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('I = I0 (exp(V/Vt) - 1)', 25, graphY + 18);
+
+  const I0 = 1;
+  const I = V > 0 ? I0 * (Math.exp(V / vt) - 1) : -I0 * (1 - Math.exp(V / vt));
+
+  document.getElementById('current').textContent = (Math.abs(I) * 100).toFixed(1) + ' μA';
+  document.getElementById('vt').textContent = (vt * 1000).toFixed(1) + ' mV';
+  document.getElementById('barrier').textContent = phi.toFixed(2) + ' eV';
+  
+  let state = '零偏';
+  if (V > 0.1) state = '正向偏置';
+  else if (V < -0.1) state = '反向偏置';
+  
+  document.getElementById('state').textContent = state;
+  document.getElementById('state').style.color = V > 0.1 ? '#4ade80' : (V < -0.1 ? '#f87171' : '#fbbf24');
+}
+
+function animate() {
+  draw();
+  requestAnimationFrame(animate);
+}
+
+document.getElementById('voltage').addEventListener('input', (e) => {
+  V = parseFloat(e.target.value);
+  document.getElementById('vVal').textContent = V.toFixed(1);
+});
+
+document.getElementById('temperature').addEventListener('input', (e) => {
+  T = parseFloat(e.target.value);
+  document.getElementById('tVal').textContent = T;
+});
+
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶️ 继续' : '⏸️ 暂停';
+});
+
+animate();
+</script>
+</body>
+</html>

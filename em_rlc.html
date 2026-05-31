@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RLC串联谐振电路 - 交流电路谐振现象仿真</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+header {
+  text-align: center;
+  padding: 12px 0 4px;
+}
+header h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: 0.04em;
+}
+header .subtitle {
+  font-size: 0.9rem;
+  color: #8b949e;
+  margin-top: 2px;
+}
+
+.main {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+  width: 540px;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 480px;
+}
+
+.panel {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.canvas-wrap {
+  position: relative;
+}
+.canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  font-size: 0.85rem;
+}
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  background: #0d1117;
+  border-radius: 4px;
+  border: 1px solid #21262d;
+}
+.info-item .label { color: #8b949e; }
+.info-item .value { color: #58a6ff; font-weight: 600; font-family: 'Consolas', 'Courier New', monospace; }
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.control-row label {
+  width: 36px;
+  text-align: right;
+  color: #58a6ff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.control-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  background: #30363d;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+.control-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #58a6ff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+.control-row .unit {
+  width: 36px;
+  color: #8b949e;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  text-align: left;
+}
+.control-row .val-display {
+  width: 58px;
+  text-align: right;
+  color: #c9d1d9;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.83rem;
+  flex-shrink: 0;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+.btn-row button {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #c9d1d9;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-row button:hover {
+  background: #30363d;
+  border-color: #58a6ff;
+}
+.btn-row button.active-btn {
+  background: #1f6feb;
+  border-color: #58a6ff;
+  color: #fff;
+}
+
+.plot-title {
+  font-size: 0.8rem;
+  color: #8b949e;
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+
+@media (max-width: 1100px) {
+  .main { flex-direction: column; }
+  .left-panel { width: 100%; }
+  .right-panel { min-width: auto; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  
+
+  <div class="main">
+
+    <!-- 左侧面板: 电路图 + 信息 + 控件 -->
+    <div class="left-panel">
+      <div class="panel canvas-wrap">
+        <canvas id="circuitCanvas" width="516" height="420"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="info-grid" id="infoGrid">
+          <div class="info-item"><span class="label">谐振频率 f₀</span><span class="value" id="infoF0">--</span></div>
+          <div class="info-item"><span class="label">品质因数 Q</span><span class="value" id="infoQ">--</span></div>
+          <div class="info-item"><span class="label">带宽 Δf</span><span class="value" id="infoBw">--</span></div>
+          <div class="info-item"><span class="label">电流幅值 I₀</span><span class="value" id="infoI0">--</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="controls">
+          <!-- R: 电阻 0.1~100 Ω, 对数刻度 -->
+          <!-- L: 电感 0.01~1 H, 对数刻度 -->
+          <!-- C: 电容 0.1~100 μF, 对数刻度 -->
+          <!-- V0: 电压幅值 1~20 V, 线性刻度 -->
+          <!-- f: 驱动频率 10~1000 Hz, 对数刻度 -->
+          <div class="control-row">
+            <label>R</label>
+            <input type="range" id="sliderR" min="0" max="100" value="67">
+            <span class="val-display" id="valR">10.00</span>
+            <span class="unit">Ω</span>
+          </div>
+          <div class="control-row">
+            <label>L</label>
+            <input type="range" id="sliderL" min="0" max="100" value="50">
+            <span class="val-display" id="valL">0.10</span>
+            <span class="unit">H</span>
+          </div>
+          <div class="control-row">
+            <label>C</label>
+            <input type="range" id="sliderC" min="0" max="100" value="67">
+            <span class="val-display" id="valC">10.00</span>
+            <span class="unit">μF</span>
+          </div>
+          <div class="control-row">
+            <label>V₀</label>
+            <input type="range" id="sliderV0" min="0" max="100" value="47">
+            <span class="val-display" id="valV0">10.00</span>
+            <span class="unit">V</span>
+          </div>
+          <div class="control-row">
+            <label>f</label>
+            <input type="range" id="sliderF" min="0" max="100" value="50">
+            <span class="val-display" id="valF">100.0</span>
+            <span class="unit">Hz</span>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:10px;">
+          <button id="btnStart" class="active-btn">▶ 运行</button>
+          <button id="btnPause">⏸ 暂停</button>
+          <button id="btnReset">↺ 重置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧面板: 三个实时图表 -->
+    <div class="right-panel">
+      <div class="panel">
+        <div class="plot-title">📊 电压时域波形 — V<sub>R</sub> (蓝) &nbsp; V<sub>L</sub> (绿) &nbsp; V<sub>C</sub> (红)</div>
+        <div class="canvas-wrap"><canvas id="plotVoltage" width="620" height="220"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="plot-title">📈 阻抗-频率特性 — |Z| = √(R² + (ωL − 1/(ωC))²) &nbsp; 虚线: 谐振频率 f₀</div>
+        <div class="canvas-wrap"><canvas id="plotImpedance" width="620" height="220"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="plot-title">📉 相位-频率特性 — φ = arctan((ωL − 1/(ωC))/R)</div>
+        <div class="canvas-wrap"><canvas id="plotPhase" width="620" height="220"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+// RLC 串联谐振电路 仿真核心
+// ============================================================
+// 基本公式:
+//   角频率:        ω = 2πf
+//   谐振角频率:    ω₀ = 1/√(LC)
+//   谐振频率:      f₀ = 1/(2π√(LC))
+//   感抗:          X_L = ωL
+//   容抗:          X_C = 1/(ωC)
+//   总阻抗:        Z = √(R² + (ωL - 1/(ωC))²)
+//   相位角:        φ = arctan((ωL - 1/(ωC))/R)
+//   电流幅值:      I₀ = V₀ / Z
+//   品质因数:      Q = (1/R)·√(L/C)
+//   带宽:          Δf = f₀ / Q
+//   谐振条件:      ωL = 1/(ωC)  →  ω₀ = 1/√(LC)
+//   谐振时:        Z = Z_min = R,  I₀ 最大,  φ = 0
+//
+//   电压时域表达式:
+//     V_R(t) = I₀·R·sin(ωt)
+//     V_L(t) = I₀·ωL·sin(ωt + π/2) = I₀·ωL·cos(ωt)
+//     V_C(t) = I₀/(ωC)·sin(ωt - π/2) = -I₀/(ωC)·cos(ωt)
+//   V_L 和 V_C 相位差 180° (反相 / antiphase)
+// ============================================================
+
+/* ---------- DOM 引用 ---------- */
+const circuitCanvas = document.getElementById('circuitCanvas');
+const circuitCtx = circuitCanvas.getContext('2d');
+
+const plotVoltageCanvas = document.getElementById('plotVoltage');
+const plotVoltageCtx = plotVoltageCanvas.getContext('2d');
+const plotImpedanceCanvas = document.getElementById('plotImpedance');
+const plotImpedanceCtx = plotImpedanceCanvas.getContext('2d');
+const plotPhaseCanvas = document.getElementById('plotPhase');
+const plotPhaseCtx = plotPhaseCanvas.getContext('2d');
+
+/* ---------- 控件引用 ---------- */
+const sliderR  = document.getElementById('sliderR');
+const sliderL  = document.getElementById('sliderL');
+const sliderC  = document.getElementById('sliderC');
+const sliderV0 = document.getElementById('sliderV0');
+const sliderF  = document.getElementById('sliderF');
+
+const valR  = document.getElementById('valR');
+const valL  = document.getElementById('valL');
+const valC  = document.getElementById('valC');
+const valV0 = document.getElementById('valV0');
+const valF  = document.getElementById('valF');
+
+const btnStart = document.getElementById('btnStart');
+const btnPause = document.getElementById('btnPause');
+const btnReset = document.getElementById('btnReset');
+
+/* ---------- 信息显示引用 ---------- */
+const infoF0 = document.getElementById('infoF0');
+const infoQ  = document.getElementById('infoQ');
+const infoBw = document.getElementById('infoBw');
+const infoI0 = document.getElementById('infoI0');
+
+/* ---------- 参数: 对数滑块 → 实际值的映射 ---------- */
+// 通用对数映射: sliderPos(0~100) → actualValue(min~max)
+function sliderToLog(sliderVal, minVal, maxVal) {
+  const t = sliderVal / 100;
+  return minVal * Math.pow(maxVal / minVal, t);
+}
+function logToSlider(actual, minVal, maxVal) {
+  if (actual <= minVal) return 0;
+  if (actual >= maxVal) return 100;
+  return 100 * Math.log(actual / minVal) / Math.log(maxVal / minVal);
+}
+
+// 线性映射
+function sliderToLinear(sliderVal, minVal, maxVal) {
+  return minVal + (sliderVal / 100) * (maxVal - minVal);
+}
+function linearToSlider(actual, minVal, maxVal) {
+  return 100 * (actual - minVal) / (maxVal - minVal);
+}
+
+/* ---------- 参数对象 (SI单位) ---------- */
+let params = {
+  R:   10,      // 电阻 Ω
+  L:   0.1,     // 电感 H
+  C:   10e-6,   // 电容 F (10 μF)
+  V0:  10,      // 驱动电压幅值 V
+  f:   100,     // 驱动频率 Hz
+};
+
+// 从滑块读取参数
+function readParams() {
+  params.R  = sliderToLog(parseFloat(sliderR.value), 0.1, 100);
+  params.L  = sliderToLog(parseFloat(sliderL.value), 0.01, 1);
+  params.C  = sliderToLog(parseFloat(sliderC.value), 0.1e-6, 100e-6);
+  params.V0 = sliderToLinear(parseFloat(sliderV0.value), 1, 20);
+  params.f  = sliderToLog(parseFloat(sliderF.value), 10, 1000);
+}
+
+// 更新参数显示
+function updateParamDisplay() {
+  valR.textContent  = params.R.toFixed(2);
+  valL.textContent  = params.L.toFixed(3);
+  valC.textContent  = (params.C * 1e6).toFixed(2);
+  valV0.textContent = params.V0.toFixed(2);
+  valF.textContent  = params.f.toFixed(1);
+}
+
+/* ---------- 计算衍生物理量 ---------- */
+function getOmega()      { return 2 * Math.PI * params.f; }
+function getOmega0()     { return 1 / Math.sqrt(params.L * params.C); }
+function getF0()         { return getOmega0() / (2 * Math.PI); }
+function getXL()         { return getOmega() * params.L; }
+function getXC()         { return 1 / (getOmega() * params.C); }
+function getImpedance()  {
+  const d = getXL() - getXC();
+  return Math.sqrt(params.R * params.R + d * d);
+}
+function getPhase()      { return Math.atan2(getXL() - getXC(), params.R); }
+function getI0()         { return params.V0 / getImpedance(); }
+function getQ()          { return (1 / params.R) * Math.sqrt(params.L / params.C); }
+
+/* ---------- 更新信息面板 ---------- */
+function updateInfoPanel() {
+  const f0 = getF0();
+  const q  = getQ();
+  const bw = f0 / q;
+  const i0 = getI0();
+
+  infoF0.textContent = f0.toFixed(2) + ' Hz';
+  infoQ.textContent  = q.toFixed(2);
+  infoBw.textContent = bw.toFixed(2) + ' Hz';
+  infoI0.textContent = i0.toFixed(3) + ' A';
+}
+
+/* ---------- 电子动画: 路径生成 ---------- */
+// 电路布局 (画布 516×420):
+//   AC电源在顶部中线, 电阻在右侧, 电感在底部, 电容在左侧
+//   四个角: TL(110,70) TR(406,70) BR(406,350) BL(110,350)
+// 电子沿顺时针方向运动
+
+let pathPoints = [];  // {x, y, cumDist}
+
+function generateCircuitPath() {
+  const pts = [];
+  const step = 1.5;
+
+  // 辅助: 添加直线段
+  function line(x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const n = Math.max(1, Math.ceil(dist / step));
+    for (let i = 0; i <= n; i++) {
+      pts.push({ x: x1 + (dx * i) / n, y: y1 + (dy * i) / n });
+    }
+  }
+
+  // 辅助: 添加弧线段 (用于电感线圈)
+  function arc(cx, cy, r, aStart, aEnd, clockwise) {
+    const sweep = clockwise ? (aEnd - aStart) : (aStart - aEnd);
+    const absSweep = Math.abs(aEnd - aStart);
+    const n = Math.max(1, Math.ceil((r * absSweep) / step));
+    for (let i = 0; i <= n; i++) {
+      const a = clockwise ? aStart + (sweep * i) / n : aStart - (sweep * i) / n;
+      pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+    }
+  }
+
+  const TLX = 110, TLY = 70;
+  const TRX = 406, TRY = 70;
+  const BRX = 406, BRY = 350;
+  const BLX = 110, BLY = 350;
+
+  // --- 顶部: TL → AC源 → TR ---
+  const acCx = (TLX + TRX) / 2, acCy = TLY;
+  line(TLX, TLY, acCx - 35, acCy);       // 左线
+  line(acCx - 35, acCy, acCx + 35, acCy); // 穿过AC源
+  line(acCx + 35, acCy, TRX, TRY);        // 右线
+
+  // --- 右侧: 电阻 (zigzag) ---
+  const rTopY = TRY + 40;
+  const rBotY = BRY - 40;
+  line(TRX, TRY, TRX, rTopY);             // 上引线
+
+  // 电阻锯齿: 水平方向来回摆动
+  const zigWidth = 22;
+  const zigSegs = 6;
+  const zigDY = (rBotY - rTopY) / zigSegs;
+  for (let i = 0; i < zigSegs; i++) {
+    const y1 = rTopY + i * zigDY;
+    const y2 = rTopY + (i + 1) * zigDY;
+    const dir = (i % 2 === 0) ? 1 : -1;
+    line(TRX + dir * zigWidth, y1, TRX - dir * zigWidth, y2);
+  }
+
+  line(TRX, rBotY, TRX, BRY);             // 下引线
+
+  // --- 底部: 电感 (线圈) ---
+  const lStartX = BRX - 40;
+  const lEndX = BLX + 40;
+  line(BRX, BRY, lStartX, BLY);            // 右引线
+
+  // 电感线圈: 4个半圆弧
+  const coilRadius = 14;
+  const coilLen = lStartX - lEndX;
+  const coilLoops = 4;
+  const coilPitch = coilLen / (coilLoops * 2);
+  for (let i = 0; i < coilLoops * 2; i++) {
+    const cx = lStartX - (i + 0.5) * coilPitch;
+    const up = (i % 2 === 0);  // 交替上下
+    const aStart = up ? Math.PI : 0;
+    const aEnd   = up ? 0 : Math.PI;
+    arc(cx, BLY, coilRadius, aStart, aEnd, up);
+  }
+
+  line(lEndX, BLY, BLX, BLY);             // 左引线
+
+  // --- 左侧: 电容 (平行板) ---
+  const cTopY = BLY - 40;
+  const cBotY = TLY + 40;
+  line(BLX, BLY, BLX, cTopY);             // 下引线
+
+  // 电容间隙: 直接穿过 (代表位移电流)
+  line(BLX, cTopY, BLX, cBotY);
+
+  line(BLX, cBotY, BLX, TLY);             // 上引线
+
+  // 计算累积距离
+  let cum = 0;
+  for (let i = 0; i < pts.length; i++) {
+    if (i > 0) {
+      const dx = pts[i].x - pts[i - 1].x;
+      const dy = pts[i].y - pts[i - 1].y;
+      cum += Math.sqrt(dx * dx + dy * dy);
+    }
+    pts[i].cumDist = cum;
+  }
+
+  pathPoints = pts;
+}
+
+// 根据距离沿路径获取坐标 (线性插值)
+function getPointAtDistance(dist) {
+  if (pathPoints.length < 2) return { x: 0, y: 0 };
+  const totalLen = pathPoints[pathPoints.length - 1].cumDist;
+  // 取模确保循环
+  let d = dist % totalLen;
+  if (d < 0) d += totalLen;
+
+  // 二分查找
+  let lo = 0, hi = pathPoints.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (pathPoints[mid].cumDist < d) lo = mid + 1;
+    else hi = mid;
+  }
+  if (lo === 0) return { x: pathPoints[0].x, y: pathPoints[0].y };
+
+  const p0 = pathPoints[lo - 1];
+  const p1 = pathPoints[lo];
+  const segLen = p1.cumDist - p0.cumDist;
+  const t = segLen > 0 ? (d - p0.cumDist) / segLen : 0;
+  return {
+    x: p0.x + (p1.x - p0.x) * t,
+    y: p0.y + (p1.y - p0.y) * t,
+  };
+}
+
+/* ---------- 电子状态 ---------- */
+const NUM_ELECTRONS = 50;
+let electrons = [];  // 每个电子: distance (沿路径的距离)
+
+function initElectrons() {
+  electrons = [];
+  if (pathPoints.length === 0) return;
+  const totalLen = pathPoints[pathPoints.length - 1].cumDist;
+  for (let i = 0; i < NUM_ELECTRONS; i++) {
+    electrons.push({ distance: (i / NUM_ELECTRONS) * totalLen });
+  }
+}
+
+/* ---------- 电路图绘制 ---------- */
+function drawCircuit(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+
+  const TLX = 110, TLY = 70;
+  const TRX = 406, TRY = 70;
+  const BRX = 406, BRY = 350;
+  const BLX = 110, BLY = 350;
+
+  // --- 辅助函数 ---
+  function wirePath(px, py) {
+    ctx.beginPath();
+    ctx.moveTo(px[0], py[0]);
+    for (let i = 1; i < px.length; i++) ctx.lineTo(px[i], py[i]);
+    ctx.strokeStyle = '#8b949e';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  // --- 导线 (不含元件部分) ---
+  const acCx = (TLX + TRX) / 2;
+  const rTopY = TRY + 40, rBotY = BRY - 40;
+  const lStartX = BRX - 40, lEndX = BLX + 40;
+  const cTopY = BLY - 40, cBotY = TLY + 40;
+  const zigW = 22;
+
+  // 顶线: TL → AC源左侧
+  wirePath([TLX, acCx - 35], [TLY, TLY]);
+  // 顶线: AC源右侧 → TR
+  wirePath([acCx + 35, TRX], [TRY, TRY]);
+  // 右上线: TR → 电阻上端
+  wirePath([TRX, TRX], [TRY, rTopY]);
+  // 右下线: 电阻下端 → BR
+  wirePath([TRX, TRX], [rBotY, BRY]);
+  // 底右线: BR → 电感右端
+  wirePath([BRX, lStartX], [BRY, BLY]);
+  // 底左线: 电感左端 → BL
+  wirePath([lEndX, BLX], [BLY, BLY]);
+  // 左下: BL → 电容下端
+  wirePath([BLX, BLX], [BLY, cTopY]);
+  // 左上: 电容上端 → TL
+  wirePath([BLX, BLX], [cBotY, TLY]);
+
+  // --- AC电压源 (圆圈 + ~) ---
+  ctx.beginPath();
+  ctx.arc(acCx, TLY, 28, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#f0c040';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 画 ~ 符号
+  ctx.fillStyle = '#f0c040';
+  ctx.font = 'bold 22px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('~', acCx + 2, TLY + 1);
+
+  // AC 标签
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('AC', acCx, TLY - 38);
+
+  // --- 电阻 (zigzag) ---
+  ctx.beginPath();
+  ctx.moveTo(TRX + zigW, rTopY);
+  const zigSegs = 6;
+  const zigDY = (rBotY - rTopY) / zigSegs;
+  for (let i = 0; i < zigSegs; i++) {
+    const y2 = rTopY + (i + 1) * zigDY;
+    const dir = (i % 2 === 0) ? -1 : 1;
+    ctx.lineTo(TRX + dir * zigW, y2);
+  }
+  ctx.strokeStyle = '#c9d1d9';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 电阻标签
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = '12px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('R', TRX + 28, (rTopY + rBotY) / 2);
+
+  // --- 电感 (线圈) ---
+  const coilR = 14;
+  const coilLen = lStartX - lEndX;
+  const coilLoops = 4;
+  const coilPitch = coilLen / (coilLoops * 2);
+  ctx.beginPath();
+  for (let i = 0; i < coilLoops * 2; i++) {
+    const cx = lStartX - (i + 0.5) * coilPitch;
+    const up = (i % 2 === 0);
+    const aStart = up ? Math.PI : 0;
+    const aEnd   = up ? 0 : Math.PI;
+    ctx.arc(cx, BLY, coilR, aStart, aEnd, !up);
+  }
+  ctx.strokeStyle = '#c9d1d9';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // 电感标签
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = '12px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('L', (lStartX + lEndX) / 2, BLY - 24);
+
+  // --- 电容 (平行板) ---
+  const capPlateHalfW = 22;
+  const capGap = 14;
+
+  // 上板
+  ctx.beginPath();
+  ctx.moveTo(BLX - capPlateHalfW, cTopY);
+  ctx.lineTo(BLX + capPlateHalfW, cTopY);
+  ctx.strokeStyle = '#c9d1d9';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  // 下板
+  ctx.beginPath();
+  ctx.moveTo(BLX - capPlateHalfW, cBotY);
+  ctx.lineTo(BLX + capPlateHalfW, cBotY);
+  ctx.stroke();
+
+  // 电容标签
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = '12px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('C', BLX - 28, (cTopY + cBotY) / 2);
+
+  // --- 电流方向箭头 ---
+  const omega = getOmega();
+  const phase = getPhase();
+  const i0 = getI0();
+
+  // 在顶部导线画电流方向指示
+  const arrowX = acCx + 80;
+  const arrowY = TLY;
+  // 根据 sin(ωt) 决定方向
+  // (在绘制时用 simTime, 这里只是静态指示)
+  ctx.fillStyle = '#f0883e';
+  ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('i(t)', arrowX, arrowY - 14);
+
+  // 画一个小箭头
+  ctx.beginPath();
+  ctx.moveTo(arrowX + 10, arrowY);
+  ctx.lineTo(arrowX - 2, arrowY - 5);
+  ctx.lineTo(arrowX - 2, arrowY + 5);
+  ctx.closePath();
+  ctx.fillStyle = '#f0883e';
+  ctx.fill();
+
+  // --- 连接点标记 (四个角画小圆点) ---
+  function drawDot(x, y) {
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = '#58a6ff';
+    ctx.fill();
+  }
+  drawDot(TLX, TLY);
+  drawDot(TRX, TRY);
+  drawDot(BRX, BRY);
+  drawDot(BLX, BLY);
+}
+
+/* ---------- 电子绘制 ---------- */
+function drawElectrons(ctx, simTime) {
+  if (pathPoints.length === 0) return;
+
+  const omega = getOmega();
+  const i0 = getI0();
+  const totalLen = pathPoints[pathPoints.length - 1].cumDist;
+
+  // 瞬时电流: i(t) = I₀·sin(ωt)
+  const instantCurrent = i0 * Math.sin(omega * simTime);
+  // 亮度与瞬时电流幅值相关 (归一化到 0~1)
+  const brightness = Math.min(1, Math.abs(instantCurrent) / (i0 + 0.001));
+
+  for (const e of electrons) {
+    const pos = getPointAtDistance(e.distance);
+
+    // 电子颜色: 亮蓝色, 透明度随电流变化
+    const alpha = 0.35 + brightness * 0.65;
+    const r = 3.0 + brightness * 1.5;
+
+    // 光晕
+    const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, r * 2.5);
+    grad.addColorStop(0, `rgba(88,166,255,${alpha})`);
+    grad.addColorStop(0.4, `rgba(88,166,255,${alpha * 0.6})`);
+    grad.addColorStop(1, 'rgba(88,166,255,0)');
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, r * 2.5, 0, 2 * Math.PI);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 核心亮点
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
+    ctx.fillStyle = `rgba(180,220,255,${alpha})`;
+    ctx.fill();
+  }
+}
+
+/* ---------- 更新电子位置 ---------- */
+function updateElectrons(dt, simTime) {
+  if (pathPoints.length === 0) return;
+
+  const omega = getOmega();
+  const i0 = getI0();
+  const totalLen = pathPoints[pathPoints.length - 1].cumDist;
+
+  // 电子速度正比于 |sin(ωt)|, 方向由 sin(ωt) 的符号决定
+  // 基础速度: 让电子在 ~2 秒内绕一圈 (无电流时非常慢)
+  const baseSpeed = totalLen * 0.6; // 像素/秒
+  const instantCurrent = i0 * Math.sin(omega * simTime);
+  const speedFactor = Math.abs(instantCurrent) / (i0 + 0.001);
+  const direction = Math.sin(omega * simTime) >= 0 ? 1 : -1;
+
+  const speed = baseSpeed * (0.1 + 0.9 * speedFactor) * direction;
+
+  for (const e of electrons) {
+    e.distance += speed * dt;
+    // 循环
+    if (e.distance >= totalLen) e.distance -= totalLen;
+    if (e.distance < 0) e.distance += totalLen;
+  }
+}
+
+/* ---------- 图表通用辅助 ---------- */
+function drawAxes(ctx, x, y, w, h, xLabel, yLabel, xMin, xMax, yMin, yMax, xTicks, yTicks) {
+  // 网格
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < xTicks.length; i++) {
+    const px = x + ((xTicks[i] - xMin) / (xMax - xMin)) * w;
+    ctx.beginPath();
+    ctx.moveTo(px, y);
+    ctx.lineTo(px, y + h);
+    ctx.stroke();
+  }
+  for (let i = 0; i < yTicks.length; i++) {
+    const py = y + h - ((yTicks[i] - yMin) / (yMax - yMin)) * h;
+    ctx.beginPath();
+    ctx.moveTo(x, py);
+    ctx.lineTo(x + w, py);
+    ctx.stroke();
+  }
+
+  // 轴线
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y + h);
+  ctx.lineTo(x + w, y + h);
+  ctx.stroke();
+
+  // 刻度标签
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (let i = 0; i < xTicks.length; i++) {
+    const px = x + ((xTicks[i] - xMin) / (xMax - xMin)) * w;
+    ctx.fillText(xTicks[i], px, y + h + 4);
+  }
+
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < yTicks.length; i++) {
+    const py = y + h - ((yTicks[i] - yMin) / (yMax - yMin)) * h;
+    ctx.fillText(yTicks[i], x - 6, py);
+  }
+
+  // 轴标签
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(xLabel, x + w / 2, y + h + 22);
+
+  ctx.save();
+  ctx.translate(x - 28, y + h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+}
+
+// 生成对数间隔的刻度
+function logTicks(min, max, count) {
+  const ticks = [];
+  const logMin = Math.log10(min);
+  const logMax = Math.log10(max);
+  for (let i = 0; i <= count; i++) {
+    ticks.push(Math.pow(10, logMin + (logMax - logMin) * i / count));
+  }
+  return ticks;
+}
+
+function linTicks(min, max, count) {
+  const ticks = [];
+  for (let i = 0; i <= count; i++) {
+    ticks.push(min + (max - min) * i / count);
+  }
+  return ticks;
+}
+
+/* ---------- 电压时域波形图 ---------- */
+// 存储最近的数据点: {t, vR, vL, vC}
+const VOLTAGE_BUFFER_MAX = 500;
+let voltageBuffer = [];
+
+function drawVoltagePlot(ctx, w, h, simTime) {
+  ctx.clearRect(0, 0, w, h);
+
+  const margin = { left: 50, right: 20, top: 18, bottom: 38 };
+  const pw = w - margin.left - margin.right;
+  const ph = h - margin.top - margin.bottom;
+  const x0 = margin.left, y0 = margin.top;
+
+  drawAxes(ctx, x0, y0, pw, ph, '时间 / ms', '电压 / V',
+    -5, 5, -20, 20,
+    linTicks(-5, 5, 10), linTicks(-20, 20, 8));
+
+  // 图例
+  const legends = [
+    { label: 'V_R', color: '#58a6ff' },
+    { label: 'V_L', color: '#3fb950' },
+    { label: 'V_C', color: '#f85149' },
+  ];
+  ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  let lx = x0 + pw - 150;
+  for (const leg of legends) {
+    ctx.fillStyle = leg.color;
+    ctx.fillRect(lx, y0 + 2, 12, 12);
+    ctx.fillStyle = '#c9d1d9';
+    ctx.fillText(leg.label, lx + 16, y0 + 8);
+    lx += 50;
+  }
+
+  if (voltageBuffer.length < 2) return;
+
+  // 绘图
+  function drawCurve(dataKey, color) {
+    ctx.beginPath();
+    let first = true;
+    for (const pt of voltageBuffer) {
+      const sx = x0 + ((pt.tRel - (-5)) / 10) * pw;
+      const sy = y0 + ph - ((pt[dataKey] - (-20)) / 40) * ph;
+      if (sx < x0 || sx > x0 + pw) { first = true; continue; }
+      if (first) { ctx.moveTo(sx, sy); first = false; }
+      else { ctx.lineTo(sx, sy); }
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  }
+
+  drawCurve('vR', '#58a6ff');
+  drawCurve('vL', '#3fb950');
+  drawCurve('vC', '#f85149');
+
+  // 零线
+  const zy = y0 + ph / 2;
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x0, zy);
+  ctx.lineTo(x0 + pw, zy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* ---------- 阻抗-频率图 ---------- */
+function drawImpedancePlot(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+
+  const margin = { left: 50, right: 20, top: 18, bottom: 38 };
+  const pw = w - margin.left - margin.right;
+  const ph = h - margin.top - margin.bottom;
+  const x0 = margin.left, y0 = margin.top;
+
+  const fMin = 1, fMax = 1000;
+  const zMax = Math.max(200, getImpedance() * 2.5);
+
+  drawAxes(ctx, x0, y0, pw, ph, '频率 / Hz', '|Z| / Ω',
+    fMin, fMax, 0, zMax,
+    [1, 10, 100, 1000], linTicks(0, zMax, 5));
+
+  // 绘制 |Z(f)| 曲线
+  ctx.beginPath();
+  const nPts = 400;
+  let first = true;
+  for (let i = 0; i <= nPts; i++) {
+    const f = fMin * Math.pow(fMax / fMin, i / nPts);
+    const wAng = 2 * Math.PI * f;
+    const xl = wAng * params.L;
+    const xc = 1 / (wAng * params.C);
+    const z = Math.sqrt(params.R * params.R + (xl - xc) * (xl - xc));
+
+    const sx = x0 + ((Math.log10(f) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin))) * pw;
+    const sy = y0 + ph - (z / zMax) * ph;
+
+    if (first) { ctx.moveTo(sx, sy); first = false; }
+    else { ctx.lineTo(sx, sy); }
+  }
+  ctx.strokeStyle = '#f0883e';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 谐振频率虚线
+  const f0 = getF0();
+  const f0x = x0 + ((Math.log10(f0) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin))) * pw;
+  if (f0x > x0 && f0x < x0 + pw) {
+    ctx.strokeStyle = '#f85149';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(f0x, y0);
+    ctx.lineTo(f0x, y0 + ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#f85149';
+    ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('f₀=' + f0.toFixed(1) + 'Hz', f0x, y0 - 2);
+  }
+
+  // 当前驱动频率标记
+  const fCur = params.f;
+  const fCurX = x0 + ((Math.log10(fCur) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin))) * pw;
+  if (fCurX > x0 && fCurX < x0 + pw) {
+    const wCur = 2 * Math.PI * fCur;
+    const xlCur = wCur * params.L;
+    const xcCur = 1 / (wCur * params.C);
+    const zCur = Math.sqrt(params.R * params.R + (xlCur - xcCur) * (xlCur - xcCur));
+    const zCurY = y0 + ph - (zCur / zMax) * ph;
+
+    ctx.beginPath();
+    ctx.arc(fCurX, zCurY, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#58a6ff';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+/* ---------- 相位-频率图 ---------- */
+function drawPhasePlot(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+
+  const margin = { left: 50, right: 20, top: 18, bottom: 38 };
+  const pw = w - margin.left - margin.right;
+  const ph = h - margin.top - margin.bottom;
+  const x0 = margin.left, y0 = margin.top;
+
+  const fMin = 1, fMax = 1000;
+
+  drawAxes(ctx, x0, y0, pw, ph, '频率 / Hz', 'φ / °',
+    fMin, fMax, -90, 90,
+    [1, 10, 100, 1000], linTicks(-90, 90, 6));
+
+  // 零线
+  const zy = y0 + ph / 2;
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x0, zy);
+  ctx.lineTo(x0 + pw, zy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 绘制 φ(f) 曲线
+  ctx.beginPath();
+  const nPts = 400;
+  let first = true;
+  for (let i = 0; i <= nPts; i++) {
+    const f = fMin * Math.pow(fMax / fMin, i / nPts);
+    const wAng = 2 * Math.PI * f;
+    const xl = wAng * params.L;
+    const xc = 1 / (wAng * params.C);
+    const phi = Math.atan2(xl - xc, params.R) * 180 / Math.PI;
+
+    const sx = x0 + ((Math.log10(f) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin))) * pw;
+    const sy = y0 + ph - ((phi - (-90)) / 180) * ph;
+
+    if (first) { ctx.moveTo(sx, sy); first = false; }
+    else { ctx.lineTo(sx, sy); }
+  }
+  ctx.strokeStyle = '#a371f7';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 谐振频率虚线 (φ=0)
+  const f0 = getF0();
+  const f0x = x0 + ((Math.log10(f0) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin))) * pw;
+  if (f0x > x0 && f0x < x0 + pw) {
+    ctx.strokeStyle = '#f85149';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(f0x, y0);
+    ctx.lineTo(f0x, y0 + ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#f85149';
+    ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('f₀', f0x, y0 - 2);
+  }
+
+  // 当前驱动频率标记 (相位)
+  const fCur = params.f;
+  const fCurX = x0 + ((Math.log10(fCur) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin))) * pw;
+  if (fCurX > x0 && fCurX < x0 + pw) {
+    const wCur = 2 * Math.PI * fCur;
+    const xlCur = wCur * params.L;
+    const xcCur = 1 / (wCur * params.C);
+    const phiCur = Math.atan2(xlCur - xcCur, params.R) * 180 / Math.PI;
+    const phiCurY = y0 + ph - ((phiCur - (-90)) / 180) * ph;
+
+    ctx.beginPath();
+    ctx.arc(fCurX, phiCurY, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#58a6ff';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+/* ---------- 主循环 ---------- */
+let simTime = 0;
+let isRunning = true;
+let lastTimestamp = null;
+
+function animate(timestamp) {
+  if (lastTimestamp === null) lastTimestamp = timestamp;
+  let dt = (timestamp - lastTimestamp) / 1000; // 秒
+  if (dt <= 0) dt = 0.016;
+  if (dt > 0.1) dt = 0.1; // 防止大跳跃
+
+  if (isRunning) {
+    simTime += dt;
+  }
+  lastTimestamp = timestamp;
+
+  const omega = getOmega();
+  const i0 = getI0();
+
+  // 更新电压缓冲区
+  if (isRunning) {
+    // 以当前频率采样, 每帧添加约 200/dt 个样本 (时间跨度 -5ms ~ +5ms)
+    // 简化: 滚动缓冲区, 新数据追加在末尾, 移除旧数据
+    const sampleDt = 0.00005; // 50μs 采样间隔
+    const numSamples = Math.min(50, Math.ceil(dt / sampleDt));
+    for (let i = 0; i < numSamples; i++) {
+      const tSample = simTime - dt + (dt * i) / numSamples;
+      const phaseAngle = omega * tSample;
+      const instCurrent = i0 * Math.sin(phaseAngle);
+      voltageBuffer.push({
+        tRel: (tSample - simTime) * 1000 + 5, // 相对于当前显示窗口
+        vR: instCurrent * params.R,
+        vL: i0 * getXL() * Math.cos(phaseAngle),
+        vC: -i0 * getXC() * Math.cos(phaseAngle),
+      });
+    }
+    // 清理旧数据: 保持窗口 [-5ms, +5ms]
+    const cutoffRel = -5;
+    while (voltageBuffer.length > 0 && voltageBuffer[0].tRel < cutoffRel - 0.5) {
+      voltageBuffer.shift();
+    }
+    // 限制最大缓冲区大小
+    while (voltageBuffer.length > VOLTAGE_BUFFER_MAX) {
+      voltageBuffer.shift();
+    }
+  }
+
+  // 更新电子
+  if (isRunning) {
+    updateElectrons(dt, simTime);
+  }
+
+  // 绘制电路图
+  drawCircuit(circuitCtx, circuitCanvas.width, circuitCanvas.height);
+
+  // 绘制电子 (在电路图之上)
+  drawElectrons(circuitCtx, simTime);
+
+  // 更新电压缓冲区的时间偏移 (使窗口滚动)
+  if (isRunning) {
+    for (const pt of voltageBuffer) {
+      pt.tRel -= dt * 1000;
+    }
+  }
+
+  // 绘制三个图
+  drawVoltagePlot(plotVoltageCtx, plotVoltageCanvas.width, plotVoltageCanvas.height, simTime);
+  drawImpedancePlot(plotImpedanceCtx, plotImpedanceCanvas.width, plotImpedanceCanvas.height);
+  drawPhasePlot(plotPhaseCtx, plotPhaseCanvas.width, plotPhaseCanvas.height);
+
+  requestAnimationFrame(animate);
+}
+
+/* ---------- 参数变更时的更新 ---------- */
+function onParamsChanged() {
+  readParams();
+  updateParamDisplay();
+  updateInfoPanel();
+  // 电压缓冲区重置 (参数变了, 旧波形数据无效)
+  voltageBuffer = [];
+}
+
+/* ---------- 重置 ---------- */
+function resetSimulation() {
+  simTime = 0;
+  voltageBuffer = [];
+  initElectrons();
+  lastTimestamp = null;
+  updateInfoPanel();
+}
+
+/* ---------- 按钮事件 ---------- */
+btnStart.addEventListener('click', () => {
+  isRunning = true;
+  btnStart.classList.add('active-btn');
+  btnPause.classList.remove('active-btn');
+  lastTimestamp = null;
+});
+
+btnPause.addEventListener('click', () => {
+  isRunning = false;
+  btnStart.classList.remove('active-btn');
+  btnPause.classList.add('active-btn');
+});
+
+btnReset.addEventListener('click', () => {
+  isRunning = true;
+  btnStart.classList.add('active-btn');
+  btnPause.classList.remove('active-btn');
+  resetSimulation();
+});
+
+/* ---------- 滑块事件 ---------- */
+sliderR.addEventListener('input', onParamsChanged);
+sliderL.addEventListener('input', onParamsChanged);
+sliderC.addEventListener('input', onParamsChanged);
+sliderV0.addEventListener('input', onParamsChanged);
+sliderF.addEventListener('input', onParamsChanged);
+
+/* ---------- 窗口大小变化: 调整右侧图表的 canvas 宽度 ---------- */
+function resizePlotCanvases() {
+  const rightPanel = document.querySelector('.right-panel');
+  if (!rightPanel) return;
+  const panelWidth = rightPanel.clientWidth - 24; // padding
+  const plotWidth = Math.max(400, panelWidth);
+
+  if (plotVoltageCanvas.width !== plotWidth) {
+    plotVoltageCanvas.width = plotWidth;
+    plotImpedanceCanvas.width = plotWidth;
+    plotPhaseCanvas.width = plotWidth;
+  }
+}
+window.addEventListener('resize', resizePlotCanvases);
+
+/* ---------- 初始化 ---------- */
+function init() {
+  onParamsChanged();
+  generateCircuitPath();
+  initElectrons();
+  updateInfoPanel();
+  resizePlotCanvases();
+  // 设置初始按钮状态
+  btnStart.classList.add('active-btn');
+  btnPause.classList.remove('active-btn');
+  // 启动动画循环
+  requestAnimationFrame(animate);
+}
+
+init();
+</script>
+</body>
+</html>

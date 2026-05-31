@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>布朗运动与扩散</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.header {
+  width: 100%;
+  max-width: 1160px;
+  padding: 24px 20px 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid #30363d;
+  margin-bottom: 16px;
+}
+.header-left h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f0f6fc;
+  letter-spacing: 1px;
+}
+.header-left .subtitle {
+  font-size: 13px;
+  color: #8b949e;
+  margin-top: 4px;
+}
+.back-link {
+  color: #58a6ff;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 14px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.back-link:hover { background: #1f2937; }
+.main-container {
+  display: flex;
+  gap: 16px;
+  max-width: 1160px;
+  width: 100%;
+  padding: 0 20px 24px;
+}
+.canvas-wrapper {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.canvas-wrapper canvas { display: block; }
+.side-panel {
+  flex: 1;
+  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.panel {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px;
+}
+.panel h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0f6fc;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #21262d;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stat-item {
+  background: #0d1117;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.stat-item .label {
+  font-size: 11px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-item .value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #58a6ff;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.stat-item .value.diffusion {
+  color: #7ee787;
+}
+.stat-item .unit {
+  font-size: 11px;
+  color: #8b949e;
+  font-weight: 400;
+}
+.msd-canvas-wrap {
+  background: #0d1117;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.msd-canvas-wrap canvas { display: block; }
+.control-group {
+  margin-bottom: 12px;
+}
+.control-group:last-child { margin-bottom: 0; }
+.control-group label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #c9d1d9;
+  margin-bottom: 4px;
+}
+.control-group label .val {
+  color: #58a6ff;
+  font-weight: 600;
+  font-size: 13px;
+  min-width: 50px;
+  text-align: right;
+}
+.control-group input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #21262d;
+  outline: none;
+  cursor: pointer;
+}
+.control-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #58a6ff;
+  cursor: pointer;
+  border: 2px solid #0d1117;
+}
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 8px 16px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #c9d1d9;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: #30363d; }
+.btn.accent {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: #fff;
+}
+.btn.accent:hover { background: #388bfd; }
+.btn.success { background: #238636; border-color: #238636; color: #fff; }
+.btn.success:hover { background: #2ea043; }
+.btn.warn { background: #9e6a03; border-color: #9e6a03; color: #fff; }
+.btn.warn:hover { background: #bb8009; }
+.footer-note {
+  text-align: center;
+  padding: 0 20px 24px;
+  font-size: 12px;
+  color: #484f58;
+  max-width: 1160px;
+  width: 100%;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>布朗运动与扩散</h1>
+    <div class="subtitle">爱因斯坦布朗运动理论 — 随机游走与均方位移的线性关系</div>
+  </div>
+  <a class="back-link" href="index.html">← 返回首页</a>
+</div>
+
+<div class="main-container">
+  <div class="canvas-wrapper">
+    <canvas id="simCanvas" width="700" height="500"></canvas>
+  </div>
+  <div class="side-panel">
+    <!-- 实时参数面板 -->
+    <div class="panel">
+      <h3>📊 模拟参数</h3>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="label">花粉粒数量 N</div>
+          <div class="value" id="statGrains">10</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">温度 T</div>
+          <div class="value" id="statTemp">300<span class="unit"> K</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="label">模拟时间</div>
+          <div class="value" id="statTime">0.00<span class="unit"> s</span></div>
+        </div>
+        <div class="stat-item">
+          <div class="label">扩散系数 D</div>
+          <div class="value diffusion" id="statD">0.00<span class="unit"> px²/步</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- 均方位移图 -->
+    <div class="panel">
+      <h3>📈 均方位移 ⟨r²⟩ vs 时间 t</h3>
+      <div class="msd-canvas-wrap">
+        <canvas id="msdCanvas" width="370" height="200"></canvas>
+      </div>
+    </div>
+    <!-- 控制面板 -->
+    <div class="panel">
+      <h3>🎮 控制面板</h3>
+      <div class="control-group">
+        <label>温度 T <span class="val" id="valTemp">300 K</span></label>
+        <input type="range" id="sliderTemp" min="50" max="1000" value="300" step="10">
+      </div>
+      <div class="control-group">
+        <label>花粉粒数量 <span class="val" id="valNum">10</span></label>
+        <input type="range" id="sliderNum" min="2" max="30" value="10" step="1">
+      </div>
+      <div class="control-group">
+        <label>步长 σ₀ <span class="val" id="valStep">2.0 px</span></label>
+        <input type="range" id="sliderStep" min="0.5" max="6.0" value="2.0" step="0.1">
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn accent" id="btnStart">▶ 开始</button>
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn warn" id="btnReset">↺ 重置</button>
+        <button class="btn success" id="btnCenter">🎯 注入中心</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">
+  布朗运动模拟：花粉粒每一步位移服从高斯分布 N(0, σ²)，温度 T 越大则 σ 越大，扩散越快。<br>
+  均方位移 ⟨r²⟩ = 4Dt 与时间 t 呈线性关系，这是正常扩散的标志。爱因斯坦在 1905 年首次从理论上解释了这一现象。
+</div>
+
+<script>
+/* ==================================================================
+ * 布朗运动与扩散模拟 — 完整物理仿真
+ *
+ * 【物理背景】
+ * 1827 年，植物学家罗伯特·布朗 (Robert Brown) 在显微镜下观察到花粉粒
+ * 在水中持续做无规则运动，即"布朗运动"。当时无法解释其成因。
+ *
+ * 1905 年，爱因斯坦发表论文《论热的分子运动论所要求的静止液体中
+ * 悬浮小粒子的运动》，从理论上解释了布朗运动：
+ *   - 花粉粒受到周围液体分子的随机碰撞
+ *   - 由于分子热运动的涨落 (fluctuation)，碰撞力不能完全抵消
+ *   - 花粉粒因此做随机游走 (random walk)
+ *
+ * 【随机游走 (Random Walk)】
+ * 每一步位移是独立同分布的随机变量。经过 N 步后：
+ *   位置: r_N = Σ Δr_i
+ *   均方位移: ⟨r²⟩ = ⟨(Σ Δr_i)²⟩ = Σ ⟨Δr_i²⟩ = N·⟨Δr²⟩
+ * （交叉项 ⟨Δr_i·Δr_j⟩ = 0，因为各步独立）
+ *
+ * 因此均方位移 ∝ 步数 ∝ 时间，这正是扩散的特征。
+ *
+ * 【高斯位移与中心极限定理】
+ * 每一步位移是大量分子碰撞的净效果。根据中心极限定理，
+ * 大量独立随机碰撞的叠加趋向于高斯分布：
+ *   Δx ~ N(0, σ²),  Δy ~ N(0, σ²)
+ *
+ * 【爱因斯坦关系 (Einstein Relation)】
+ * 二维扩散中，均方位移与扩散系数 D 的关系为：
+ *   ⟨r²⟩ = 4Dt
+ * 其中 D = k_B·T / (6π·η·r)  (Stokes-Einstein 方程)
+ *   k_B: 玻尔兹曼常数
+ *   T:   绝对温度
+ *   η:   流体粘度
+ *   r:   花粉粒半径
+ *
+ * 温度 T 越高，分子热运动越剧烈 → σ 越大 → D 越大 → 扩散越快
+ *
+ * 【本模拟实现】
+ * - 每步位移由 Box-Muller 变换生成高斯随机数
+ * - σ = σ₀ · √(T / T_ref)，温度越高步长越大
+ * - 扩散系数 D = σ² / (2·Δt)  (从 ⟨Δr²⟩ = 2σ² = 4D·Δt 导出)
+ * - 理论曲线 ⟨r²⟩ = 4Dt 作为参考与模拟数据对比
+ * - 实时追踪均方位移并显示 D
+ * ================================================================== */
+
+/* ===== DOM 元素 ===== */
+const simCanvas = document.getElementById('simCanvas');
+const simCtx = simCanvas.getContext('2d');
+const msdCanvas = document.getElementById('msdCanvas');
+const msdCtx = msdCanvas.getContext('2d');
+
+const statGrains = document.getElementById('statGrains');
+const statTemp = document.getElementById('statTemp');
+const statTime = document.getElementById('statTime');
+const statD = document.getElementById('statD');
+const valTemp = document.getElementById('valTemp');
+const valNum = document.getElementById('valNum');
+const valStep = document.getElementById('valStep');
+
+const sliderTemp = document.getElementById('sliderTemp');
+const sliderNum = document.getElementById('sliderNum');
+const sliderStep = document.getElementById('sliderStep');
+const btnStart = document.getElementById('btnStart');
+const btnPause = document.getElementById('btnPause');
+const btnReset = document.getElementById('btnReset');
+const btnCenter = document.getElementById('btnCenter');
+
+/* ===== 常量 ===== */
+const SIM_W = simCanvas.width;   // 模拟画布宽度
+const SIM_H = simCanvas.height;  // 模拟画布高度
+const CX = SIM_W / 2;            // 画布中心 X
+const CY = SIM_H / 2;            // 画布中心 Y
+const T_REF = 300;               // 参考温度 (K)
+const GRAIN_R = 7;               // 花粉粒显示半径 (px)
+const TRAIL_MAX = 180;           // 轨迹最大点数
+const DT = 1.0;                  // 每步时间间隔 (任意单位)
+
+/* ===== 花粉粒专属颜色 ===== */
+const GRAIN_COLORS = [
+  '#58a6ff', '#f78166', '#7ee787', '#d2a8ff', '#ffa657',
+  '#56d364', '#db6d28', '#a5d6ff', '#ff7b72', '#79c0ff',
+  '#f2cc60', '#bc8cff', '#f778ba', '#8b949e', '#3fb950',
+  '#e5534b', '#a371f7', '#68b5fc', '#e3b341', '#cb8cff',
+  '#ff9bce', '#7fd962', '#f0883e', '#96d0ff', '#ffa198',
+  '#d9b84b', '#c297ff', '#ff77a8', '#85c1ff', '#c9d1d9'
+];
+
+/* ===== 状态变量 ===== */
+let grains = [];           // { x, y, initX, initY, trail: [{x,y}], color }
+let temperature = 300;     // 温度 T (K)
+let baseStepSize = 2.0;   // 基础步长 σ₀ (px)
+let numGrains = 10;        // 花粉粒数量
+let simTime = 0;           // 累计模拟时间
+let frameCount = 0;        // 模拟步数
+let isRunning = false;     // 是否运行中
+let msdHistory = [];       // [{t, msd}]
+let animId = null;         // requestAnimationFrame ID
+
+/* ===== Box-Muller 变换：生成服从 N(mean, stddev²) 的高斯随机数 =====
+ * 原理：利用两个 [0,1) 均匀随机数 u₁, u₂，通过极坐标变换
+ * 生成一对独立标准正态随机数 z₀, z₁：
+ *   z₀ = √(-2·ln(u₁)) · cos(2π·u₂)
+ *   z₁ = √(-2·ln(u₁)) · sin(2π·u₂)
+ * 这里只取 z₀，缩放并平移后得到 N(mean, stddev²) 的样本。
+ */
+function gaussRandom(mean, stddev) {
+  let u1, u2;
+  do { u1 = Math.random(); } while (u1 === 0);
+  u2 = Math.random();
+  const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+  return z0 * stddev + mean;
+}
+
+/* ===== 初始化花粉粒 =====
+ * 所有花粉粒从画布中心出发，初始位置即参考位置 (initX, initY)，
+ * 用于后续计算均方位移 ⟨r²⟩。
+ */
+function createGrains(n) {
+  const result = [];
+  for (let i = 0; i < n; i++) {
+    result.push({
+      x: CX,
+      y: CY,
+      initX: CX,
+      initY: CY,
+      trail: [],
+      color: GRAIN_COLORS[i % GRAIN_COLORS.length]
+    });
+  }
+  return result;
+}
+
+/* ===== 重置模拟 ===== */
+function resetSimulation() {
+  grains = createGrains(numGrains);
+  simTime = 0;
+  frameCount = 0;
+  msdHistory = [];
+}
+
+/* ===== 计算当前有效步长 σ =====
+ * 温度影响：σ = σ₀ · √(T / T_ref)
+ * 这体现了 Einstein 关系：温度越高，分子碰撞越剧烈，步长越大。
+ */
+function getSigma() {
+  return baseStepSize * Math.sqrt(temperature / T_REF);
+}
+
+/* ===== 计算理论扩散系数 D =====
+ * 对二维扩散：每一步 ⟨Δr²⟩ = ⟨Δx²⟩ + ⟨Δy²⟩ = σ² + σ² = 2σ²
+ * 而 ⟨Δr²⟩ = 4D·Δt，因此 D = 2σ² / (4·Δt) = σ² / (2·Δt)
+ * 这里 Δt = DT。
+ */
+function getDiffusionCoefficient() {
+  const sigma = getSigma();
+  return (sigma * sigma) / (2 * DT);
+}
+
+/* ===== 更新模拟一步 ===== */
+function stepSimulation() {
+  const sigma = getSigma();
+
+  for (let i = 0; i < grains.length; i++) {
+    const g = grains[i];
+    /* 每一步位移服从高斯分布 N(0, σ²) */
+    const dx = gaussRandom(0, sigma);
+    const dy = gaussRandom(0, sigma);
+    g.x += dx;
+    g.y += dy;
+
+    /* 存储轨迹点 (用于绘制尾迹) */
+    g.trail.push({ x: g.x, y: g.y });
+    if (g.trail.length > TRAIL_MAX) {
+      g.trail.shift();
+    }
+  }
+
+  /* 累加时间与步数 */
+  simTime += DT;
+  frameCount++;
+
+  /* 计算均方位移 ⟨r²⟩ = (1/N) · Σ [(x - x₀)² + (y - y₀)²] */
+  let sumR2 = 0;
+  for (let i = 0; i < grains.length; i++) {
+    const g = grains[i];
+    const dx = g.x - g.initX;
+    const dy = g.y - g.initY;
+    sumR2 += dx * dx + dy * dy;
+  }
+  const msd = sumR2 / grains.length;
+  msdHistory.push({ t: simTime, msd: msd });
+
+  /* 限制 MSD 历史长度以避免内存和绘图开销 */
+  if (msdHistory.length > 600) {
+    msdHistory.shift();
+  }
+}
+
+/* ===== 渲染模拟画布 ===== */
+function renderSimulation() {
+  const ctx = simCtx;
+  const W = SIM_W, H = SIM_H;
+
+  /* 清屏 */
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  /* 绘制淡色网格 (模拟显微镜载物台) */
+  ctx.strokeStyle = '#1a2233';
+  ctx.lineWidth = 0.5;
+  const gridSize = 40;
+  for (let x = gridSize; x < W; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = gridSize; y < H; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  /* 绘制中心十字标记 (显微镜准星) */
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(CX - 20, CY); ctx.lineTo(CX + 20, CY);
+  ctx.moveTo(CX, CY - 20); ctx.lineTo(CX, CY + 20);
+  ctx.stroke();
+
+  /* 绘制花粉粒轨迹尾迹 (越旧的轨迹点越透明，呈现彗星尾效果) */
+  for (let i = 0; i < grains.length; i++) {
+    const g = grains[i];
+    const trail = g.trail;
+    if (trail.length < 2) continue;
+
+    /* 从旧到新绘制轨迹点，alpha 从 0.05 线性递增到 0.9 */
+    for (let j = 0; j < trail.length - 1; j++) {
+      const alpha = 0.05 + (j / trail.length) * 0.85;
+      const px = trail[j].x, py = trail[j].y;
+      /* 只绘制画布范围内的轨迹 */
+      if (px < -10 || px > W + 10 || py < -10 || py > H + 10) continue;
+      ctx.fillStyle = g.color;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* 绘制花粉粒 (大圆球) */
+  for (let i = 0; i < grains.length; i++) {
+    const g = grains[i];
+    const px = g.x, py = g.y;
+    if (px < -GRAIN_R * 2 || px > W + GRAIN_R * 2 ||
+        py < -GRAIN_R * 2 || py > H + GRAIN_R * 2) continue;
+
+    /* 外发光 */
+    const glow = ctx.createRadialGradient(px, py, GRAIN_R * 0.3, px, py, GRAIN_R * 2.5);
+    glow.addColorStop(0, g.color);
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(px, py, GRAIN_R * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* 主体 */
+    const grad = ctx.createRadialGradient(px - GRAIN_R * 0.3, py - GRAIN_R * 0.3, GRAIN_R * 0.1, px, py, GRAIN_R);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.35, g.color);
+    grad.addColorStop(1, '#000000');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(px, py, GRAIN_R, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* 边框 */
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  /* 画布边界提示文字 */
+  ctx.fillStyle = '#30363d';
+  ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('花粉粒随机游走 — 自由空间 (无边界)', 10, SIM_H - 10);
+}
+
+/* ===== 渲染均方位移 (MSD) 图 ===== */
+function renderMSDPlot() {
+  const ctx = msdCtx;
+  const W = msdCanvas.width;
+  const H = msdCanvas.height;
+  const pad = { top: 18, right: 20, bottom: 32, left: 50 };
+  const pw = W - pad.left - pad.right;
+  const ph = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  /* 绘图区域 */
+  const x0 = pad.left, y0 = pad.top;
+  const x1 = pad.left + pw, y1 = pad.top + ph;
+
+  /* 计算数据范围 */
+  let maxT = 20;
+  let maxR2 = 100;
+  if (msdHistory.length > 0) {
+    maxT = msdHistory[msdHistory.length - 1].t + 5;
+    for (let i = 0; i < msdHistory.length; i++) {
+      if (msdHistory[i].msd > maxR2) maxR2 = msdHistory[i].msd;
+    }
+    maxR2 = Math.ceil(maxR2 * 1.3 / 50) * 50;
+    if (maxR2 < 50) maxR2 = 50;
+  }
+
+  /* Y 轴刻度 */
+  const nYTicks = 5;
+  const yStep = maxR2 / nYTicks;
+  ctx.strokeStyle = '#1a2233';
+  ctx.lineWidth = 0.5;
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i <= nYTicks; i++) {
+    const val = i * yStep;
+    const y = y1 - (val / maxR2) * ph;
+    ctx.beginPath();
+    ctx.moveTo(x0, y);
+    ctx.lineTo(x1, y);
+    ctx.stroke();
+    ctx.fillText(Math.round(val).toString(), x0 - 6, y);
+  }
+
+  /* X 轴刻度 */
+  const nXTicks = 5;
+  const xTStep = Math.ceil(maxT / nXTicks / 5) * 5;
+  if (xTStep > 0) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let t = 0; t <= maxT; t += xTStep) {
+      if (t === 0 && xTStep > 0) continue;
+      const x = x0 + (t / maxT) * pw;
+      ctx.beginPath();
+      ctx.moveTo(x, y0);
+      ctx.lineTo(x, y1);
+      ctx.stroke();
+      ctx.fillText(t.toString(), x, y1 + 5);
+    }
+  }
+
+  /* 坐标轴 */
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.lineTo(x1, y1);
+  ctx.stroke();
+
+  /* 轴标签 */
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'center';
+  ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('时间 t', x0 + pw / 2, H - 4);
+  ctx.save();
+  ctx.translate(10, y0 + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('⟨r²⟩', 0, 0);
+  ctx.restore();
+
+  /* 理论扩散曲线 ⟨r²⟩ = 4Dt (虚线) */
+  const D = getDiffusionCoefficient();
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  let firstTheo = true;
+  for (let t = 0; t <= maxT; t += maxT / 200) {
+    const theoR2 = 4 * D * t;
+    const sx = x0 + (t / maxT) * pw;
+    const sy = y1 - (Math.min(theoR2, maxR2 * 1.2) / maxR2) * ph;
+    if (firstTheo) { ctx.moveTo(sx, sy); firstTheo = false; }
+    else { ctx.lineTo(sx, sy); }
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* 模拟数据曲线 */
+  if (msdHistory.length > 1) {
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < msdHistory.length; i++) {
+      const pt = msdHistory[i];
+      const sx = x0 + (pt.t / maxT) * pw;
+      const sy = y1 - (Math.min(pt.msd, maxR2 * 1.5) / maxR2) * ph;
+      if (i === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+  }
+
+  /* 图例 */
+  ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  const lx = x0 + 8, ly = y0 + 4;
+  ctx.fillStyle = '#f78166';
+  ctx.fillText('— 理论 4Dt', lx + 14, ly + 12);
+  ctx.fillStyle = '#f78166';
+  ctx.fillRect(lx, ly + 6, 10, 2);
+
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText('— 模拟 ⟨r²⟩', lx + 14, ly + 28);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillRect(lx, ly + 22, 10, 2);
+}
+
+/* ===== 更新 UI 数据显示 ===== */
+function updateStats() {
+  statGrains.textContent = numGrains;
+  statTemp.innerHTML = temperature + '<span class="unit"> K</span>';
+  statTime.textContent = simTime.toFixed(1) + ' s';
+  const D = getDiffusionCoefficient();
+  statD.innerHTML = D.toFixed(3) + '<span class="unit"> px²/步</span>';
+
+  valTemp.textContent = temperature + ' K';
+  valNum.textContent = numGrains;
+  valStep.textContent = baseStepSize.toFixed(1) + ' px';
+}
+
+/* ===== 全量渲染 ===== */
+function renderAll() {
+  renderSimulation();
+  renderMSDPlot();
+  updateStats();
+}
+
+/* ===== 模拟主循环 ===== */
+function loop() {
+  if (isRunning) {
+    stepSimulation();
+    renderAll();
+  }
+  animId = requestAnimationFrame(loop);
+}
+
+/* ===== 控制逻辑 ===== */
+function startSimulation() {
+  if (!isRunning) {
+    isRunning = true;
+  }
+}
+
+function pauseSimulation() {
+  isRunning = false;
+}
+
+function resetAndPause() {
+  isRunning = false;
+  resetSimulation();
+  renderAll();
+}
+
+function centerAllGrains() {
+  /* 将所有花粉粒重置到画布中心，清除轨迹与 MSD 历史 */
+  for (let i = 0; i < grains.length; i++) {
+    grains[i].x = CX;
+    grains[i].y = CY;
+    grains[i].initX = CX;
+    grains[i].initY = CY;
+    grains[i].trail = [];
+  }
+  simTime = 0;
+  frameCount = 0;
+  msdHistory = [];
+  renderAll();
+}
+
+/* ===== 事件监听 ===== */
+btnStart.addEventListener('click', startSimulation);
+btnPause.addEventListener('click', pauseSimulation);
+btnReset.addEventListener('click', resetAndPause);
+btnCenter.addEventListener('click', centerAllGrains);
+
+sliderTemp.addEventListener('input', function () {
+  temperature = parseInt(this.value);
+  updateStats();
+});
+sliderNum.addEventListener('input', function () {
+  const newN = parseInt(this.value);
+  if (newN !== numGrains) {
+    numGrains = newN;
+    /* 调整花粉粒数量：多则添加，少则移除 */
+    while (grains.length < numGrains) {
+      grains.push({
+        x: CX, y: CY, initX: CX, initY: CY,
+        trail: [],
+        color: GRAIN_COLORS[grains.length % GRAIN_COLORS.length]
+      });
+    }
+    while (grains.length > numGrains) {
+      grains.pop();
+    }
+    /* 数量变化后重算 MSD */
+    msdHistory = [];
+    simTime = 0;
+    frameCount = 0;
+    for (let i = 0; i < grains.length; i++) {
+      grains[i].initX = grains[i].x;
+      grains[i].initY = grains[i].y;
+      grains[i].trail = [];
+    }
+    renderAll();
+  }
+});
+sliderStep.addEventListener('input', function () {
+  baseStepSize = parseFloat(this.value);
+  updateStats();
+});
+
+/* 键盘快捷键 */
+document.addEventListener('keydown', function (e) {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (isRunning) { pauseSimulation(); }
+    else { startSimulation(); }
+  }
+  if (e.code === 'KeyR') {
+    resetAndPause();
+  }
+  if (e.code === 'KeyC') {
+    centerAllGrains();
+  }
+});
+
+/* ===== 启动 ===== */
+resetSimulation();
+renderAll();
+loop();
+</script>
+
+</body>
+</html>

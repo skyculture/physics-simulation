@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高尔顿板、机械波和动量守恒实验 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>振动频率:</label><input type="range" id="vibFreq" min="0.5" max="5" step="0.1" value="2"><span id="vibFreqVal">2</span></div>
+    <div class="ctrl-group"><label>振动幅度:</label><input type="range" id="vibAmp" min="0" max="20" step="1" value="8"><span id="vibAmpVal">8</span></div>
+    <div class="ctrl-group"><label>球数/次:</label><input type="range" id="dropCount" min="1" max="10" step="1" value="5"><span id="dropCountVal">5</span></div>
+    <div class="ctrl-group"><button id="dropBtn">投放小球</button><button id="resetBtn">清空</button></div>
+  </div>
+  <div id="info">高尔顿板与机械波耦合：高尔顿板的钉子受机械波振动影响，小球的偏转概率与振动模式有关联。可观察统计分布与振动的相互作用。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let balls = [];
+let slots = [];
+let rows = 8;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  balls = [];
+  slots = Array(rows + 1).fill(0);
+}
+
+function dropBalls() {
+  const count = parseInt(document.getElementById('dropCount').value);
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  for (let i = 0; i < count; i++) {
+    balls.push({
+      x: w / 2 + (Math.random() - 0.5) * 8,
+      y: h * 0.08 + i * 10,
+      vy: 0,
+      vx: (Math.random() - 0.5) * 0.3,
+      r: S * 0.015,
+      col: 0,
+      row: 0,
+      settled: false,
+      trail: []
+    });
+  }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const vibFreq = parseFloat(document.getElementById('vibFreq').value);
+  const vibAmp = parseFloat(document.getElementById('vibAmp').value);
+  const dropCount = parseInt(document.getElementById('dropCount').value);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const topY = h * 0.15;
+  const bottomY = h * 0.7;
+  const rowHeight = (bottomY - topY) / rows;
+  const colWidth = S * 0.07;
+
+  for (let r = 0; r < rows; r++) {
+    const nCols = r + 1;
+    const startX = cx - (nCols - 1) * colWidth / 2;
+    const y = topY + r * rowHeight;
+    for (let c = 0; c < nCols; c++) {
+      const baseX = startX + c * colWidth;
+      const phase = (c + r * 0.7 + t * vibFreq) * Math.PI * 2;
+      const vibX = baseX + Math.sin(phase) * vibAmp * 0.3;
+      
+      ctx.fillStyle = '#d2a8ff';
+      ctx.beginPath();
+      ctx.arc(vibX, y, S * 0.012, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = 'rgba(210,168,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(baseX, y, vibAmp * 0.3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  for (let i = 0; i < balls.length; i++) {
+    const ball = balls[i];
+    if (ball.settled) continue;
+
+    ball.vy += 0.5;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.trail.push({ x: ball.x, y: ball.y });
+    if (ball.trail.length > 20) ball.trail.shift();
+
+    const rowIdx = Math.floor((ball.y - topY) / rowHeight);
+    if (rowIdx >= 0 && rowIdx < rows) {
+      const nColsRow = rowIdx + 1;
+      const startXRow = cx - (nColsRow - 1) * colWidth / 2;
+      const colIdx = Math.round((ball.x - startXRow) / colWidth);
+      
+      if (colIdx >= 0 && colIdx < nColsRow) {
+        const phase = (colIdx + rowIdx * 0.7 + t * vibFreq) * Math.PI * 2;
+        const pegX = startXRow + colIdx * colWidth + Math.sin(phase) * vibAmp * 0.3;
+        const pegY = topY + rowIdx * rowHeight;
+        const pegR = S * 0.012;
+
+        const dx = ball.x - pegX;
+        const dy = ball.y - pegY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = ball.r + pegR;
+
+        if (dist < minDist && ball.vy > 0) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const dot = ball.vx * nx + ball.vy * ny;
+
+          ball.vx -= (1 + 0.4) * dot * nx;
+          ball.vy -= (1 + 0.4) * dot * ny;
+          ball.vy = Math.abs(ball.vy) * 0.7 + 0.5;
+          
+          const vibVel = Math.cos(phase) * vibAmp * 0.15 * vibFreq;
+          ball.vx += vibVel * 0.2;
+          
+          ball.x = pegX + nx * minDist;
+          ball.y = pegY + ny * minDist;
+          ball.col = colIdx;
+          ball.row = rowIdx;
+        }
+      }
+    }
+
+    if (ball.y > bottomY + S * 0.02) {
+      const slotIdx = Math.max(0, Math.min(rows, Math.round((ball.x - (cx - rows * colWidth / 2)) / colWidth)));
+      slots[slotIdx]++;
+      ball.settled = true;
+    }
+
+    ball.x = Math.max(ball.r, Math.min(w - ball.r, ball.x));
+  }
+
+  const slotTop = bottomY + S * 0.05;
+  const slotBottom = h * 0.95;
+  const maxCount = Math.max(1, ...slots);
+  for (let i = 0; i <= rows; i++) {
+    const sx = cx - rows * colWidth / 2 + i * colWidth;
+    const sw = colWidth * 0.85;
+
+    const sh = (slots[i] / maxCount) * (slotBottom - slotTop) * 0.9;
+    ctx.fillStyle = `rgba(247,129,102,${0.4 + (slots[i] / maxCount) * 0.5})`;
+    ctx.fillRect(sx - sw / 2, slotBottom - sh, sw, sh);
+
+    ctx.strokeStyle = 'rgba(139,148,158,0.4)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(sx - sw / 2, slotTop, sw, slotBottom - slotTop);
+  }
+
+  for (const ball of balls) {
+    if (!ball.settled && ball.trail.length > 1) {
+      ctx.strokeStyle = 'rgba(255,166,87,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(ball.trail[0].x, ball.trail[0].y);
+      for (let j = 1; j < ball.trail.length; j++) {
+        ctx.lineTo(ball.trail[j].x, ball.trail[j].y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  for (const ball of balls) {
+    if (!ball.settled) {
+      ctx.fillStyle = '#ffa657';
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const total = slots.reduce((a, b) => a + b, 0);
+  ctx.fillStyle = '#8b949e';
+  const fs = S * 0.035;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText(`总小球数: ${total}`, w * 0.05, fs + 5);
+  ctx.fillText(`振动频率: ${vibFreq.toFixed(1)} Hz`, w * 0.05, fs * 2 + 5);
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('vibFreq').addEventListener('input', e => {
+  document.getElementById('vibFreqVal').textContent = e.target.value;
+});
+document.getElementById('vibAmp').addEventListener('input', e => {
+  document.getElementById('vibAmpVal').textContent = e.target.value;
+});
+document.getElementById('dropCount').addEventListener('input', e => {
+  document.getElementById('dropCountVal').textContent = e.target.value;
+});
+document.getElementById('dropBtn').addEventListener('click', dropBalls);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+draw();
+</script>
+</body>
+</html>

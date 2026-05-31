@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电感计算实验 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>线圈匝数N:</label><input type="range" id="turns" min="1" max="500" step="1" value="100"><input type="number" id="turnsVal" value="100"></div>
+      <div class="ctrl-group"><label>磁导率μ:</label><input type="range" id="mu" min="4" max="400" step="0.1" value="12.57"><input type="number" id="muVal" value="12.57"></div>
+      <div class="ctrl-group"><label>线圈半径r(cm):</label><input type="range" id="radius" min="1" max="50" step="1" value="10"><input type="number" id="radiusVal" value="10"></div>
+      <div class="ctrl-group"><label>线圈长度l(cm):</label><input type="range" id="length" min="1" max="200" step="1" value="50"><input type="number" id="lengthVal" value="50"></div>
+    </div>
+    <div id="info">电感计算实验：通过调整线圈匝数、磁导率、半径和长度，计算电感值。公式：L = μ × N² × A / l，其中A为线圈横截面积。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let time = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  const N = parseFloat(document.getElementById('turns').value);
+  const mu = parseFloat(document.getElementById('mu').value) * 1e-7; // μ₀ = 4πe-7
+  const r = parseFloat(document.getElementById('radius').value) / 100; // 转换为米
+  const l = parseFloat(document.getElementById('length').value) / 100; // 转换为米
+  
+  const A = Math.PI * r * r;
+  const L = mu * N * N * A / Math.max(l, 0.001); // 电感值
+  
+  const cx = canvas.width/2, cy = canvas.height/2;
+  
+  // 绘制线圈
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  const coilRadius = Math.min(r * canvas.width * 0.8, canvas.height * 0.3);
+  ctx.beginPath();
+  ctx.arc(cx, cy, coilRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  // 绘制磁感线
+  ctx.strokeStyle = 'rgba(247,129,102,0.4)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<8;i++) {
+    const angle = i * Math.PI / 4;
+    const x1 = cx + coilRadius * Math.cos(angle);
+    const y1 = cy + coilRadius * Math.sin(angle);
+    const x2 = cx + (coilRadius + 20) * Math.cos(angle);
+    const y2 = cy + (coilRadius + 20) * Math.sin(angle);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  
+  // 绘制信息
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`匝数 N = ${N}`, canvas.width*0.1, canvas.height*0.1);
+  ctx.fillText(`磁导率 μ = ${(mu*1e7).toFixed(2)} × 10⁻⁷ H/m`, canvas.width*0.1, canvas.height*0.1+18);
+  ctx.fillText(`半径 r = ${(r*100).toFixed(1)} cm`, canvas.width*0.1, canvas.height*0.1+36);
+  ctx.fillText(`长度 l = ${(l*100).toFixed(1)} cm`, canvas.width*0.1, canvas.height*0.1+54);
+  
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`电感 L = ${(L*1e6).toFixed(2)} μH`, cx-80, canvas.height*0.85);
+  
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('turns').addEventListener('input', e => { document.getElementById('turnsVal').value = e.target.value; });
+document.getElementById('mu').addEventListener('input', e => { document.getElementById('muVal').value = e.target.value; });
+document.getElementById('radius').addEventListener('input', e => { document.getElementById('radiusVal').value = e.target.value; });
+document.getElementById('length').addEventListener('input', e => { document.getElementById('lengthVal').value = e.target.value; });
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

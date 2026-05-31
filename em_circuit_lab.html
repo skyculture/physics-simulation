@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高中物理电路实验室 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>电源电压:</label><input type="range" id="voltage" min="1" max="24" step="1" value="12"><input type="number" id="voltageVal" value="12"></div>
+      <div class="ctrl-group"><label>电阻值:</label><input type="range" id="resistor" min="10" max="1000" step="10" value="100"><input type="number" id="resistorVal" value="100"></div>
+      <div class="ctrl-group"><label>电容值:</label><input type="range" id="capacitor" min="1" max="100" step="1" value="10"><input type="number" id="capacitorVal" value="10"></div>
+    </div>
+    <div id="info">电路实验室展示了基本的直流电路原理。包含电源、电阻、电容等元件，可观察电流、电压的变化以及电容充放电过程。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let time = 0;
+let capVoltage = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  const V = parseFloat(document.getElementById('voltage').value);
+  const R = parseFloat(document.getElementById('resistor').value);
+  const C = parseFloat(document.getElementById('capacitor').value);
+  
+  const cx = canvas.width/2, cy = canvas.height/2;
+  
+  ctx.fillStyle = '#ffa657';
+  ctx.fillRect(cx-canvas.width*0.35, cy+canvas.height*0.2, canvas.width*0.1, canvas.height*0.08);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('V', cx-canvas.width*0.32, cy+canvas.height*0.26);
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx-canvas.width*0.25, cy+canvas.height*0.2);
+  ctx.lineTo(cx-canvas.width*0.15, cy+canvas.height*0.2);
+  ctx.lineTo(cx-canvas.width*0.15, cy);
+  ctx.lineTo(cx, cy);
+  ctx.stroke();
+  
+  ctx.fillStyle = '#f78166';
+  ctx.beginPath();
+  ctx.arc(cx-canvas.width*0.08, cy, 8, 0, Math.PI*2);
+  ctx.fill();
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.beginPath();
+  ctx.moveTo(cx+canvas.width*0.08, cy);
+  ctx.lineTo(cx+canvas.width*0.15, cy);
+  ctx.lineTo(cx+canvas.width*0.15, cy-canvas.height*0.15);
+  ctx.lineTo(cx+canvas.width*0.35, cy-canvas.height*0.15);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx+canvas.width*0.2, cy-canvas.height*0.25);
+  ctx.lineTo(cx+canvas.width*0.3, cy-canvas.height*0.25);
+  ctx.moveTo(cx+canvas.width*0.2, cy-canvas.height*0.1);
+  ctx.lineTo(cx+canvas.width*0.3, cy-canvas.height*0.1);
+  ctx.moveTo(cx+canvas.width*0.25, cy-canvas.height*0.25);
+  ctx.lineTo(cx+canvas.width*0.25, cy-canvas.height*0.1);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.beginPath();
+  ctx.moveTo(cx-canvas.width*0.35, cy+canvas.height*0.28);
+  ctx.lineTo(cx-canvas.width*0.35, cy-canvas.height*0.1);
+  ctx.lineTo(cx+canvas.width*0.35, cy-canvas.height*0.1);
+  ctx.stroke();
+  
+  const tau = R * C / 1000;
+  capVoltage += (V - capVoltage) * (1 - Math.exp(-1/(tau*60)));
+  const I = (V - capVoltage) / R;
+  
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px sans-serif';
+  ctx.fillText(`电压: ${V}V`, canvas.width*0.05, canvas.height*0.9);
+  ctx.fillText(`电流: ${I.toFixed(2)}A`, canvas.width*0.05, canvas.height*0.95);
+  ctx.fillText(`电容电压: ${capVoltage.toFixed(1)}V`, canvas.width*0.3, canvas.height*0.95);
+  
+  if(Math.random() < Math.abs(I)*5) {
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath();
+    ctx.arc(cx-canvas.width*0.08, cy+Math.random()*20-10, 2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('voltage').addEventListener('input', e => { document.getElementById('voltageVal').value = e.target.value; });
+document.getElementById('resistor').addEventListener('input', e => { document.getElementById('resistorVal').value = e.target.value; });
+document.getElementById('capacitor').addEventListener('input', e => { document.getElementById('capacitorVal').value = e.target.value; capVoltage = 0; });
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

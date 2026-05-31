@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弦上驻波 - 驻波与谐波模拟</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    width: 100%;
+}
+
+/* ========== 页头 ========== */
+.header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #58a6ff;
+    letter-spacing: 2px;
+}
+
+.header .subtitle {
+    font-size: 14px;
+    color: #8b949e;
+    margin-top: 4px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: #58a6ff;
+    text-decoration: none;
+    font-size: 13px;
+    padding: 4px 12px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.back-link:hover {
+    background: #1f2937;
+    border-color: #58a6ff;
+}
+
+/* ========== 面板 ========== */
+.panel {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #8b949e;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ========== 画布容器 ========== */
+.canvas-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    border-radius: 4px;
+    cursor: crosshair;
+}
+
+#stringCanvas {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+}
+
+#fftCanvas {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+}
+
+/* ========== 控制面板 ========== */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 100px;
+    flex: 1;
+}
+
+.control-group label {
+    font-size: 12px;
+    color: #8b949e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.control-group label span.val {
+    color: #58a6ff;
+    font-weight: 600;
+}
+
+.control-group input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #21262d;
+    outline: none;
+    cursor: pointer;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #58a6ff;
+    cursor: pointer;
+    border: 2px solid #161b22;
+}
+
+/* ========== 按钮 ========== */
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn {
+    padding: 8px 18px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    background: #21262d;
+    color: #c9d1d9;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+.btn:hover {
+    background: #30363d;
+    border-color: #58a6ff;
+}
+
+.btn.primary {
+    background: #1f6feb;
+    border-color: #1f6feb;
+    color: #fff;
+}
+
+.btn.primary:hover {
+    background: #388bfd;
+    border-color: #388bfd;
+}
+
+.btn.accent {
+    background: #238636;
+    border-color: #238636;
+    color: #fff;
+}
+
+.btn.accent:hover {
+    background: #2ea043;
+    border-color: #2ea043;
+}
+
+/* ========== 信息面板 ========== */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.info-item {
+    text-align: center;
+    padding: 8px;
+    background: #0d1117;
+    border-radius: 4px;
+    border: 1px solid #21262d;
+}
+
+.info-item .info-label {
+    font-size: 11px;
+    color: #8b949e;
+}
+
+.info-item .info-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #58a6ff;
+}
+
+/* ========== 图例 ========== */
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: #8b949e;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+    <!-- ========== 页头 ========== -->
+    <div class="header">
+        <h1>弦上驻波</h1>
+        <p class="subtitle">驻波与谐波 — Standing Waves and Harmonics</p>
+        <a class="back-link" href="index.html">← 返回首页</a>
+    </div>
+
+    <!-- ========== 主画布：弦振动动画 ========== -->
+    <div class="panel">
+        <div class="panel-title">弦振动可视化 — String Vibration</div>
+        <div class="canvas-wrapper">
+            <!--
+                画布坐标系说明：
+                - x 轴水平，对应弦从 0 到 L
+                - y 轴垂直，对应横向位移（向上为正）
+                - 弦的平衡位置位于画布垂直中点
+            -->
+            <canvas id="stringCanvas"></canvas>
+        </div>
+        <div class="legend" style="margin-top:8px;">
+            <div class="legend-item"><span class="legend-dot" style="background:#58a6ff;"></span> 当前弦形</div>
+            <div class="legend-item"><span class="legend-dot" style="background:rgba(255,123,114,0.5);"></span> n=1 基频</div>
+            <div class="legend-item"><span class="legend-dot" style="background:rgba(63,185,80,0.5);"></span> n=2</div>
+            <div class="legend-item"><span class="legend-dot" style="background:rgba(210,168,255,0.5);"></span> n=3</div>
+            <div class="legend-item"><span class="legend-dot" style="background:rgba(255,166,87,0.5);"></span> n=4</div>
+        </div>
+    </div>
+
+    <!-- ========== 控制面板 ========== -->
+    <div class="panel">
+        <div class="panel-title">参数控制 — Controls</div>
+
+        <!--
+            三个核心物理参数：
+            1. 弦长 L —— 决定基频 f₁ = c/(2L)
+            2. 波速 c —— 由弦的张力和线密度决定：c = √(T/μ)
+            3. 阻尼系数 —— 模拟能量耗散，使振动逐渐衰减
+        -->
+        <div class="controls">
+            <div class="control-group">
+                <label>弦长 L <span class="val" id="lVal">1.00</span> m</label>
+                <input type="range" id="lSlider" min="0.5" max="2.0" step="0.01" value="1.0">
+            </div>
+            <div class="control-group">
+                <label>波速 c <span class="val" id="cVal">3.00</span> m/s</label>
+                <input type="range" id="cSlider" min="0.5" max="8.0" step="0.01" value="3.0">
+            </div>
+            <div class="control-group">
+                <label>阻尼 ζ <span class="val" id="dVal">0.0005</span></label>
+                <input type="range" id="dSlider" min="0" max="0.005" step="0.0001" value="0.0005">
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn primary" id="btnStart">▶ 开始</button>
+            <button class="btn" id="btnPause">⏸ 暂停</button>
+            <button class="btn" id="btnReset">↺ 重置</button>
+            <button class="btn accent" id="btnPluck">🎸 拨弦 (三角波)</button>
+        </div>
+    </div>
+
+    <!-- ========== 频谱面板 ========== -->
+    <div class="panel">
+        <div class="panel-title">频谱分析 — Frequency Spectrum (FFT)</div>
+        <div class="canvas-wrapper">
+            <canvas id="fftCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- ========== 实时数据面板 ========== -->
+    <div class="panel">
+        <div class="panel-title">实时数据 — Live Data</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">基频 f₁</div>
+                <div class="info-value" id="infoF1">1.50 Hz</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">谐波 f₂</div>
+                <div class="info-value" id="infoF2">3.00 Hz</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">谐波 f₃</div>
+                <div class="info-value" id="infoF3">4.50 Hz</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">谐波 f₄</div>
+                <div class="info-value" id="infoF4">6.00 Hz</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">最大振幅</div>
+                <div class="info-value" id="infoAmp">0.000</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Courant 数</div>
+                <div class="info-value" id="infoCourant">0.80</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/*
+ * ============================================================================
+ * 弦上驻波模拟 — Standing Wave on a String Simulation
+ * ============================================================================
+ *
+ * 【物理背景】
+ * 一根两端固定的弦，其横向位移 y(x,t) 满足一维波动方程：
+ *
+ *     ∂²y/∂t² = c² · ∂²y/∂x²
+ *
+ * 其中 c 是波速，c = √(T/μ)，T 为张力，μ 为线密度。
+ *
+ * 边界条件（两端固定）：y(0,t) = 0,  y(L,t) = 0
+ *
+ * 【驻波解】
+ * 分离变量法给出驻波解：y(x,t) = Σ Aₙ sin(nπx/L) cos(2πfₙt + φₙ)
+ * 固有频率：fₙ = n·c/(2L)，n = 1,2,3,...
+ * 这些就是弦的谐波（harmonics），也称简正模式（normal modes）。
+ *
+ * 【数值方法：显式中心差分（蛙跳格式）】
+ * 对波动方程做有限差分离散化。空间步长 Δx = L/(N-1)，时间步长 Δt。
+ *
+ * 二阶中心差分近似：
+ *   ∂²y/∂t² ≈ [y(i,n+1) - 2y(i,n) + y(i,n-1)] / Δt²
+ *   ∂²y/∂x² ≈ [y(i+1,n) - 2y(i,n) + y(i-1,n)] / Δx²
+ *
+ * 代入波动方程，解出下一时刻的位移：
+ *   y(i,n+1) = 2y(i,n) - y(i,n-1) + r²[y(i+1,n) - 2y(i,n) + y(i-1,n)]
+ *
+ * 其中 r = c·Δt/Δx 称为 Courant 数（CFL数）。
+ *
+ * 【稳定性条件（CFL条件）】
+ * 显式格式稳定的充要条件：r = c·Δt/Δx ≤ 1
+ * 物理意义：数值波速不能超过网格波速，即一个时间步内信息传播不超过一个网格。
+ *
+ * 【阻尼】
+ * 在每一步对位移乘以 (1 - ζ)，模拟能量耗散：
+ *   y_new[i] *= (1 - ζ)
+ * 阻尼使振动逐渐衰减，最终趋于静止。
+ *
+ * ============================================================================
+ */
+
+(function() {
+    'use strict';
+
+    // ==================== 物理参数 ====================
+    let L     = 1.0;      // 弦长 (m)
+    let c     = 3.0;      // 波速 (m/s)，c = √(T/μ)
+    let damping = 0.0005; // 阻尼系数 ζ
+
+    // ==================== 数值参数 ====================
+    const N = 200;           // 空间网格点数（包含两端点）
+    // 空间步长 Δx = L/(N-1)，每次 L 变化时重新计算
+    let dx = L / (N - 1);
+    // 时间步长由 CFL 条件决定，每次 c 或 L 变化时重新计算
+    let dt = 0.8 * dx / c;  // 含安全因子 0.8
+    let subSteps = 1;        // 每帧物理子步数
+
+    // ==================== 位移数组（三个时间层） ====================
+    // y_prev: t-Δt 时刻位移
+    // y_curr: t 时刻位移
+    // y_next: t+Δt 时刻位移
+    let y_prev = new Float64Array(N);
+    let y_curr = new Float64Array(N);
+    let y_next = new Float64Array(N);
+
+    // ==================== 动画状态 ====================
+    let running = false;
+    let animationId = null;
+
+    // ==================== 拖拽交互状态 ====================
+    let isDragging = false;
+    let dragIndex = -1;
+    let dragDisplacement = 0;
+    const DRAG_SIGMA = 4;    // 拖拽高斯宽度（网格点数），模拟手指宽度
+
+    // ==================== FFT 频谱分析 ====================
+    const FFT_SIZE = 256;              // FFT 采样点数（必须是 2 的幂）
+    let sampleBuffer = [];             // 中点位移采样缓冲区
+    let sampleTimes = [];              // 对应的时间戳（秒）
+    let spectrumMagnitudes = [];       // 频谱幅值
+    let spectrumFreqs = [];            // 频谱频率轴
+
+    // ==================== Canvas 元素 ====================
+    const stringCanvas = document.getElementById('stringCanvas');
+    const stringCtx = stringCanvas.getContext('2d');
+    const fftCanvas = document.getElementById('fftCanvas');
+    const fftCtx = fftCanvas.getContext('2d');
+
+    // ==================== Canvas 尺寸设置 ====================
+    // 使用高分辨率内部分辨率以保证清晰度
+    const STRING_CANVAS_W = 900;
+    const STRING_CANVAS_H = 350;
+    const FFT_CANVAS_W = 900;
+    const FFT_CANVAS_H = 150;
+
+    function setupCanvas(canvas, w, h) {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return ctx;
+    }
+
+    function initCanvases() {
+        setupCanvas(stringCanvas, STRING_CANVAS_W, STRING_CANVAS_H);
+        setupCanvas(fftCanvas, FFT_CANVAS_W, FFT_CANVAS_H);
+    }
+
+    // ==================== 物理参数更新 ====================
+    /*
+     * 根据当前的 L 和 c 重新计算 dx、dt 和子步数。
+     * CFL 条件：c·Δt/Δx ≤ 1，取安全因子 0.8。
+     */
+    function updatePhysicsParams() {
+        dx = L / (N - 1);
+        // 满足 CFL 条件的最大时间步长
+        const dt_max = dx / c;
+        dt = 0.8 * dt_max;
+        updateInfoDisplay();
+    }
+
+    // ==================== 弦形插值（用于 L 变化时重新采样） ====================
+    /*
+     * 当弦长 L 改变时，网格点数 N 不变但 Δx 改变。
+     * 需要将旧网格上的位移插值到新网格上。
+     * 采用线性插值：对每个新网格点，找到它在旧网格上的物理位置，
+     * 然后用相邻两个旧网格点做线性插值。
+     */
+    function resampleDisplacement(oldL, oldData) {
+        const newData = new Float64Array(N);
+        const oldDx = oldL / (N - 1);
+        for (let i = 0; i < N; i++) {
+            const x = i * dx;                       // 新网格点物理位置
+            const oldIdx = x / oldDx;                // 在旧网格中的浮点索引
+            const i0 = Math.floor(oldIdx);
+            const i1 = Math.min(i0 + 1, N - 1);
+            const frac = oldIdx - i0;
+            // 线性插值
+            newData[i] = oldData[i0] * (1 - frac) + oldData[i1] * frac;
+        }
+        // 强制边界条件
+        newData[0] = 0;
+        newData[N - 1] = 0;
+        return newData;
+    }
+
+    // ==================== 初始化 / 重置 ====================
+    function initArrays() {
+        for (let i = 0; i < N; i++) {
+            y_prev[i] = 0;
+            y_curr[i] = 0;
+            y_next[i] = 0;
+        }
+    }
+
+    function fullReset() {
+        initArrays();
+        sampleBuffer = [];
+        sampleTimes = [];
+        spectrumMagnitudes = [];
+        spectrumFreqs = [];
+        updatePhysicsParams();
+        updateInfoDisplay();
+        drawString();
+        drawFFT();
+    }
+
+    // ==================== 拨弦：三角波初始形状 ====================
+    /*
+     * 在 x=xPluck 处以三角波形拨弦。
+     * 三角波是拨弦的经典初始条件，分解后只含奇次谐波（中心拨弦时）。
+     *
+     * 三角波形：
+     *   左侧 (0 ≤ x ≤ xPluck)： y = h · x / xPluck
+     *   右侧 (xPluck ≤ x ≤ L)： y = h · (L-x) / (L-xPluck)
+     *
+     * 同时设置 y_prev = y_curr，使初始速度为零（从静止释放）。
+     */
+    function pluckString(xPluck, amplitude) {
+        if (xPluck === undefined) xPluck = L / 2;
+        if (amplitude === undefined) amplitude = 0.25;
+
+        for (let i = 0; i < N; i++) {
+            const x = i * dx;
+            if (x <= xPluck) {
+                y_curr[i] = amplitude * x / xPluck;
+            } else {
+                y_curr[i] = amplitude * (L - x) / (L - xPluck);
+            }
+        }
+        // 边界条件
+        y_curr[0] = 0;
+        y_curr[N - 1] = 0;
+        // 初始速度为零：前一时刻位移等于当前时刻
+        for (let i = 0; i < N; i++) {
+            y_prev[i] = y_curr[i];
+        }
+        // 清空频谱缓冲区
+        sampleBuffer = [];
+        sampleTimes = [];
+        spectrumMagnitudes = [];
+        spectrumFreqs = [];
+        drawString();
+        drawFFT();
+    }
+
+    // ==================== 单步物理更新（有限差分核心） ====================
+    /*
+     * 显式中心差分格式 — 蛙跳法 (Leapfrog)：
+     *
+     *   y_next[i] = 2·y_curr[i] - y_prev[i]
+     *             + r²·(y_curr[i+1] - 2·y_curr[i] + y_curr[i-1])
+     *
+     * 其中 r = c·dt_actual/dx 是步进 Courant 数。
+     *
+     * 之后施加阻尼：y_next[i] *= (1 - ζ)
+     *
+     * 最后滚动时间层：y_prev ← y_curr, y_curr ← y_next
+     */
+    function physicsStep(dtActual) {
+        const r2 = (c * dtActual / dx) ** 2;
+
+        // 计算内部点（跳过边界）
+        for (let i = 1; i < N - 1; i++) {
+            y_next[i] = 2.0 * y_curr[i] - y_prev[i]
+                      + r2 * (y_curr[i + 1] - 2.0 * y_curr[i] + y_curr[i - 1]);
+        }
+
+        // 阻尼衰减（模拟能量耗散）
+        if (damping > 0) {
+            for (let i = 1; i < N - 1; i++) {
+                y_next[i] *= (1.0 - damping);
+            }
+        }
+
+        // 边界条件：两端固定 y(0)=0, y(L)=0
+        y_next[0] = 0;
+        y_next[N - 1] = 0;
+
+        // 滚动时间层：n-1 ← n, n ← n+1
+        const temp = y_prev;
+        y_prev = y_curr;
+        y_curr = y_next;
+        y_next = temp;
+    }
+
+    // ==================== FFT 实现（迭代 Cooley-Tukey 基-2 FFT） ====================
+    /*
+     * 快速傅里叶变换 (FFT)，将时域信号转换到频域。
+     * 输入要求长度为 2 的幂。
+     *
+     * 算法：迭代 Cooley-Tukey，原地计算，位逆序重排 + 蝶形运算。
+     *
+     * 输出 real[k] 和 imag[k] 对应频率 f_k = k · fs / N，
+     * 幅值 = sqrt(real² + imag²)。
+     */
+    function fft(real, imag) {
+        const n = real.length;
+        if (n <= 1) return;
+
+        // 第一步：位逆序重排 (Bit-reversal permutation)
+        for (let i = 1, j = 0; i < n; i++) {
+            let bit = n >> 1;
+            for (; j & bit; bit >>= 1) {
+                j ^= bit;
+            }
+            j ^= bit;
+            if (i < j) {
+                [real[i], real[j]] = [real[j], real[i]];
+                [imag[i], imag[j]] = [imag[j], imag[i]];
+            }
+        }
+
+        // 第二步：蝶形运算 (Butterfly)
+        for (let len = 2; len <= n; len <<= 1) {
+            const halfLen = len >> 1;
+            const angle = -2.0 * Math.PI / len;
+            const wRe = Math.cos(angle);
+            const wIm = Math.sin(angle);
+            for (let i = 0; i < n; i += len) {
+                let curRe = 1.0;
+                let curIm = 0.0;
+                for (let j = 0; j < halfLen; j++) {
+                    const uRe = real[i + j];
+                    const uIm = imag[i + j];
+                    const vRe = real[i + j + halfLen] * curRe - imag[i + j + halfLen] * curIm;
+                    const vIm = real[i + j + halfLen] * curIm + imag[i + j + halfLen] * curRe;
+                    real[i + j] = uRe + vRe;
+                    imag[i + j] = uIm + vIm;
+                    real[i + j + halfLen] = uRe - vRe;
+                    imag[i + j + halfLen] = uIm - vIm;
+                    const newRe = curRe * wRe - curIm * wIm;
+                    curIm = curRe * wIm + curIm * wRe;
+                    curRe = newRe;
+                }
+            }
+        }
+    }
+
+    /*
+     * 计算频谱：从采样缓冲区中取数据，做 FFT，得到幅值谱。
+     * 采样率 fs 由实际时间戳间隔估算。
+     * 只保留正频率部分（0 到 Nyquist 频率）。
+     */
+    function computeSpectrum() {
+        if (sampleBuffer.length < FFT_SIZE) return;
+
+        const real = new Float64Array(FFT_SIZE);
+        const imag = new Float64Array(FFT_SIZE);
+
+        // 复制采样数据
+        for (let i = 0; i < FFT_SIZE; i++) {
+            real[i] = sampleBuffer[i];
+            imag[i] = 0;
+        }
+
+        // 估算采样率
+        const totalTime = sampleTimes[FFT_SIZE - 1] - sampleTimes[0];
+        const fs = (FFT_SIZE - 1) / Math.max(totalTime, 0.001);
+
+        // 执行 FFT
+        fft(real, imag);
+
+        // 计算幅值谱（只取前一半，对应 0 到 Nyquist）
+        const halfN = FFT_SIZE >> 1;
+        spectrumMagnitudes = new Array(halfN);
+        spectrumFreqs = new Array(halfN);
+        for (let k = 0; k < halfN; k++) {
+            const mag = Math.sqrt(real[k] * real[k] + imag[k] * imag[k]) / FFT_SIZE;
+            spectrumMagnitudes[k] = mag;
+            spectrumFreqs[k] = k * fs / FFT_SIZE;
+        }
+
+        // 清空缓冲区，继续采样
+        sampleBuffer = [];
+        sampleTimes = [];
+    }
+
+    // ==================== 采样中点位移 ====================
+    /*
+     * 每秒约 60 次采样（跟随动画帧率）。
+     * 当缓冲区满时自动触发频谱计算。
+     */
+    function sampleMidpoint(timestampSec) {
+        const midIdx = Math.floor(N / 2);
+        sampleBuffer.push(y_curr[midIdx]);
+        sampleTimes.push(timestampSec);
+        if (sampleBuffer.length >= FFT_SIZE) {
+            computeSpectrum();
+        }
+    }
+
+    // ==================== 绘制主画布：弦 + 谐波模式叠加 ====================
+    /*
+     * 绘制内容：
+     * 1. 网格参考线
+     * 2. 平衡位置虚线
+     * 3. 前 4 个谐波模式形状（半透明叠加）
+     * 4. 当前弦的实际形状（粗实线）
+     * 5. 两端固定点
+     *
+     * 【谐波模式（简正模式）】
+     * 两端固定弦的简正模式为：yₙ(x) = A · sin(nπx/L)
+     * n=1 基频（fundamental），n=2,3,4... 为泛音（overtones）。
+     * 这些是纯驻波形状，用于与当前弦形对比。
+     */
+    function drawString() {
+        const ctx = stringCtx;
+        const W = STRING_CANVAS_W;
+        const H = STRING_CANVAS_H;
+
+        ctx.clearRect(0, 0, W, H);
+
+        // 边距
+        const marginX = 60;
+        const marginY = 30;
+        const plotW = W - 2 * marginX;
+        const plotH = H - 2 * marginY;
+        const midY = H / 2;
+
+        // 纵向缩放：使得位移 0.35 对应半个绘图区高度
+        const maxDisplay = 0.35;
+        const scaleY = (plotH / 2) / maxDisplay;
+
+        // --- 网格 ---
+        ctx.strokeStyle = '#21262d';
+        ctx.lineWidth = 0.5;
+        for (let gy = marginY; gy <= H - marginY; gy += plotH / 8) {
+            ctx.beginPath();
+            ctx.moveTo(marginX, gy);
+            ctx.lineTo(W - marginX, gy);
+            ctx.stroke();
+        }
+        for (let gx = marginX; gx <= W - marginX; gx += plotW / 10) {
+            ctx.beginPath();
+            ctx.moveTo(gx, marginY);
+            ctx.lineTo(gx, H - marginY);
+            ctx.stroke();
+        }
+
+        // --- 坐标轴 ---
+        ctx.strokeStyle = '#484f58';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(marginX, midY);
+        ctx.lineTo(W - marginX, midY);
+        ctx.stroke();
+
+        // --- 平衡位置虚线 ---
+        ctx.setLineDash([4, 6]);
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(marginX, midY);
+        ctx.lineTo(W - marginX, midY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // --- 轴标签 ---
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('x = 0', marginX, H - marginY + 18);
+        ctx.fillText('x = L', W - marginX, H - marginY + 18);
+        ctx.fillText('弦长方向 x', W / 2, H - 4);
+
+        ctx.save();
+        ctx.translate(12, H / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('横向位移 y', 0, 0);
+        ctx.restore();
+
+        // --- 谐波模式叠加（半透明虚线） ---
+        /*
+         * 绘制前 4 个简正模式 yₙ(x) = Aₘₒₔₑ · sin(nπx/L)
+         * 使用独立于实际振幅的固定显示振幅，便于观察模式形状。
+         */
+        const modeAmplitude = 0.28;
+        const modeColors = [
+            'rgba(255,123,114,0.45)',  // n=1 红色调
+            'rgba(63,185,80,0.45)',    // n=2 绿色调
+            'rgba(210,168,255,0.45)',  // n=3 紫色调
+            'rgba(255,166,87,0.45)'    // n=4 橙色调
+        ];
+
+        for (let mode = 0; mode < 4; mode++) {
+            const n = mode + 1;
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = modeColors[mode];
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                const xPhys = i * dx;
+                const yPhys = modeAmplitude * Math.sin(n * Math.PI * xPhys / L);
+                const sx = marginX + (xPhys / L) * plotW;
+                const sy = midY - yPhys * scaleY;
+                if (i === 0) ctx.moveTo(sx, sy);
+                else ctx.lineTo(sx, sy);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 模式标签
+            const labelX = marginX + plotW * 0.05;
+            const labelYPhys = modeAmplitude * Math.sin(n * Math.PI * 0.05);
+            const labelY = midY - labelYPhys * scaleY;
+            ctx.fillStyle = modeColors[mode].replace('0.45', '0.8');
+            ctx.font = 'bold 11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('n=' + n, marginX + 6, labelY - 6);
+        }
+
+        // --- 当前弦的实际形状 ---
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#58a6ff';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        for (let i = 0; i < N; i++) {
+            const xPhys = i * dx;
+            const yPhys = y_curr[i];
+            const sx = marginX + (xPhys / L) * plotW;
+            const sy = midY - yPhys * scaleY;
+            if (i === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // --- 两端固定点 ---
+        ctx.fillStyle = '#58a6ff';
+        ctx.beginPath();
+        ctx.arc(marginX, midY, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(W - marginX, midY, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- 操作提示 ---
+        if (!running && !isDragging) {
+            const hasDisplacement = y_curr.some(v => Math.abs(v) > 0.001);
+            ctx.fillStyle = 'rgba(139,148,158,0.7)';
+            ctx.font = '13px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.textAlign = 'center';
+            if (!hasDisplacement) {
+                ctx.fillText('点击"拨弦"按钮或拖拽弦线来创建初始位移，然后点击"开始"运行模拟', W / 2, H - marginY + 35);
+            } else {
+                ctx.fillText('弦已就绪 — 点击"开始"运行动画，或继续拖拽修改弦形', W / 2, H - marginY + 35);
+            }
+        }
+    }
+
+    // ==================== 绘制频谱面板 ====================
+    /*
+     * 绘制 FFT 幅值谱。
+     * x 轴：频率 (Hz)，范围 0 到 ~20 Hz（覆盖前几个谐波）
+     * y 轴：归一化幅值
+     * 竖直线标记各谐波频率位置 fₙ = n·c/(2L)
+     */
+    function drawFFT() {
+        const ctx = fftCtx;
+        const W = FFT_CANVAS_W;
+        const H = FFT_CANVAS_H;
+
+        ctx.clearRect(0, 0, W, H);
+
+        const marginX = 50;
+        const marginY = 20;
+        const plotW = W - 2 * marginX;
+        const plotH = H - 2 * marginY;
+
+        // 显示频率范围：0 到 8 倍基频（确保显示前 4 个谐波）
+        const f1 = c / (2 * L);
+        const fMax = Math.max(f1 * 8, 5);
+
+        // --- 网格 ---
+        ctx.strokeStyle = '#21262d';
+        ctx.lineWidth = 0.5;
+        for (let gy = marginY; gy <= H - marginY; gy += plotH / 4) {
+            ctx.beginPath();
+            ctx.moveTo(marginX, gy);
+            ctx.lineTo(W - marginX, gy);
+            ctx.stroke();
+        }
+
+        // --- 坐标轴 ---
+        ctx.strokeStyle = '#484f58';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(marginX, marginY);
+        ctx.lineTo(marginX, H - marginY);
+        ctx.lineTo(W - marginX, H - marginY);
+        ctx.stroke();
+
+        // --- 谐波频率标记线 ---
+        for (let n = 1; n <= 4; n++) {
+            const fn = n * f1;
+            if (fn <= fMax) {
+                const fx = marginX + (fn / fMax) * plotW;
+                ctx.setLineDash([3, 4]);
+                ctx.strokeStyle = 'rgba(88,166,255,0.25)';
+                ctx.lineWidth = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(fx, marginY);
+                ctx.lineTo(fx, H - marginY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#58a6ff';
+                ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('f' + n + '=' + fn.toFixed(1), fx, H - 4);
+            }
+        }
+
+        // --- x 轴标签 ---
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        for (let f = 0; f <= fMax; f += Math.ceil(fMax / 6)) {
+            const fx = marginX + (f / fMax) * plotW;
+            ctx.fillText(f.toFixed(1), fx, H - marginY + 14);
+        }
+        ctx.fillText('频率 (Hz)', W / 2, H - 3);
+
+        // y 轴标签
+        ctx.save();
+        ctx.translate(12, H / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('幅值', 0, 0);
+        ctx.restore();
+
+        // --- 绘制频谱柱状图 ---
+        if (spectrumMagnitudes.length > 0) {
+            const barWidth = Math.max(2, plotW / spectrumMagnitudes.length);
+            let maxMag = 0;
+            for (let i = 0; i < spectrumMagnitudes.length; i++) {
+                if (spectrumFreqs[i] <= fMax && spectrumMagnitudes[i] > maxMag) {
+                    maxMag = spectrumMagnitudes[i];
+                }
+            }
+            if (maxMag < 0.0001) maxMag = 1;
+
+            for (let i = 0; i < spectrumMagnitudes.length; i++) {
+                if (spectrumFreqs[i] > fMax) break;
+                const fx = marginX + (spectrumFreqs[i] / fMax) * plotW;
+                const barH = (spectrumMagnitudes[i] / maxMag) * plotH;
+                const y = H - marginY - barH;
+
+                ctx.fillStyle = 'rgba(88,166,255,0.7)';
+                ctx.fillRect(fx - barWidth / 2, y, barWidth, barH);
+            }
+        } else {
+            // 无频谱数据时的提示
+            ctx.fillStyle = 'rgba(139,148,158,0.5)';
+            ctx.font = '13px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('频谱将在模拟运行数秒后显示...', W / 2, H / 2);
+        }
+    }
+
+    // ==================== 动画主循环 ====================
+    /*
+     * 使用 requestAnimationFrame 驱动动画。
+     * 每个动画帧：
+     *   1. 计算自上一帧经过的真实时间 elapsed
+     *   2. 将 elapsed 拆分为满足 CFL 条件的子步
+     *   3. 逐个执行物理子步
+     *   4. 采样中点位移用于 FFT
+     *   5. 绘制弦和频谱
+     */
+    let lastFrameTime = null;
+
+    function animate(timestamp) {
+        if (!running) return;
+
+        const timestampSec = timestamp / 1000;
+
+        if (lastFrameTime === null) {
+            lastFrameTime = timestampSec;
+            animationId = requestAnimationFrame(animate);
+            return;
+        }
+
+        let elapsed = timestampSec - lastFrameTime;
+        lastFrameTime = timestampSec;
+
+        // 防止切出标签页后的大跳帧
+        if (elapsed > 0.1) elapsed = 0.1;
+        if (elapsed <= 0) elapsed = 0.001;
+
+        // 计算子步数：确保每个子步满足 dt ≤ 0.8*dx/c
+        const dtMax = 0.8 * dx / c;
+        subSteps = Math.max(1, Math.ceil(elapsed / dtMax));
+        const dtActual = elapsed / subSteps;
+
+        // 执行物理子步
+        for (let s = 0; s < subSteps; s++) {
+            physicsStep(dtActual);
+        }
+
+        // FFT 采样
+        sampleMidpoint(timestampSec);
+
+        // 渲染
+        drawString();
+        drawFFT();
+
+        animationId = requestAnimationFrame(animate);
+    }
+
+    // ==================== 开始 / 暂停 / 重置 ====================
+    function startSimulation() {
+        if (running) return;
+        running = true;
+        lastFrameTime = null;
+        updatePhysicsParams();
+        animationId = requestAnimationFrame(animate);
+        document.getElementById('btnStart').textContent = '▶ 运行中...';
+        document.getElementById('btnStart').disabled = true;
+    }
+
+    function pauseSimulation() {
+        running = false;
+        if (animationId !== null) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        lastFrameTime = null;
+        document.getElementById('btnStart').textContent = '▶ 开始';
+        document.getElementById('btnStart').disabled = false;
+        drawString();
+    }
+
+    function resetSimulation() {
+        pauseSimulation();
+        fullReset();
+    }
+
+    // ==================== 拖拽交互 ====================
+    /*
+     * 鼠标/触摸拖拽以设置弦的初始位移。
+     * 使用高斯权重在拖拽点周围创建平滑的位移分布，
+     * 模拟手指拨弦的物理效果。
+     *
+     * 坐标系转换：
+     *   - 画布坐标 → 物理坐标：x_phys = (mouseX - marginX) / plotW * L
+     *   - 物理位移 → 画布位移：y_canvas = midY - y_phys * scaleY
+     */
+    function getCanvasPos(e) {
+        const rect = stringCanvas.getBoundingClientRect();
+        const scaleX = STRING_CANVAS_W / rect.width;
+        const scaleY_ratio = STRING_CANVAS_H / rect.height;
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY_ratio
+        };
+    }
+
+    function getStringCoords(canvasX, canvasY) {
+        const marginX = 60;
+        const plotW = STRING_CANVAS_W - 2 * marginX;
+        const midY = STRING_CANVAS_H / 2;
+        const plotH = STRING_CANVAS_H - 2 * 30;
+        const maxDisplay = 0.35;
+        const scaleY = (plotH / 2) / maxDisplay;
+
+        const xPhys = Math.max(0, Math.min(L, ((canvasX - marginX) / plotW) * L));
+        const yPhys = (midY - canvasY) / scaleY;
+
+        return { xPhys, yPhys };
+    }
+
+    function onMouseDown(e) {
+        e.preventDefault();
+        const pos = getCanvasPos(e);
+        const coords = getStringCoords(pos.x, pos.y);
+
+        // 检查点击是否在绘图区域内
+        const marginX = 60;
+        if (pos.x < marginX || pos.x > STRING_CANVAS_W - marginX) return;
+
+        isDragging = true;
+        dragIndex = Math.round(coords.xPhys / dx);
+        dragIndex = Math.max(1, Math.min(N - 2, dragIndex));
+        dragDisplacement = coords.yPhys;
+
+        applyDragDisplacement();
+        drawString();
+    }
+
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+
+        const pos = getCanvasPos(e);
+        const coords = getStringCoords(pos.x, pos.y);
+
+        dragIndex = Math.round(coords.xPhys / dx);
+        dragIndex = Math.max(1, Math.min(N - 2, dragIndex));
+        dragDisplacement = Math.max(-0.35, Math.min(0.35, coords.yPhys));
+
+        applyDragDisplacement();
+        drawString();
+    }
+
+    function onMouseUp(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        dragIndex = -1;
+        dragDisplacement = 0;
+        drawString();
+    }
+
+    /*
+     * 在拖拽点周围施加高斯权重位移。
+     * 当模拟未运行时，同时更新 y_prev = y_curr（零初速度条件）。
+     */
+    function applyDragDisplacement() {
+        const sigma = DRAG_SIGMA;
+        const sigma2 = 2 * sigma * sigma;
+        for (let i = 1; i < N - 1; i++) {
+            const dist = i - dragIndex;
+            const weight = Math.exp(-dist * dist / sigma2);
+            if (weight > 0.005) {
+                y_curr[i] = dragDisplacement * weight;
+                if (!running) {
+                    y_prev[i] = y_curr[i];   // 零初速度
+                }
+            }
+        }
+        y_curr[0] = 0;
+        y_curr[N - 1] = 0;
+        y_prev[0] = 0;
+        y_prev[N - 1] = 0;
+    }
+
+    // ==================== 触摸事件支持 ====================
+    function onTouchStart(e) {
+        if (e.touches.length === 1) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const pos = getCanvasPos(touch);
+            const coords = getStringCoords(pos.x, pos.y);
+            const marginX = 60;
+            if (pos.x < marginX || pos.x > STRING_CANVAS_W - marginX) return;
+            isDragging = true;
+            dragIndex = Math.round(coords.xPhys / dx);
+            dragIndex = Math.max(1, Math.min(N - 2, dragIndex));
+            dragDisplacement = coords.yPhys;
+            applyDragDisplacement();
+            drawString();
+        }
+    }
+
+    function onTouchMove(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const pos = getCanvasPos(touch);
+        const coords = getStringCoords(pos.x, pos.y);
+        dragIndex = Math.round(coords.xPhys / dx);
+        dragIndex = Math.max(1, Math.min(N - 2, dragIndex));
+        dragDisplacement = Math.max(-0.35, Math.min(0.35, coords.yPhys));
+        applyDragDisplacement();
+        drawString();
+    }
+
+    function onTouchEnd(e) {
+        isDragging = false;
+        dragIndex = -1;
+        dragDisplacement = 0;
+        drawString();
+    }
+
+    // ==================== 信息面板更新 ====================
+    function updateInfoDisplay() {
+        const f1 = c / (2 * L);
+        document.getElementById('infoF1').textContent = f1.toFixed(2) + ' Hz';
+        document.getElementById('infoF2').textContent = (f1 * 2).toFixed(2) + ' Hz';
+        document.getElementById('infoF3').textContent = (f1 * 3).toFixed(2) + ' Hz';
+        document.getElementById('infoF4').textContent = (f1 * 4).toFixed(2) + ' Hz';
+
+        let maxAmp = 0;
+        for (let i = 0; i < N; i++) {
+            const absVal = Math.abs(y_curr[i]);
+            if (absVal > maxAmp) maxAmp = absVal;
+        }
+        document.getElementById('infoAmp').textContent = maxAmp.toFixed(3);
+
+        const courant = c * dt / dx;
+        document.getElementById('infoCourant').textContent = courant.toFixed(2);
+
+        document.getElementById('lVal').textContent = L.toFixed(2);
+        document.getElementById('cVal').textContent = c.toFixed(2);
+        document.getElementById('dVal').textContent = damping.toFixed(4);
+    }
+
+    // ==================== 滑块事件 ====================
+    /*
+     * 滑块变化时的处理：
+     * - L 变化：暂停动画，重新采样位移数组（插值到新网格）
+     * - c 变化：只需更新 dt 和子步数，无需改变位移数组
+     * - damping 变化：立即生效
+     */
+    document.getElementById('lSlider').addEventListener('input', function() {
+        const newL = parseFloat(this.value);
+        if (newL === L) return;
+        const oldL = L;
+        L = newL;
+        // 将当前位移从旧网格插值到新网格
+        const newYCurr = resampleDisplacement(oldL, y_curr);
+        const newYPrev = resampleDisplacement(oldL, y_prev);
+        y_curr = newYCurr;
+        y_prev = newYPrev;
+        y_next = new Float64Array(N);
+        updatePhysicsParams();
+        sampleBuffer = [];
+        sampleTimes = [];
+        spectrumMagnitudes = [];
+        spectrumFreqs = [];
+        drawString();
+        drawFFT();
+    });
+
+    document.getElementById('cSlider').addEventListener('input', function() {
+        c = parseFloat(this.value);
+        updatePhysicsParams();
+        sampleBuffer = [];
+        sampleTimes = [];
+        spectrumMagnitudes = [];
+        spectrumFreqs = [];
+        drawString();
+        drawFFT();
+    });
+
+    document.getElementById('dSlider').addEventListener('input', function() {
+        damping = parseFloat(this.value);
+        updateInfoDisplay();
+    });
+
+    // ==================== 按钮事件 ====================
+    document.getElementById('btnStart').addEventListener('click', startSimulation);
+    document.getElementById('btnPause').addEventListener('click', pauseSimulation);
+    document.getElementById('btnReset').addEventListener('click', resetSimulation);
+    document.getElementById('btnPluck').addEventListener('click', function() {
+        // 随机拨弦位置（0.3L 到 0.7L），高度 0.25
+        const pluckPos = L * (0.3 + Math.random() * 0.4);
+        pluckString(pluckPos, 0.25);
+    });
+
+    // ==================== 画布事件 ====================
+    stringCanvas.addEventListener('mousedown', onMouseDown);
+    stringCanvas.addEventListener('mousemove', onMouseMove);
+    stringCanvas.addEventListener('mouseup', onMouseUp);
+    stringCanvas.addEventListener('mouseleave', onMouseUp);
+    stringCanvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    stringCanvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    stringCanvas.addEventListener('touchend', onTouchEnd);
+
+    // ==================== 键盘快捷键 ====================
+    document.addEventListener('keydown', function(e) {
+        switch (e.key.toLowerCase()) {
+            case ' ':
+                e.preventDefault();
+                if (running) pauseSimulation();
+                else startSimulation();
+                break;
+            case 'r':
+                if (!e.ctrlKey && !e.metaKey) {
+                    resetSimulation();
+                }
+                break;
+            case 'p':
+                if (!e.ctrlKey && !e.metaKey) {
+                    pluckString(L / 2, 0.25);
+                }
+                break;
+        }
+    });
+
+    // ==================== 启动 ====================
+    initCanvases();
+    fullReset();
+    drawString();
+    drawFFT();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>微波阻抗变换器 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>源阻抗Zs:</label><input type="range" id="zs" min="10" max="200" step="1" value="50"><input type="number" id="zsVal" value="50"></div>
+      <div class="ctrl-group"><label>负载阻抗ZL:</label><input type="range" id="zl" min="10" max="200" step="1" value="100"><input type="number" id="zlVal" value="100"></div>
+      <div class="ctrl-group"><label>特征阻抗Z0:</label><input type="range" id="z0" min="20" max="100" step="1" value="70.7"><input type="number" id="z0Val" value="70.7"></div>
+      <div class="ctrl-group"><label>频率f(GHz):</label><input type="range" id="freq" min="0.1" max="10" step="0.1" value="2.4"><input type="number" id="freqVal" value="2.4"></div>
+    </div>
+    <div id="info">微波阻抗变换器实验：使用λ/4传输线实现阻抗匹配。特征阻抗Z0 = √(Zs × ZL)，通过调整各参数观察匹配效果。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let time = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  const Zs = parseFloat(document.getElementById('zs').value);
+  const ZL = parseFloat(document.getElementById('zl').value);
+  const Z0 = parseFloat(document.getElementById('z0').value);
+  const freq = parseFloat(document.getElementById('freq').value);
+  
+  const cx = canvas.width/2, cy = canvas.height/2;
+  
+  // 绘制传输线结构
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  
+  // 源端
+  ctx.beginPath();
+  ctx.moveTo(canvas.width*0.1, cy);
+  ctx.lineTo(canvas.width*0.25, cy);
+  ctx.stroke();
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(canvas.width*0.25, cy-15);
+  ctx.lineTo(canvas.width*0.25, cy+15);
+  ctx.stroke();
+  
+  // λ/4传输线
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(canvas.width*0.25, cy);
+  ctx.lineTo(canvas.width*0.75, cy);
+  ctx.stroke();
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(canvas.width*0.25, cy-18);
+  ctx.lineTo(canvas.width*0.75, cy-18);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(canvas.width*0.25, cy+18);
+  ctx.lineTo(canvas.width*0.75, cy+18);
+  ctx.stroke();
+  
+  // 负载端
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(canvas.width*0.75, cy);
+  ctx.lineTo(canvas.width*0.9, cy);
+  ctx.stroke();
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(canvas.width*0.75, cy-15);
+  ctx.lineTo(canvas.width*0.75, cy+15);
+  ctx.stroke();
+  
+  // 绘制标签
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('Zs', canvas.width*0.12, cy-25);
+  ctx.fillText('Z0', cx, cy-25);
+  ctx.fillText('ZL', canvas.width*0.82, cy-25);
+  ctx.fillText('λ/4', cx, cy+35);
+  
+  // 计算匹配参数
+  const requiredZ0 = Math.sqrt(Zs * ZL);
+  const wavelength = 30 / freq; // 厘米
+  const reflection = (ZL - Zs) / (ZL + Zs);
+  const SWR = Math.abs((1 + reflection) / (1 - reflection));
+  
+  // 绘制信息
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`源阻抗 Zs = ${Zs} Ω`, canvas.width*0.1, canvas.height*0.8);
+  ctx.fillText(`负载阻抗 ZL = ${ZL} Ω`, canvas.width*0.1, canvas.height*0.8+18);
+  ctx.fillText(`当前 Z0 = ${Z0.toFixed(1)} Ω`, canvas.width*0.1, canvas.height*0.8+36);
+  ctx.fillText(`理想 Z0 = ${requiredZ0.toFixed(1)} Ω`, canvas.width*0.1, canvas.height*0.8+54);
+  
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`驻波比 SWR = ${SWR.toFixed(2)}`, cx-70, canvas.height*0.9);
+  ctx.fillStyle = '#f78166';
+  ctx.fillText(`波长 λ = ${wavelength.toFixed(1)} cm`, cx-60, canvas.height*0.9+22);
+  
+  // 绘制信号动画
+  ctx.strokeStyle = 'rgba(63,185,80,0.6)';
+  ctx.lineWidth = 1.5;
+  const offset = Math.sin(time * 0.05) * 20;
+  for(let i=0;i<3;i++) {
+    const x = canvas.width*0.3 + (i * canvas.width*0.15) + offset;
+    if(x > canvas.width*0.2 && x < canvas.width*0.8) {
+      ctx.beginPath();
+      ctx.arc(x, cy, 3, 0, Math.PI*2);
+      ctx.stroke();
+    }
+  }
+  
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('zs').addEventListener('input', e => { document.getElementById('zsVal').value = e.target.value; });
+document.getElementById('zl').addEventListener('input', e => { document.getElementById('zlVal').value = e.target.value; });
+document.getElementById('z0').addEventListener('input', e => { document.getElementById('z0Val').value = e.target.value; });
+document.getElementById('freq').addEventListener('input', e => { document.getElementById('freqVal').value = e.target.value; });
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

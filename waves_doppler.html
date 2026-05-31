@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多普勒效应 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; cursor:crosshair; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>声源速度 v:</label><input type="range" id="srcSpeed" min="0" max="0.9" step="0.05" value="0.4"><span id="srcSpeedVal">0.4</span> c</div>
+    <div class="ctrl-group"><label>运动方向:</label><input type="range" id="srcAngle" min="0" max="360" step="5" value="0"><span id="srcAngleVal">0</span>°</div>
+    <div class="ctrl-group"><label>波源频率 f₀:</label><input type="range" id="srcFreq" min="1" max="5" step="0.5" value="2"><span id="srcFreqVal">2</span> Hz</div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">多普勒效应：声源运动时，前方波前被压缩（频率升高/蓝移），后方波前被拉伸（频率降低/红移）。点击画布任意位置放置观察者。公式：f' = f₀ × c / (c - v·cosθ)</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let waves = [];
+let observers = [];
+let sourceX = 0, sourceY = 0;
+let sourceVx = 0, sourceVy = 0;
+let lastWaveTime = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  waves = [];
+  observers = [];
+  t = 0;
+  lastWaveTime = 0;
+  const w = canvas.width, h = canvas.height;
+  sourceX = w / 2;
+  sourceY = h / 2;
+  sourceVx = 0;
+  sourceVy = 0;
+  observers.push({ x: w * 0.85, y: h * 0.5, label: 'A' });
+  observers.push({ x: w * 0.15, y: h * 0.5, label: 'B' });
+  observers.push({ x: w * 0.5, y: h * 0.15, label: 'C' });
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const speed = parseFloat(document.getElementById('srcSpeed').value);
+  const angle = parseFloat(document.getElementById('srcAngle').value) * Math.PI / 180;
+  const freq = parseFloat(document.getElementById('srcFreq').value);
+  const c = S * 0.15;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  sourceVx = speed * c * Math.cos(angle);
+  sourceVy = speed * c * Math.sin(angle);
+  sourceX += sourceVx * 0.016;
+  sourceY += sourceVy * 0.016;
+
+  if (sourceX < S * 0.05) { sourceX = S * 0.05; }
+  if (sourceX > w - S * 0.05) { sourceX = w - S * 0.05; }
+  if (sourceY < S * 0.05) { sourceY = S * 0.05; }
+  if (sourceY > h - S * 0.05) { sourceY = h - S * 0.05; }
+
+  const waveInterval = 1 / freq;
+  if (t - lastWaveTime >= waveInterval) {
+    waves.push({ x: sourceX, y: sourceY, birthTime: t });
+    lastWaveTime = t;
+  }
+
+  for (let i = waves.length - 1; i >= 0; i--) {
+    const wave = waves[i];
+    const age = t - wave.birthTime;
+    const radius = age * c;
+    const alpha = Math.max(0, 1 - age / 6);
+
+    if (radius > S * 2 || alpha <= 0) {
+      waves.splice(i, 1);
+      continue;
+    }
+
+    ctx.strokeStyle = `rgba(210,168,255,${alpha * 0.6})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(wave.x, wave.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#f78166';
+  ctx.beginPath();
+  ctx.arc(sourceX, sourceY, S * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffa657';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(sourceX, sourceY, S * 0.025, 0, Math.PI * 2);
+  ctx.stroke();
+
+  if (speed > 0.01) {
+    const arrowLen = S * 0.08;
+    ctx.strokeStyle = '#ffa657';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(sourceX, sourceY);
+    ctx.lineTo(sourceX + Math.cos(angle) * arrowLen, sourceY + Math.sin(angle) * arrowLen);
+    ctx.stroke();
+    const ax = sourceX + Math.cos(angle) * arrowLen;
+    const ay = sourceY + Math.sin(angle) * arrowLen;
+    ctx.fillStyle = '#ffa657';
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - Math.cos(angle - 0.4) * S * 0.02, ay - Math.sin(angle - 0.4) * S * 0.02);
+    ctx.lineTo(ax - Math.cos(angle + 0.4) * S * 0.02, ay - Math.sin(angle + 0.4) * S * 0.02);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const fs = S * 0.03;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#ffa657';
+  ctx.textAlign = 'center';
+  ctx.fillText('声源', sourceX, sourceY - S * 0.04);
+  ctx.textAlign = 'left';
+
+  for (const obs of observers) {
+    const dx = obs.x - sourceX;
+    const dy = obs.y - sourceY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const cosTheta = (dx * sourceVx + dy * sourceVy) / (dist * Math.sqrt(sourceVx * sourceVx + sourceVy * sourceVy) + 0.001);
+    const vRadial = speed * cosTheta;
+    const fObs = freq * 1 / (1 - vRadial);
+    const fRatio = fObs / freq;
+
+    let r, g, b;
+    if (fRatio > 1) {
+      const shift = Math.min(1, (fRatio - 1) * 2);
+      r = Math.round(88 + shift * 159);
+      g = Math.round(166 - shift * 100);
+      b = Math.round(255 - shift * 153);
+    } else {
+      const shift = Math.min(1, (1 - fRatio) * 2);
+      r = Math.round(88 - shift * 40);
+      g = Math.round(166 - shift * 66);
+      b = Math.round(255);
+    }
+
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.beginPath();
+    ctx.arc(obs.x, obs.y, S * 0.02, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.5)`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(obs.x, obs.y, S * 0.035, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.font = `bold ${fs}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(obs.label, obs.x, obs.y - S * 0.05);
+    ctx.font = `${fs * 0.9}px sans-serif`;
+    ctx.fillText(`f'=${fObs.toFixed(2)}Hz`, obs.x, obs.y + S * 0.06);
+
+    if (fRatio > 1.02) {
+      ctx.fillStyle = '#3fb950';
+      ctx.fillText('↑蓝移', obs.x, obs.y + S * 0.09);
+    } else if (fRatio < 0.98) {
+      ctx.fillStyle = '#f78166';
+      ctx.fillText('↓红移', obs.x, obs.y + S * 0.09);
+    } else {
+      ctx.fillStyle = '#8b949e';
+      ctx.fillText('≈不变', obs.x, obs.y + S * 0.09);
+    }
+    ctx.textAlign = 'left';
+
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.2)`;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(sourceX, sourceY);
+    ctx.lineTo(obs.x, obs.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText(`v = ${speed.toFixed(2)}c`, w * 0.02, fs + 5);
+  ctx.fillText(`方向 = ${parseFloat(document.getElementById('srcAngle').value).toFixed(0)}°`, w * 0.02, fs * 2 + 5);
+  ctx.fillText(`f₀ = ${freq.toFixed(1)} Hz`, w * 0.02, fs * 3 + 5);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${fs * 0.8}px sans-serif`;
+  ctx.fillText('点击画布添加观察者', w * 0.02, fs * 4 + 5);
+
+  const barX = w * 0.02;
+  const barY = h - S * 0.12;
+  const barW = S * 0.3;
+  const barH = S * 0.04;
+  const grad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
+  grad.addColorStop(0, '#f78166');
+  grad.addColorStop(0.5, '#d2a8ff');
+  grad.addColorStop(1, '#58a6ff');
+  ctx.fillStyle = grad;
+  ctx.fillRect(barX, barY, barW, barH);
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX, barY, barW, barH);
+  ctx.fillStyle = '#f78166';
+  ctx.font = `${fs * 0.7}px sans-serif`;
+  ctx.fillText('红移(低频)', barX, barY - 3);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText('蓝移(高频)', barX + barW - S * 0.1, barY - 3);
+
+  t += 0.016;
+  animationId = requestAnimationFrame(draw);
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const label = labels[observers.length % labels.length];
+  observers.push({ x, y, label });
+});
+
+document.getElementById('srcSpeed').addEventListener('input', e => {
+  document.getElementById('srcSpeedVal').textContent = e.target.value;
+});
+document.getElementById('srcAngle').addEventListener('input', e => {
+  document.getElementById('srcAngleVal').textContent = e.target.value;
+});
+document.getElementById('srcFreq').addEventListener('input', e => {
+  document.getElementById('srcFreqVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>李萨如图 - 物理数值仿真平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+.container{width:100%;max-width:1100px}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.canvas-row{display:flex;gap:16px;margin-bottom:20px}
+@media(max-width:860px){.canvas-row{flex-direction:column}}
+.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
+.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
+.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+.info-item{display:flex;align-items:baseline;gap:6px}
+.info-item .info-label{color:#8b949e}
+.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.btn-row{display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn-start{background:#238636;color:#fff;border-color:#2ea043}
+.btn-start:hover{background:#2ea043}
+.btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
+.btn-pause:hover{background:#bb8009}
+.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
+.btn-reset:hover{background:#30363d}
+.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>李萨如图形</h1>
+    <p class="subtitle">两个相互垂直的简谐振动合成时，若频率比为有理数，质点轨迹为闭合曲线，即李萨如图形。不同的频率比和相位差产生不同的优美图案。</p>
+  </div>
+  <div class="canvas-row">
+    <div class="panel">
+      <h2>🔬 李萨如图形</h2>
+      <canvas id="canvasLissajous" width="680" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h2>📊 分振动波形</h2>
+      <canvas id="canvasWave" width="680" height="420"></canvas>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>频率比 fx <span class="val" id="valFx">3</span></label>
+      <input type="range" id="sliderFx" min="1" max="10" step="1" value="3">
+    </div>
+    <div class="control-group">
+      <label>频率比 fy <span class="val" id="valFy">2</span></label>
+      <input type="range" id="sliderFy" min="1" max="10" step="1" value="2">
+    </div>
+    <div class="control-group">
+      <label>相位差 Δφ <span class="val" id="valPhase">90°</span></label>
+      <input type="range" id="sliderPhase" min="0" max="360" step="1" value="90">
+    </div>
+  </div>
+  <div class="info-bar">
+    <div class="info-item"><span class="info-label">频率比 fx:fy =</span><span class="info-value" id="infoRatio">3:2</span></div>
+    <div class="info-item"><span class="info-label">闭合条件 =</span><span class="info-value" id="infoClosed">闭合</span></div>
+    <div class="info-item"><span class="info-label">周期 T =</span><span class="info-value" id="infoPeriod">2π</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart">▶ 动画</button>
+    <button class="btn btn-pause" id="btnPause">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset">↺ 重置</button>
+  </div>
+  <p class="legend-note">💡 提示：频率比为有理数时图形闭合，为无理数时图形不闭合。按 Space 开始/暂停，按 R 重置。</p>
+</div>
+<script>
+var canvasLissajous=document.getElementById('canvasLissajous');
+var ctxL=canvasLissajous.getContext('2d');
+var canvasWave=document.getElementById('canvasWave');
+var ctxW=canvasWave.getContext('2d');
+var sliderFx=document.getElementById('sliderFx');
+var sliderFy=document.getElementById('sliderFy');
+var sliderPhase=document.getElementById('sliderPhase');
+var valFx=document.getElementById('valFx');
+var valFy=document.getElementById('valFy');
+var valPhase=document.getElementById('valPhase');
+var infoRatio=document.getElementById('infoRatio');
+var infoClosed=document.getElementById('infoClosed');
+var infoPeriod=document.getElementById('infoPeriod');
+var btnStart=document.getElementById('btnStart');
+var btnPause=document.getElementById('btnPause');
+var btnReset=document.getElementById('btnReset');
+
+var fx=3,fy=2,phaseDeg=90;
+var running=false,animTime=0,lastFrameTime=null,animFrameId=null;
+
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=b;b=a%b;a=t}return a}
+
+function updateUI(){
+  valFx.textContent=fx;
+  valFy.textContent=fy;
+  valPhase.textContent=phaseDeg+'°';
+  infoRatio.textContent=fx+':'+fy;
+  var g=gcd(fx,fy);
+  infoClosed.textContent='闭合';
+  infoClosed.style.color='#3fb950';
+  var periodGcd=g;
+  var periodStr='2π';
+  if(periodGcd>1) periodStr='2π/'+periodGcd;
+  infoPeriod.textContent=periodStr;
+}
+
+sliderFx.addEventListener('input',function(){fx=+sliderFx.value;updateUI();if(!running)draw()});
+sliderFy.addEventListener('input',function(){fy=+sliderFy.value;updateUI();if(!running)draw()});
+sliderPhase.addEventListener('input',function(){phaseDeg=+sliderPhase.value;updateUI();if(!running)draw()});
+
+btnStart.addEventListener('click',function(){
+  if(running){pause();return}
+  running=true;
+  if(!animFrameId)animFrameId=requestAnimationFrame(animate);
+});
+btnPause.addEventListener('click',pause);
+function pause(){running=false}
+btnReset.addEventListener('click',function(){
+  fx=3;fy=2;phaseDeg=90;animTime=0;lastFrameTime=null;
+  sliderFx.value=3;sliderFy.value=2;sliderPhase.value=90;
+  updateUI();if(!running)draw();
+});
+
+function drawLissajous(){
+  var W=canvasLissajous.width,H=canvasLissajous.height;
+  ctxL.clearRect(0,0,W,H);
+  ctxL.fillStyle='#0d1117';ctxL.fillRect(0,0,W,H);
+  var cx=W/2,cy=H/2;
+  var A=Math.min(W,H)*0.38;
+  var phaseRad=phaseDeg*Math.PI/180;
+  var g=gcd(fx,fy);
+  var periodT=2*Math.PI/g;
+  var totalSteps=1000;
+
+  ctxL.strokeStyle='rgba(48,54,61,0.6)';ctxL.lineWidth=1;
+  for(var i=-4;i<=4;i++){
+    var gx=cx+i*(A/4);
+    ctxL.beginPath();ctxL.moveTo(gx,cy-A);ctxL.lineTo(gx,cy+A);ctxL.stroke();
+    var gy=cy+i*(A/4);
+    ctxL.beginPath();ctxL.moveTo(cx-A,gy);ctxL.lineTo(cx+A,gy);ctxL.stroke();
+  }
+
+  ctxL.strokeStyle='#30363d';ctxL.lineWidth=1.5;
+  ctxL.beginPath();ctxL.moveTo(cx-A,cy);ctxL.lineTo(cx+A,cy);ctxL.stroke();
+  ctxL.beginPath();ctxL.moveTo(cx,cy-A);ctxL.lineTo(cx,cy+A);ctxL.stroke();
+
+  ctxL.strokeStyle='#3fb950';ctxL.lineWidth=2.5;ctxL.shadowColor='#3fb950';ctxL.shadowBlur=8;
+  ctxL.beginPath();
+  for(var i=0;i<=totalSteps;i++){
+    var t=i/totalSteps*periodT;
+    var px=cx+A*Math.sin(fx*t+phaseRad);
+    var py=cy-A*Math.sin(fy*t);
+    if(i===0)ctxL.moveTo(px,py);else ctxL.lineTo(px,py);
+  }
+  ctxL.stroke();ctxL.shadowBlur=0;
+
+  var curT=animTime%periodT;
+  var dotX=cx+A*Math.sin(fx*curT+phaseRad);
+  var dotY=cy-A*Math.sin(fy*curT);
+  ctxL.fillStyle='#f0883e';ctxL.shadowColor='#f0883e';ctxL.shadowBlur=12;
+  ctxL.beginPath();ctxL.arc(dotX,dotY,6,0,Math.PI*2);ctxL.fill();
+  ctxL.shadowBlur=0;
+
+  ctxL.fillStyle='#8b949e';ctxL.font='11px sans-serif';ctxL.textAlign='left';
+  ctxL.fillText('x = sin('+fx+'t + Δφ)',8,16);
+  ctxL.fillText('y = sin('+fy+'t)',8,32);
+  ctxL.fillStyle='#3fb950';ctxL.textAlign='right';
+  ctxL.fillText('fx:fy = '+fx+':'+fy,W-8,16);
+}
+
+function drawWave(){
+  var W=canvasWave.width,H=canvasWave.height;
+  ctxW.clearRect(0,0,W,H);
+  ctxW.fillStyle='#0d1117';ctxW.fillRect(0,0,W,H);
+  var phaseRad=phaseDeg*Math.PI/180;
+  var g=gcd(fx,fy);
+  var periodT=2*Math.PI/g;
+  var ml=50,mr=16,mt=20,mb=30;
+  var pw=W-ml-mr;
+  var halfH=(H-mt-mb)/2;
+  var xCenter=mt+halfH/2;
+  var yCenter=mt+halfH+halfH/2;
+  var waveAmp=halfH*0.38;
+
+  ctxW.strokeStyle='#30363d';ctxW.lineWidth=1;
+  ctxW.beginPath();ctxW.moveTo(ml,mt+halfH);ctxW.lineTo(ml+pw,mt+halfH);ctxW.stroke();
+
+  ctxW.strokeStyle='rgba(48,54,61,0.5)';ctxW.lineWidth=0.5;
+  ctxW.setLineDash([4,4]);
+  ctxW.beginPath();ctxW.moveTo(ml,xCenter);ctxW.lineTo(ml+pw,xCenter);ctxW.stroke();
+  ctxW.beginPath();ctxW.moveTo(ml,yCenter);ctxW.lineTo(ml+pw,yCenter);ctxW.stroke();
+  ctxW.setLineDash([]);
+
+  ctxW.strokeStyle='#58a6ff';ctxW.lineWidth=2;ctxW.shadowColor='#58a6ff';ctxW.shadowBlur=4;
+  ctxW.beginPath();
+  for(var i=0;i<=pw;i++){
+    var t=i/pw*periodT;
+    var val=Math.sin(fx*t+phaseRad);
+    var px=ml+i;
+    var py=xCenter-val*waveAmp;
+    if(i===0)ctxW.moveTo(px,py);else ctxW.lineTo(px,py);
+  }
+  ctxW.stroke();ctxW.shadowBlur=0;
+
+  ctxW.fillStyle='#58a6ff';ctxW.font='11px sans-serif';ctxW.textAlign='left';
+  ctxW.fillText('x(t) = sin('+fx+'t + Δφ)',ml+4,mt+14);
+
+  ctxW.strokeStyle='#f78166';ctxW.lineWidth=2;ctxW.shadowColor='#f78166';ctxW.shadowBlur=4;
+  ctxW.beginPath();
+  for(var i=0;i<=pw;i++){
+    var t=i/pw*periodT;
+    var val=Math.sin(fy*t);
+    var px=ml+i;
+    var py=yCenter-val*waveAmp;
+    if(i===0)ctxW.moveTo(px,py);else ctxW.lineTo(px,py);
+  }
+  ctxW.stroke();ctxW.shadowBlur=0;
+
+  ctxW.fillStyle='#f78166';ctxW.font='11px sans-serif';ctxW.textAlign='left';
+  ctxW.fillText('y(t) = sin('+fy+'t)',ml+4,mt+halfH+14);
+
+  var curT=animTime%periodT;
+  var curFrac=curT/periodT;
+  var lineX=ml+curFrac*pw;
+  ctxW.strokeStyle='rgba(240,136,62,0.6)';ctxW.lineWidth=1.5;ctxW.setLineDash([3,3]);
+  ctxW.beginPath();ctxW.moveTo(lineX,mt);ctxW.lineTo(lineX,H-mb);ctxW.stroke();
+  ctxW.setLineDash([]);
+
+  var xVal=Math.sin(fx*curT+phaseRad);
+  var yVal=Math.sin(fy*curT);
+  ctxW.fillStyle='#58a6ff';ctxW.beginPath();ctxW.arc(lineX,xCenter-xVal*waveAmp,5,0,Math.PI*2);ctxW.fill();
+  ctxW.fillStyle='#f78166';ctxW.beginPath();ctxW.arc(lineX,yCenter-yVal*waveAmp,5,0,Math.PI*2);ctxW.fill();
+
+  ctxW.fillStyle='#8b949e';ctxW.font='10px sans-serif';ctxW.textAlign='center';
+  ctxW.fillText('0',ml,H-mb+14);
+  ctxW.fillText('T',ml+pw,H-mb+14);
+  ctxW.fillText('t',ml+pw/2,H-mb+14);
+}
+
+function draw(){drawLissajous();drawWave()}
+
+function animate(timestamp){
+  if(!running){animFrameId=null;return}
+  if(lastFrameTime===null)lastFrameTime=timestamp;
+  var dt=Math.min((timestamp-lastFrameTime)/1000,0.1);
+  lastFrameTime=timestamp;animTime+=dt*2;
+  draw();
+  if(running)animFrameId=requestAnimationFrame(animate);
+}
+
+function resizeCanvases(){
+  var rowW=document.querySelector('.canvas-row').clientWidth;var cw=Math.floor((rowW-16)/2)-26;if(cw>680)cw=680;if(cw<200)cw=200;
+  var sw=cw,sh=Math.round(sw*420/680);
+  canvasLissajous.width=sw;canvasLissajous.height=sh;
+  canvasLissajous.style.width=sw+'px';canvasLissajous.style.height=sh+'px';
+  var fw=cw,fh=Math.round(fw*420/680);
+  canvasWave.width=fw;canvasWave.height=fh;
+  canvasWave.style.width=fw+'px';canvasWave.style.height=fh+'px';
+}
+window.addEventListener('resize',resizeCanvases);resizeCanvases();
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(running)pause();else btnStart.click()}
+  else if(e.code==='KeyR'){e.preventDefault();btnReset.click()}
+});
+updateUI();draw();
+</script>
+</body>
+</html>

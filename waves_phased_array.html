@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>相控阵雷达 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>波束方向:</label><input type="range" id="beamAngle" min="-90" max="90" step="5" value="0"><span id="beamAngleVal">0</span>°</div>
+    <div class="ctrl-group"><label>阵列大小:</label><input type="range" id="arraySize" min="3" max="8" step="1" value="5"><span id="arraySizeVal">5</span>×5</div>
+    <div class="ctrl-group"><label>波长λ:</label><input type="range" id="wavelength" min="1" max="5" step="0.5" value="2"><span id="wavelengthVal">2</span></div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">相控阵雷达：通过控制阵列中每个天线单元的相位延迟，实现波束的电子扫描。原理：相邻单元间的相位差Δφ = 2πd·sinθ/λ，可在不转动天线的情况下改变波束方向。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const beamAngle = parseFloat(document.getElementById('beamAngle').value) * Math.PI / 180;
+  const arraySize = parseInt(document.getElementById('arraySize').value);
+  const wavelength = parseFloat(document.getElementById('wavelength').value);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const spacing = S * 0.06;
+  const startX = cx - (arraySize - 1) * spacing / 2;
+  const startY = cy - (arraySize - 1) * spacing / 2;
+
+  for (let i = 0; i < arraySize; i++) {
+    for (let j = 0; j < arraySize; j++) {
+      const x = startX + j * spacing;
+      const y = startY + i * spacing;
+      const distFromCenter = Math.sqrt(Math.pow(j - (arraySize - 1) / 2, 2) + Math.pow(i - (arraySize - 1) / 2, 2)) * spacing;
+      const phase = (2 * Math.PI * distFromCenter * Math.sin(beamAngle)) / wavelength;
+      const intensity = 0.5 + 0.5 * Math.sin(t * 3 + phase);
+
+      ctx.fillStyle = `rgba(210,168,255,${0.3 + intensity * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(x, y, S * 0.015, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(210,168,255,${0.3 + intensity * 0.3})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, S * 0.02, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  const beamLen = S * 0.4;
+  for (let i = 0; i < 36; i++) {
+    const angle = (i / 36) * Math.PI * 2;
+    const dist = Math.cos(angle - beamAngle) * 0.8 + 0.2;
+    const intensity = Math.pow(dist, 8);
+
+    if (intensity > 0.01) {
+      ctx.strokeStyle = `rgba(247,129,102,${intensity * 0.6})`;
+      ctx.lineWidth = intensity * 3 + 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle) * beamLen * dist, cy + Math.sin(angle) * beamLen * dist);
+      ctx.stroke();
+    }
+  }
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(beamAngle) * beamLen, cy + Math.sin(beamAngle) * beamLen);
+  ctx.stroke();
+
+  ctx.fillStyle = '#3fb950';
+  ctx.beginPath();
+  ctx.arc(cx + Math.cos(beamAngle) * beamLen, cy + Math.sin(beamAngle) * beamLen, S * 0.02, 0, Math.PI * 2);
+  ctx.fill();
+
+  const fs = S * 0.032;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText(`波束方向 = ${parseFloat(document.getElementById('beamAngle').value).toFixed(0)}°`, w * 0.02, fs + 5);
+  ctx.fillText(`阵列 = ${arraySize}×${arraySize}`, w * 0.02, fs * 2 + 5);
+  ctx.fillText(`波长 λ = ${wavelength}`, w * 0.02, fs * 3 + 5);
+
+  const directivity = arraySize * arraySize * 4 * Math.PI / (wavelength * wavelength);
+  ctx.fillStyle = '#d2a8ff';
+  ctx.fillText(`方向性 = ${directivity.toFixed(1)}`, w * 0.02, fs * 4 + 5);
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('beamAngle').addEventListener('input', e => {
+  document.getElementById('beamAngleVal').textContent = e.target.value;
+});
+document.getElementById('arraySize').addEventListener('input', e => {
+  document.getElementById('arraySizeVal').textContent = e.target.value;
+});
+document.getElementById('wavelength').addEventListener('input', e => {
+  document.getElementById('wavelengthVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('beamAngle').value = 0;
+  document.getElementById('beamAngleVal').textContent = '0';
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

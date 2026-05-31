@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量子波包演化仿真 - 一维薛定谔方程数值求解</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --slider: #484f58;
+    --hover: #1f6feb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  header {
+    width: 100%; max-width: 1100px;
+    padding: 20px 24px 0;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 1.6em;
+    font-weight: 600;
+    color: #f0f6fc;
+    letter-spacing: 0.02em;
+  }
+  header .subtitle {
+    font-size: 0.88em;
+    color: #8b949e;
+    margin-top: 4px;
+  }
+  .main-container {
+    width: 100%; max-width: 1100px;
+    display: flex; gap: 16px;
+    padding: 16px 24px 24px;
+    flex-wrap: wrap;
+  }
+  .canvas-panel {
+    flex: 1 1 720px; min-width: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+  }
+  .info-bar {
+    position: absolute; top: 8px; left: 12px;
+    font-size: 0.78em; color: #8b949e;
+    pointer-events: none;
+    display: flex; gap: 18px;
+    background: rgba(13,17,23,0.75);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .info-bar span { white-space: nowrap; }
+  .info-bar .val { color: var(--accent); font-weight: 600; }
+
+  .control-panel {
+    flex: 0 0 280px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 14px;
+    max-height: 580px;
+    overflow-y: auto;
+  }
+  .control-panel h3 {
+    font-size: 0.95em;
+    color: #f0f6fc;
+    margin-bottom: 2px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ctrl-group { display: flex; flex-direction: column; gap: 3px; }
+  .ctrl-group label {
+    font-size: 0.8em;
+    color: #8b949e;
+    display: flex; justify-content: space-between;
+  }
+  .ctrl-group label .val { color: var(--accent); }
+  .ctrl-group input[type="range"] {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    background: var(--slider);
+    border-radius: 3px;
+    outline: none;
+  }
+  .ctrl-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+  select {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.82em;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #21262d;
+    color: var(--text);
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: 0.15s;
+    text-align: center;
+    font-weight: 500;
+  }
+  .btn:hover { background: #30363d; }
+  .btn.primary { border-color: var(--accent); color: var(--accent); }
+  .btn.primary:hover { background: var(--hover); color: #fff; }
+  .btn.warn { border-color: var(--accent3); color: var(--accent3); }
+
+  .legend { font-size: 0.72em; color: #8b949e; line-height: 1.7; }
+  .legend span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+  .legend .l1 { background: #58a6ff; }
+  .legend .l2 { background: #3fb95044; }
+  .legend .l3 { background: #f78166; }
+
+  footer {
+    font-size: 0.73em; color: #484f58;
+    padding: 0 24px 16px;
+    text-align: center;
+    max-width: 1100px;
+  }
+  @media (max-width: 800px) {
+    .main-container { flex-direction: column; }
+    .control-panel {
+      flex: 0 0 auto; max-height: none;
+      flex-direction: row; flex-wrap: wrap; gap: 10px;
+    }
+    .control-panel .ctrl-group { flex: 1 1 120px; }
+  }
+</style>
+</head>
+<body>
+
+
+
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+    <div class="info-bar" id="infoBar">
+      <span>时间 t = <span class="val" id="infoTime">0.00</span></span>
+      <span>动能 Ek = <span class="val" id="infoEk">0.00</span></span>
+      <span>势能 Ep = <span class="val" id="infoEp">0.00</span></span>
+      <span>总概率 = <span class="val" id="infoProb">1.000</span></span>
+    </div>
+  </div>
+
+  <div class="control-panel">
+    <h3>🛠️ 波包参数</h3>
+    <div class="ctrl-group">
+      <label>初始位置 x₀ <span class="val" id="valX0">-4.0</span></label>
+      <input type="range" id="sliderX0" min="-8" max="8" step="0.1" value="-4">
+    </div>
+    <div class="ctrl-group">
+      <label>初始动量 k₀ <span class="val" id="valK0">15.0</span></label>
+      <input type="range" id="sliderK0" min="2" max="40" step="0.5" value="15">
+    </div>
+    <div class="ctrl-group">
+      <label>波包宽度 σ <span class="val" id="valSigma">0.6</span></label>
+      <input type="range" id="sliderSigma" min="0.2" max="2.5" step="0.05" value="0.6">
+    </div>
+
+    <h3>⚡ 势场设置</h3>
+    <div class="ctrl-group">
+      <label>势场类型</label>
+      <select id="selectPotential">
+        <option value="free">自由空间 (无势场)</option>
+        <option value="barrier" selected>势垒 (量子隧穿)</option>
+        <option value="well">势阱</option>
+        <option value="harmonic">谐振子势</option>
+        <option value="double_barrier">双势垒</option>
+      </select>
+    </div>
+    <div class="ctrl-group" id="groupV0">
+      <label>势垒/阱高度 V₀ <span class="val" id="valV0">80.0</span></label>
+      <input type="range" id="sliderV0" min="5" max="200" step="1" value="80">
+    </div>
+    <div class="ctrl-group" id="groupWidth">
+      <label>势垒/阱宽度 <span class="val" id="valWidth">1.0</span></label>
+      <input type="range" id="sliderWidth" min="0.2" max="4" step="0.1" value="1">
+    </div>
+
+    <h3>⏱️ 模拟控制</h3>
+    <div class="ctrl-group">
+      <label>模拟速度 <span class="val" id="valSpeed">2.0x</span></label>
+      <input type="range" id="sliderSpeed" min="0.5" max="5" step="0.5" value="2">
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="btnStart">▶ 开始</button>
+      <button class="btn" id="btnPause">⏸ 暂停</button>
+      <button class="btn warn" id="btnReset">↺ 重置</button>
+    </div>
+    <div class="legend">
+      <span class="l1"></span> 概率密度 |ψ|²
+      <span class="l2"></span> 势能 V(x)（缩放后）
+      <span class="l3"></span> 实部 Re(ψ)
+    </div>
+  </div>
+</div>
+
+<footer>
+  数值方法：Split-Operator + FFT (Cooley-Tukey radix-2) &nbsp;|&nbsp;
+  边界条件：周期性 + 吸收边界 &nbsp;|&nbsp;
+  计算耗时 &lt; 5ms/帧 &nbsp;|&nbsp;
+  清华大学·数值仿真物理实验补充项目
+</footer>
+
+<script>
+// ============================================================================
+//  量子波包演化仿真 —— 一维含时薛定谔方程数值求解
+//
+//  数值方法：Split-Operator (Trotter分解) + FFT 谱方法
+//
+//  方程：iħ ∂ψ/∂t = -(ħ²/2m)∂²ψ/∂x² + V(x)ψ
+//
+//  使用自然单位 ħ = 1, m = 1，方程简化为：
+//    i ∂ψ/∂t = -½ ∂²ψ/∂x² + V(x)ψ
+//
+//  Split-operator 传播子：
+//    ψ(t+Δt) ≈ exp(-iVΔt/2) · F⁻¹{ exp(-ik²Δt/2) · F{ exp(-iVΔt/2) · ψ(t) } }
+//
+//  作者：AI 辅助编写
+//  日期：2026-05
+// ============================================================================
+
+// ----------------------------- DOM 元素引用 -----------------------------
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+// 信息栏
+const infoTime  = document.getElementById('infoTime');
+const infoEk    = document.getElementById('infoEk');
+const infoEp    = document.getElementById('infoEp');
+const infoProb  = document.getElementById('infoProb');
+
+// 滑块
+const sliderX0     = document.getElementById('sliderX0');
+const sliderK0     = document.getElementById('sliderK0');
+const sliderSigma  = document.getElementById('sliderSigma');
+const sliderV0     = document.getElementById('sliderV0');
+const sliderWidth  = document.getElementById('sliderWidth');
+const sliderSpeed  = document.getElementById('sliderSpeed');
+
+// 显示值
+const valX0    = document.getElementById('valX0');
+const valK0    = document.getElementById('valK0');
+const valSigma = document.getElementById('valSigma');
+const valV0    = document.getElementById('valV0');
+const valWidth = document.getElementById('valWidth');
+const valSpeed = document.getElementById('valSpeed');
+
+// 势场选择
+const selectPotential = document.getElementById('selectPotential');
+const groupV0    = document.getElementById('groupV0');
+const groupWidth = document.getElementById('groupWidth');
+
+// 按钮
+const btnStart = document.getElementById('btnStart');
+const btnPause = document.getElementById('btnPause');
+const btnReset = document.getElementById('btnReset');
+
+// ----------------------------- 全局物理参数 -----------------------------
+const L   = 20;          // 空间计算域半宽度 x ∈ [-L, L]
+const N   = 1024;        // 网格点数（必须为 2 的幂，满足 FFT radix-2 要求）
+const dx  = (2 * L) / N; // 空间步长
+const dt  = 0.001;       // 基础时间步长
+const HBAR = 1;          // 约化普朗克常数（自然单位）
+const MASS = 1;          // 粒子质量（自然单位）
+
+// Wavenumber 网格（FFT 频域）
+// k 的排列方式为 [0, 1, 2, ..., N/2-1, -N/2, -N/2+1, ..., -1] * (π/L)
+const dk = Math.PI / L;  // k 空间步长
+const kValues = new Float64Array(N);
+for (let i = 0; i < N; i++) {
+  kValues[i] = (i < N/2) ? i * dk : (i - N) * dk;
+}
+
+// 动能算符在 k 空间的相位因子 exp(-i * ½k² * dt)
+const kinPhaseReal = new Float64Array(N);
+const kinPhaseImag = new Float64Array(N);
+for (let i = 0; i < N; i++) {
+  const phase = -0.5 * kValues[i] * kValues[i] * dt;
+  kinPhaseReal[i] = Math.cos(phase);
+  kinPhaseImag[i] = Math.sin(phase);
+}
+
+// ----------------------------- 波函数存储 -----------------------------
+// 波函数 ψ(x) 用两个 Float64Array 分别存储实部和虚部
+let psiReal = new Float64Array(N);
+let psiImag = new Float64Array(N);
+
+// 势能 V(x)
+let potential = new Float64Array(N);
+
+// ----------------------------- FFT 实现 -----------------------------
+// 迭代式 Cooley-Tukey radix-2 FFT，原地计算
+// real 和 imag 是 Float64Array，长度为 N（2 的整数幂）
+
+// 预先计算 FFT 旋转因子表（加速）
+const cosTable = new Float64Array(N / 2);
+const sinTable = new Float64Array(N / 2);
+for (let i = 0; i < N / 2; i++) {
+  const angle = (-2 * Math.PI * i) / N;
+  cosTable[i] = Math.cos(angle);
+  sinTable[i] = Math.sin(angle);
+}
+
+function fft(real, imag) {
+  // 第一步：比特逆序排列 (Bit-reversal permutation)
+  let j = 0;
+  for (let i = 0; i < N; i++) {
+    if (i < j) {
+      // 交换 i 和 j
+      let tmp = real[i]; real[i] = real[j]; real[j] = tmp;
+      tmp = imag[i]; imag[i] = imag[j]; imag[j] = tmp;
+    }
+    let m = N >> 1;
+    while (m >= 1 && j >= m) {
+      j -= m;
+      m >>= 1;
+    }
+    j += m;
+  }
+
+  // 第二步：蝶形运算，逐层合并
+  for (let step = 1; step < N; step <<= 1) {
+    const halfStep = step;
+    const tableStep = N / (2 * step);
+    for (let group = 0; group < N; group += 2 * step) {
+      for (let pair = 0; pair < halfStep; pair++) {
+        const idx   = group + pair;
+        const idx2  = idx + halfStep;
+        const twiddle = pair * tableStep;
+        const wr = cosTable[twiddle];
+        const wi = sinTable[twiddle];
+
+        const tr = wr * real[idx2] - wi * imag[idx2];
+        const ti = wr * imag[idx2] + wi * real[idx2];
+
+        real[idx2] = real[idx] - tr;
+        imag[idx2] = imag[idx] - ti;
+        real[idx]  = real[idx] + tr;
+        imag[idx]  = imag[idx] + ti;
+      }
+    }
+  }
+}
+
+// 逆 FFT（共轭 → 正变换 → 共轭 → 除以 N）
+function ifft(real, imag) {
+  // 取复共轭
+  for (let i = 0; i < N; i++) imag[i] = -imag[i];
+
+  fft(real, imag);
+
+  // 取复共轭并归一化
+  for (let i = 0; i < N; i++) {
+    real[i] =  real[i] / N;
+    imag[i] = -imag[i] / N;
+  }
+}
+
+// ----------------------------- 势能函数 -----------------------------
+function buildPotential(type) {
+  const V0    = parseFloat(sliderV0.value);
+  const width = parseFloat(sliderWidth.value);
+  potential.fill(0);
+
+  if (type === 'free') {
+    // 自由空间：V(x) = 0
+    return;
+  }
+
+  if (type === 'barrier') {
+    // 单势垒：V(x) = V₀ 在 |x| < width/2 范围内
+    for (let i = 0; i < N; i++) {
+      const x = -L + i * dx;
+      if (Math.abs(x) < width / 2) potential[i] = V0;
+    }
+    return;
+  }
+
+  if (type === 'well') {
+    // 势阱：V(x) = -V₀ 在 |x| < width/2 范围内（负势）
+    for (let i = 0; i < N; i++) {
+      const x = -L + i * dx;
+      if (Math.abs(x) < width / 2) potential[i] = -V0;
+    }
+    return;
+  }
+
+  if (type === 'harmonic') {
+    // 谐振子势：V(x) = ½ m ω² x²  （ω = √V₀ / L 使其在合理范围）
+    const omega = Math.sqrt(V0) / (L * 0.5);
+    for (let i = 0; i < N; i++) {
+      const x = -L + i * dx;
+      potential[i] = 0.5 * MASS * omega * omega * x * x;
+    }
+    return;
+  }
+
+  if (type === 'double_barrier') {
+    // 双势垒：两个相距 3 的势垒
+    const sep = 3.0;
+    for (let i = 0; i < N; i++) {
+      const x = -L + i * dx;
+      const dist1 = Math.abs(x - sep / 2);
+      const dist2 = Math.abs(x + sep / 2);
+      if (dist1 < width / 2 || dist2 < width / 2) potential[i] = V0;
+    }
+    return;
+  }
+}
+
+// ----------------------------- 初始化波函数 -----------------------------
+// 高斯波包：ψ(x,0) = (1/(√(2π)σ))^(1/2) · exp(-(x-x₀)²/(4σ²)) · exp(i·k₀·x)
+function initWaveFunction() {
+  const x0    = parseFloat(sliderX0.value);
+  const k0    = parseFloat(sliderK0.value);
+  const sigma = parseFloat(sliderSigma.value);
+
+  // 归一化常数：使 ∫|ψ|²dx = 1
+  const norm = 1.0 / Math.sqrt(sigma * Math.sqrt(2 * Math.PI));
+
+  for (let i = 0; i < N; i++) {
+    const x = -L + i * dx;
+    const gauss = Math.exp(-((x - x0) * (x - x0)) / (4 * sigma * sigma));
+    const amplitude = norm * gauss;
+    const phase = k0 * x;
+    psiReal[i] = amplitude * Math.cos(phase);
+    psiImag[i] = amplitude * Math.sin(phase);
+  }
+}
+
+// ----------------------------- 吸收边界 -----------------------------
+// 使用平滑余弦衰减函数，防止波包从周期性边界折回
+function applyAbsorbingBoundary(real, imag) {
+  const absorbWidth = 3.0; // 吸收区宽度
+  for (let i = 0; i < N; i++) {
+    const x = -L + i * dx;
+    let mask = 1.0;
+    if (x < -L + absorbWidth) {
+      // 左边界吸收
+      const dist = (x - (-L)) / absorbWidth;
+      mask = 1.0 - Math.cos(dist * Math.PI / 2) * 0.999;
+    } else if (x > L - absorbWidth) {
+      // 右边界吸收
+      const dist = (L - x) / absorbWidth;
+      mask = 1.0 - Math.cos(dist * Math.PI / 2) * 0.999;
+    }
+    real[i] *= mask;
+    imag[i] *= mask;
+  }
+}
+
+// ----------------------------- 时间演化步 -----------------------------
+// Split-Operator 方法（二阶 Trotter 分解）：
+//  ψ(t+Δt) = U_V(Δt/2) · U_T(Δt) · U_V(Δt/2) ψ(t)
+//  其中 U_V(τ) = exp(-iVτ) 在实空间作用
+//       U_T(τ) = F⁻¹ exp(-i ½k² τ) F 在 k 空间作用
+function timeStep() {
+  // --- 第一步：半步势能传播子 U_V(Δt/2) ---
+  for (let i = 0; i < N; i++) {
+    const phase = -potential[i] * dt / 2;
+    const cosP = Math.cos(phase);
+    const sinP = Math.sin(phase);
+    const re = psiReal[i];
+    const im = psiImag[i];
+    psiReal[i] = re * cosP - im * sinP;
+    psiImag[i] = re * sinP + im * cosP;
+  }
+
+  // --- 第二步：正向 FFT 变换到 k 空间 ---
+  fft(psiReal, psiImag);
+
+  // --- 第三步：动能传播子 U_T(Δt) 在 k 空间作用 ---
+  for (let i = 0; i < N; i++) {
+    const re = psiReal[i];
+    const im = psiImag[i];
+    psiReal[i] = re * kinPhaseReal[i] - im * kinPhaseImag[i];
+    psiImag[i] = re * kinPhaseImag[i] + im * kinPhaseReal[i];
+  }
+
+  // --- 第四步：逆 FFT 变换回实空间 ---
+  ifft(psiReal, psiImag);
+
+  // --- 第五步：半步势能传播子 U_V(Δt/2) ---
+  for (let i = 0; i < N; i++) {
+    const phase = -potential[i] * dt / 2;
+    const cosP = Math.cos(phase);
+    const sinP = Math.sin(phase);
+    const re = psiReal[i];
+    const im = psiImag[i];
+    psiReal[i] = re * cosP - im * sinP;
+    psiImag[i] = re * sinP + im * cosP;
+  }
+
+  // --- 吸收边界条件 ---
+  applyAbsorbingBoundary(psiReal, psiImag);
+}
+
+// ----------------------------- 可观测量计算 -----------------------------
+// 计算概率密度 |ψ(x)|²
+function computeProbabilityDensity() {
+  const prob = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    prob[i] = psiReal[i] * psiReal[i] + psiImag[i] * psiImag[i];
+  }
+  return prob;
+}
+
+// 计算总概率 ∫|ψ|²dx（用于验证归一化）
+function computeTotalProbability() {
+  let sum = 0;
+  for (let i = 0; i < N; i++) {
+    sum += psiReal[i] * psiReal[i] + psiImag[i] * psiImag[i];
+  }
+  return sum * dx;
+}
+
+// 计算动能期望值 ⟨T⟩ = ⟨-½ ∂²/∂x²⟩ = ∫ ½k²|ψ̃(k)|² dk
+// 通过在 k 空间计算避免数值微分
+function computeKineticEnergy() {
+  // 复制波函数到临时数组并做 FFT
+  const tmpReal = new Float64Array(psiReal);
+  const tmpImag = new Float64Array(psiImag);
+  fft(tmpReal, tmpImag);
+
+  // 在 k 空间计算 ½k²|ψ̃|²（注意 FFT 后需要乘以 dx 以匹配连续傅里叶变换）
+  let ek = 0;
+  for (let i = 0; i < N; i++) {
+    const k2 = kValues[i] * kValues[i];
+    const probk = (tmpReal[i] * tmpReal[i] + tmpImag[i] * tmpImag[i]) * dx * dx;
+    ek += 0.5 * k2 * probk;
+  }
+  return ek / (2 * L); // dk/(2π) = (π/L)/(2π) = 1/(2L)
+}
+
+// 计算势能期望值 ⟨V⟩ = ∫ V(x)|ψ(x)|² dx
+function computePotentialEnergy() {
+  let ep = 0;
+  for (let i = 0; i < N; i++) {
+    const prob = psiReal[i] * psiReal[i] + psiImag[i] * psiImag[i];
+    ep += potential[i] * prob;
+  }
+  return ep * dx;
+}
+
+// ----------------------------- Canvas 渲染 -----------------------------
+let animationId = null;
+let simTime = 0;
+let isRunning = false;
+let stepsPerFrame = 2; // 每帧推进的时间步数
+
+function resizeCanvas() {
+  const container = canvas.parentElement;
+  const w = container.clientWidth;
+  canvas.width  = w * devicePixelRatio;
+  canvas.height = 420 * devicePixelRatio;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = '420px';
+}
+
+function draw() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const dpr = devicePixelRatio;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const marginLeft   = 50 * dpr;
+  const marginRight  = 30 * dpr;
+  const marginTop    = 20 * dpr;
+  const marginBottom = 25 * dpr;
+
+  // 上下两个绘图区：上 65% 给 |ψ|² + Re(ψ)，下 35% 给 V(x)
+  const plotHeight = h - marginTop - marginBottom;
+  const topH = plotHeight * 0.65;
+  const botH = plotHeight * 0.35;
+  const plotW = w - marginLeft - marginRight;
+
+  const prob = computeProbabilityDensity();
+
+  // 确定 |ψ|² 的最大值用于纵向缩放
+  let maxProb = 0;
+  for (let i = 0; i < N; i++) {
+    if (prob[i] > maxProb) maxProb = prob[i];
+  }
+  if (maxProb < 1e-12) maxProb = 1;
+  // 留 10% 顶部空间
+  const probScale = topH / (maxProb * 1.1);
+
+  // 确定 V(x) 的最大绝对值
+  let maxV = 0;
+  for (let i = 0; i < N; i++) {
+    const absV = Math.abs(potential[i]);
+    if (absV > maxV) maxV = absV;
+  }
+  if (maxV < 1) maxV = 1;
+  const vScale = (botH * 0.85) / maxV;
+
+  // --- 辅助函数：x 索引 → 像素 x ---
+  function idxToX(i) {
+    return marginLeft + (i / (N - 1)) * plotW;
+  }
+
+  // --- 绘制上半区：概率密度 |ψ|² ---
+  const topY0 = marginTop;
+  const topBase = marginTop + topH;
+
+  // 填充 |ψ|² 曲线下方的区域
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, topBase);
+  for (let i = 0; i < N; i++) {
+    const px = idxToX(i);
+    const py = topBase - prob[i] * probScale;
+    ctx.lineTo(px, py);
+  }
+  ctx.lineTo(marginLeft + plotW, topBase);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, topY0, 0, topBase);
+  grad.addColorStop(0, 'rgba(88,166,255,0.55)');
+  grad.addColorStop(1, 'rgba(88,166,255,0.05)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // |ψ|² 曲线描边
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const px = idxToX(i);
+    const py = topBase - prob[i] * probScale;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1.8 * dpr;
+  ctx.stroke();
+
+  // 绘制 Re(ψ) 实部（半透明叠加）
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const px = idxToX(i);
+    // 将 Re(ψ) 归一化到 |ψ|² 的尺度进行比较
+    const val = psiReal[i];
+    // 缩放到类似幅度
+    const reScale = probScale * Math.sqrt(maxProb) * 0.5;
+    const py = topBase - val * reScale;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = 'rgba(247,129,102,0.7)';
+  ctx.lineWidth = 1.2 * dpr;
+  ctx.setLineDash([4 * dpr, 4 * dpr]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // --- 绘制下半区：势能 V(x) ---
+  const botY0 = marginTop + topH + 5 * dpr;
+  const botMid = botY0 + botH * 0.5; // V=0 的参考线
+
+  // V(x) 填充
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, botMid);
+  for (let i = 0; i < N; i++) {
+    const px = idxToX(i);
+    const py = botMid - potential[i] * vScale;
+    ctx.lineTo(px, py);
+  }
+  ctx.lineTo(marginLeft + plotW, botMid);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(63,185,80,0.18)';
+  ctx.fill();
+
+  // V(x) 曲线
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const px = idxToX(i);
+    const py = botMid - potential[i] * vScale;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 1.6 * dpr;
+  ctx.stroke();
+
+  // --- 坐标轴 ---
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1 * dpr;
+  // 上区零线
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, topBase);
+  ctx.lineTo(marginLeft + plotW, topBase);
+  ctx.stroke();
+  // 下区 V=0 线
+  ctx.setLineDash([3 * dpr, 5 * dpr]);
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, botMid);
+  ctx.lineTo(marginLeft + plotW, botMid);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 左纵轴
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, topY0);
+  ctx.lineTo(marginLeft, botY0 + botH);
+  ctx.stroke();
+  // 下横轴
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, botY0 + botH);
+  ctx.lineTo(marginLeft + plotW, botY0 + botH);
+  ctx.stroke();
+
+  // --- 轴标签 ---
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${11 * dpr}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  // x 轴刻度标签
+  for (let xv = -L; xv <= L; xv += 5) {
+    const px = marginLeft + ((xv + L) / (2 * L)) * plotW;
+    ctx.fillText(xv.toFixed(0), px, botY0 + botH + 14 * dpr);
+  }
+  ctx.fillText('x (a.u.)', marginLeft + plotW / 2, botY0 + botH + 28 * dpr);
+
+  // y 轴标签（上区）
+  ctx.textAlign = 'right';
+  ctx.fillText('|ψ|² / Re(ψ)', marginLeft - 6 * dpr, topY0 + 12 * dpr);
+  // y 轴标签（下区）
+  ctx.fillText('V(x)', marginLeft - 6 * dpr, botY0 + 12 * dpr);
+}
+
+// ----------------------------- 模拟循环 -----------------------------
+let lastTimestamp = 0;
+
+function simulationLoop(timestamp) {
+  if (!isRunning) {
+    animationId = null;
+    return;
+  }
+
+  if (lastTimestamp === 0) lastTimestamp = timestamp;
+  let elapsed = (timestamp - lastTimestamp) / 1000; // 秒
+  lastTimestamp = timestamp;
+
+  // 限制最大步进防止卡顿后跳跃过大
+  if (elapsed > 0.1) elapsed = 0.1;
+
+  const speed = parseFloat(sliderSpeed.value);
+  const totalDt = elapsed * speed;
+  // 计算需要推进的时间步数
+  const steps = Math.round(totalDt / dt);
+
+  for (let s = 0; s < steps; s++) {
+    timeStep();
+    simTime += dt;
+  }
+
+  // 更新信息栏
+  infoTime.textContent = simTime.toFixed(2);
+  const ek = computeKineticEnergy();
+  const ep = computePotentialEnergy();
+  infoEk.textContent = ek.toFixed(3);
+  infoEp.textContent = ep.toFixed(3);
+  infoProb.textContent = computeTotalProbability().toFixed(4);
+
+  draw();
+
+  animationId = requestAnimationFrame(simulationLoop);
+}
+
+// ----------------------------- 控制函数 -----------------------------
+function startSimulation() {
+  if (isRunning) return;
+  isRunning = true;
+  lastTimestamp = 0;
+  animationId = requestAnimationFrame(simulationLoop);
+  btnStart.textContent = '▶ 运行中';
+  btnStart.style.opacity = '0.6';
+}
+
+function pauseSimulation() {
+  isRunning = false;
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+  btnStart.textContent = '▶ 开始';
+  btnStart.style.opacity = '1';
+}
+
+function resetSimulation() {
+  pauseSimulation();
+  simTime = 0;
+  buildPotential(selectPotential.value);
+  initWaveFunction();
+  infoTime.textContent = '0.00';
+  infoEk.textContent = '0.000';
+  infoEp.textContent = '0.000';
+  infoProb.textContent = '1.0000';
+  draw();
+}
+
+// ----------------------------- 事件绑定 -----------------------------
+btnStart.addEventListener('click', startSimulation);
+btnPause.addEventListener('click', pauseSimulation);
+btnReset.addEventListener('click', resetSimulation);
+
+// 势场类型切换 → 更新可见控件 + 重建势场
+selectPotential.addEventListener('change', () => {
+  const type = selectPotential.value;
+  // 自由空间：隐藏 V₀ 和宽度控件；谐振子：隐藏宽度控件
+  if (type === 'free') {
+    groupV0.style.display = 'none';
+    groupWidth.style.display = 'none';
+  } else if (type === 'harmonic') {
+    groupV0.style.display = 'flex';
+    groupWidth.style.display = 'none';
+  } else {
+    groupV0.style.display = 'flex';
+    groupWidth.style.display = 'flex';
+  }
+  pauseSimulation();
+  resetSimulation();
+});
+
+// 滑块值实时显示
+sliderX0.addEventListener('input', () => {
+  valX0.textContent = parseFloat(sliderX0.value).toFixed(1);
+});
+sliderK0.addEventListener('input', () => {
+  valK0.textContent = parseFloat(sliderK0.value).toFixed(1);
+});
+sliderSigma.addEventListener('input', () => {
+  valSigma.textContent = parseFloat(sliderSigma.value).toFixed(2);
+});
+sliderV0.addEventListener('input', () => {
+  valV0.textContent = parseFloat(sliderV0.value).toFixed(1);
+});
+sliderWidth.addEventListener('input', () => {
+  valWidth.textContent = parseFloat(sliderWidth.value).toFixed(1);
+});
+sliderSpeed.addEventListener('input', () => {
+  valSpeed.textContent = parseFloat(sliderSpeed.value).toFixed(1) + 'x';
+});
+
+// 参数改变时自动重置（滑块松开时触发）
+const paramSliders = [sliderX0, sliderK0, sliderSigma, sliderV0, sliderWidth];
+paramSliders.forEach(slider => {
+  slider.addEventListener('change', () => {
+    if (isRunning) pauseSimulation();
+    resetSimulation();
+  });
+});
+
+// 键盘快捷键
+document.addEventListener('keydown', (e) => {
+  switch (e.key.toLowerCase()) {
+    case ' ': // 空格键：开始/暂停
+      e.preventDefault();
+      if (isRunning) pauseSimulation();
+      else startSimulation();
+      break;
+    case 'r': // R 键：重置
+      if (!e.ctrlKey && !e.metaKey) {
+        resetSimulation();
+      }
+      break;
+  }
+});
+
+// ----------------------------- 初始化 -----------------------------
+function init() {
+  resizeCanvas();
+  buildPotential(selectPotential.value);
+  initWaveFunction();
+  // 初始化势场控件可见性
+  const type = selectPotential.value;
+  if (type === 'free') {
+    groupV0.style.display = 'none';
+    groupWidth.style.display = 'none';
+  } else if (type === 'harmonic') {
+    groupWidth.style.display = 'none';
+  }
+  draw();
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  draw();
+});
+
+// 启动
+init();
+console.log('量子波包演化仿真已就绪。');
+console.log('操作提示：空格键 开始/暂停 | R键 重置');
+console.log('默认场景：高斯波包撞向势垒（量子隧穿效应）');
+console.log('尝试调整 k₀（入射动量）观察透射率随能量的变化！');
+</script>
+
+</body>
+</html>

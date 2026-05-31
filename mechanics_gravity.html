@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万有引力 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>质量M(kg):</label><input type="range" id="mass1" min="1e24" max="1e30" step="1e25" value="5.97e24"><input type="number" id="mass1Val" value="5.97e24"></div>
+      <div class="ctrl-group"><label>质量m(kg):</label><input type="range" id="mass2" min="1e20" max="1e26" step="1e21" value="7.35e22"><input type="number" id="mass2Val" value="7.35e22"></div>
+      <div class="ctrl-group"><label>距离r(m):</label><input type="range" id="distance" min="3.8e8" max="4e9" step="1e8" value="3.84e8"><input type="number" id="distanceVal" value="3.84e8"></div>
+    </div>
+    <div id="info">万有引力定律：F = G × M × m / r²。G = 6.674 × 10⁻¹¹ N·m²/kg²。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let time = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  const M = parseFloat(document.getElementById('mass1').value);
+  const m = parseFloat(document.getElementById('mass2').value);
+  const r = parseFloat(document.getElementById('distance').value);
+  
+  const G = 6.674e-11;
+  const F = G * M * m / (r * r);
+  
+  const cx = canvas.width/2, cy = canvas.height/2;
+  
+  ctx.fillStyle = '#ffa657';
+  const bigRadius = Math.sqrt(M / 1e24) * 15;
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.min(bigRadius, canvas.height*0.25), 0, Math.PI*2);
+  ctx.fill();
+  
+  ctx.strokeStyle = 'rgba(88,166,255,0.3)';
+  ctx.lineWidth = 1;
+  for(let i=1;i<=4;i++) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, canvas.height*0.25 + i*canvas.height*0.05, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  
+  const smallRadius = Math.sqrt(m / 1e22) * 5;
+  const orbitR = canvas.width * 0.35;
+  const angle = time * 0.005;
+  const moonX = cx + orbitR * Math.cos(angle);
+  const moonY = cy + orbitR * Math.sin(angle) * 0.3;
+  
+  ctx.fillStyle = '#58a6ff';
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, Math.min(smallRadius, 10), 0, Math.PI*2);
+  ctx.fill();
+  
+  ctx.strokeStyle = 'rgba(88,166,255,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5,5]);
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, orbitR, orbitR*0.3, 0, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`地球质量 M = ${(M/1e24).toFixed(2)} × 10²⁴ kg`, canvas.width*0.05, canvas.height*0.1);
+  ctx.fillText(`月球质量 m = ${(m/1e22).toFixed(2)} × 10²² kg`, canvas.width*0.05, canvas.height*0.1+20);
+  ctx.fillText(`距离 r = ${(r/1e8).toFixed(2)} × 10⁸ m`, canvas.width*0.05, canvas.height*0.1+40);
+  
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`引力 F = ${(F/1e20).toFixed(3)} × 10²⁰ N`, cx-80, canvas.height*0.9);
+  
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('mass1').addEventListener('input', e => { document.getElementById('mass1Val').value = e.target.value; });
+document.getElementById('mass2').addEventListener('input', e => { document.getElementById('mass2Val').value = e.target.value; });
+document.getElementById('distance').addEventListener('input', e => { document.getElementById('distanceVal').value = e.target.value; });
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

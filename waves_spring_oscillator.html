@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹簧振子 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>弹簧常数 k:</label><input type="range" id="springK" min="20" max="200" step="10" value="100"><span id="springKVal">100</span></div>
+    <div class="ctrl-group"><label>质量 m:</label><input type="range" id="mass" min="0.5" max="5" step="0.5" value="2"><span id="massVal">2</span></div>
+    <div class="ctrl-group"><label>阻尼系数:</label><input type="range" id="damping" min="0" max="2" step="0.1" value="0.1"><span id="dampingVal">0.1</span></div>
+    <div class="ctrl-group"><label>初位移:</label><input type="range" id="initX" min="-100" max="100" step="5" value="50"><span id="initXVal">50</span></div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button><button id="pauseBtn">暂停</button></div>
+  </div>
+  <div id="info">弹簧振子：简谐振动的经典模型。F=-kx，周期T=2π√(m/k)。阻尼振动会随时间衰减。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let x = 0, v = 0;
+let paused = false;
+let prevTime = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  x = parseFloat(document.getElementById('initX').value);
+  v = 0;
+  prevTime = 0;
+}
+
+function draw(timestamp) {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const k = parseFloat(document.getElementById('springK').value);
+  const m = parseFloat(document.getElementById('mass').value);
+  const damping = parseFloat(document.getElementById('damping').value);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  if (!paused) {
+    if (prevTime === 0) prevTime = timestamp;
+    const dt = Math.min((timestamp - prevTime) / 1000, 0.02);
+    prevTime = timestamp;
+    const a = (-k * x - damping * v) / m;
+    v += a * dt;
+    x += v * dt;
+  }
+
+  const scale = 1.5;
+  const blockSize = S * 0.15;
+  const springX = cx - S * 0.3;
+  const blockX = cx + x * scale;
+
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(w * 0.05, cy - S * 0.12, S * 0.08, S * 0.24);
+  ctx.fillStyle = 'rgba(139,148,158,0.5)';
+  ctx.fillRect(w * 0.05, cy - S * 0.12, S * 0.08, S * 0.24);
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(springX, cy);
+  const numCoils = 10;
+  const springLen = blockX - springX - blockSize / 2;
+  const coilStep = springLen / (numCoils + 1);
+  for (let i = 1; i <= numCoils; i++) {
+    const coilX = springX + i * coilStep;
+    const offset = (i % 2 === 0 ? 1 : -1) * S * 0.04;
+    ctx.lineTo(coilX, cy + offset);
+  }
+  ctx.lineTo(blockX - blockSize / 2, cy);
+  ctx.stroke();
+
+  ctx.fillStyle = '#f78166';
+  ctx.fillRect(blockX - blockSize / 2, cy - blockSize / 2, blockSize, blockSize);
+  ctx.strokeStyle = '#ffa657';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(blockX - blockSize / 2, cy - blockSize / 2, blockSize, blockSize);
+
+  ctx.strokeStyle = 'rgba(210,168,255,0.5)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - S * 0.3);
+  ctx.lineTo(cx, cy + S * 0.3);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const omega = Math.sqrt(k / m);
+  const period = 2 * Math.PI / omega;
+
+  ctx.fillStyle = '#8b949e';
+  const fs = S * 0.035;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText(`位移 x = ${x.toFixed(1)}`, w * 0.05, fs + 5);
+  ctx.fillText(`速度 v = ${v.toFixed(2)}`, w * 0.05, fs * 2 + 5);
+  ctx.fillText(`加速度 a = ${((-k * x - damping * v) / m).toFixed(2)}`, w * 0.05, fs * 3 + 5);
+  ctx.fillStyle = '#3fb950';
+  ctx.fillText(`角频率 ω = ${omega.toFixed(2)}`, w * 0.05, fs * 4 + 5);
+  ctx.fillText(`周期 T = ${period.toFixed(3)} s`, w * 0.05, fs * 5 + 5);
+
+  if (!paused || prevTime === 0) {
+    animationId = requestAnimationFrame(draw);
+  }
+}
+
+document.getElementById('springK').addEventListener('input', e => {
+  document.getElementById('springKVal').textContent = e.target.value;
+});
+document.getElementById('mass').addEventListener('input', e => {
+  document.getElementById('massVal').textContent = e.target.value;
+});
+document.getElementById('damping').addEventListener('input', e => {
+  document.getElementById('dampingVal').textContent = e.target.value;
+});
+document.getElementById('initX').addEventListener('input', e => {
+  document.getElementById('initXVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  reset();
+  if (paused) draw(0);
+});
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '继续' : '暂停';
+  if (!paused) {
+    prevTime = 0;
+    animationId = requestAnimationFrame(draw);
+  }
+});
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+draw(0);
+</script>
+</body>
+</html>

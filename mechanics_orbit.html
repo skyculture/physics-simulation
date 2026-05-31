@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天体轨道与开普勒定律</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.header {
+  text-align: center;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid #30363d;
+  background: #161b22;
+}
+
+.header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: 0.02em;
+}
+
+.header .subtitle {
+  font-size: 0.85rem;
+  color: #8b949e;
+  margin-top: 4px;
+}
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  grid-template-rows: 1fr auto;
+  gap: 0;
+  height: calc(100vh - 95px);
+}
+
+.canvas-panel {
+  background: #0d1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  position: relative;
+}
+
+canvas {
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #0d1117;
+}
+
+.control-panel {
+  background: #161b22;
+  border-left: 1px solid #30363d;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.control-group label {
+  font-size: 0.8rem;
+  color: #8b949e;
+  font-weight: 500;
+}
+
+.control-group .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-group input[type="range"] {
+  flex: 1;
+  accent-color: #58a6ff;
+  height: 6px;
+  cursor: pointer;
+}
+
+.control-group .value {
+  font-size: 0.8rem;
+  color: #58a6ff;
+  min-width: 42px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.toggle-row span {
+  font-size: 0.82rem;
+  color: #c9d1d9;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #30363d;
+  border-radius: 24px;
+  transition: 0.25s;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 18px; width: 18px;
+  left: 3px; bottom: 3px;
+  background: #8b949e;
+  border-radius: 50%;
+  transition: 0.25s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: #1f6feb;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn {
+  padding: 7px 14px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #c9d1d9;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn:hover {
+  background: #30363d;
+  border-color: #58a6ff;
+}
+
+.btn.accent {
+  background: #1f6feb;
+  border-color: #1f6feb;
+  color: #fff;
+}
+
+.btn.accent:hover {
+  background: #388bfd;
+}
+
+.btn.green {
+  background: #238636;
+  border-color: #238636;
+  color: #fff;
+}
+
+.btn.green:hover {
+  background: #2ea043;
+}
+
+.btn.warn {
+  background: #9e6a03;
+  border-color: #9e6a03;
+  color: #fff;
+}
+
+.btn.warn:hover {
+  background: #bb8009;
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.info-table th, .info-table td {
+  border: 1px solid #30363d;
+  padding: 5px 7px;
+  text-align: center;
+}
+
+.info-table th {
+  background: #21262d;
+  color: #8b949e;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.info-table td {
+  color: #c9d1d9;
+}
+
+.info-table .match {
+  color: #3fb950;
+  font-weight: 600;
+}
+
+.bottom-panel {
+  background: #161b22;
+  border-top: 1px solid #30363d;
+  padding: 10px 20px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  font-size: 0.73rem;
+  color: #8b949e;
+}
+
+.bottom-panel .law-box {
+  flex: 1;
+  min-width: 220px;
+}
+
+.bottom-panel .law-box h4 {
+  color: #58a6ff;
+  font-size: 0.78rem;
+  margin-bottom: 3px;
+}
+
+.bottom-panel .law-box p {
+  line-height: 1.45;
+}
+
+.planet-legend {
+  display: flex;
+  gap: 14px;
+  padding: 6px 0;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+
+.planet-legend .dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>天体轨道与开普勒定律</h1>
+  <div class="subtitle">引力轨道数值模拟 —— 开普勒三大定律的可视化演示 | RK4积分</div>
+</div>
+
+<div class="main-layout">
+  <div class="canvas-panel" id="canvasPanel">
+    <canvas id="orbitCanvas"></canvas>
+  </div>
+
+  <div class="control-panel" id="controlPanel">
+    <div class="control-group">
+      <label>中心天体质量 M (太阳质量)</label>
+      <div class="row">
+        <input type="range" id="massSlider" min="0.5" max="5" step="0.1" value="1.0">
+        <span class="value" id="massValue">1.0</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>行星初始距离 r₀ (AU) <span style="color:#8b949e;font-size:0.7rem;">—— 添加行星时使用</span></label>
+      <div class="row">
+        <input type="range" id="distSlider" min="1" max="10" step="0.1" value="3.0">
+        <span class="value" id="distValue">3.0</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>初始切向速度 v₀ (归一化单位) <span style="color:#8b949e;font-size:0.7rem;">—— 影响离心率</span></label>
+      <div class="row">
+        <input type="range" id="velSlider" min="0.1" max="5" step="0.01" value="0.58">
+        <span class="value" id="velValue">0.58</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>模拟速度</label>
+      <div class="row">
+        <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1.0">
+        <span class="value" id="speedValue">1.0×</span>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <span>显示等面积扇形 (开普勒第二定律)</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="sectorToggle">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <span>显示速度矢量箭头</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="vectorToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn green" id="btnStart">▶ 开始</button>
+      <button class="btn warn" id="btnPause">⏸ 暂停</button>
+      <button class="btn" id="btnReset">↺ 重置</button>
+      <button class="btn accent" id="btnAddPlanet">＋ 添加行星</button>
+    </div>
+
+    <div class="planet-legend" id="planetLegend"></div>
+
+    <div style="font-size:0.78rem;color:#8b949e;margin-top:4px;">
+      开普勒第三定律验证: T² / a³ = 4π²/GM
+    </div>
+    <table class="info-table" id="keplerTable">
+      <thead>
+        <tr>
+          <th>行星</th>
+          <th>周期 T</th>
+          <th>半长轴 a</th>
+          <th>离心率 e</th>
+          <th>T²</th>
+          <th>a³</th>
+          <th>T²/a³</th>
+        </tr>
+      </thead>
+      <tbody id="keplerTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bottom-panel">
+  <div class="law-box">
+    <h4>开普勒第一定律（椭圆轨道定律）</h4>
+    <p>行星绕太阳运动的轨道是椭圆，太阳位于椭圆的一个焦点上。半长轴 a 和离心率 e 决定了轨道形状。图中黄色恒星位于焦点处，轨道上标注了近日点和远日点。</p>
+  </div>
+  <div class="law-box">
+    <h4>开普勒第二定律（等面积定律）</h4>
+    <p>行星与太阳的连线在相等时间内扫过相等的面积。开启"显示等面积扇形"后，轨道上两个不同颜色扇形对应相等的时间间隔，其面积相等（形状不同）。这是因为行星在近日点运动更快，远日点更慢。</p>
+  </div>
+  <div class="law-box">
+    <h4>开普勒第三定律（周期定律）</h4>
+    <p>行星公转周期的平方与其轨道半长轴的立方成正比：T² ∝ a³。上方表格中计算 T²/a³ 比值，所有行星应为同一常数 4π²/(GM)，验证了这一定律。</p>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// 牛顿万有引力定律：F = -GMm/r²
+// 两个质点之间的引力大小与两质量乘积成正比，与距离平方成反比。
+// 引力方向沿两质点连线指向对方。对于行星(m)绕恒星(M)运动，
+// 加速度 a = -GM/r² * (单位方向矢量)
+// ============================================================================
+
+// ============================================================================
+// 开普勒三大定律：
+// 第一定律：行星轨道是椭圆，太阳位于焦点
+// 第二定律：行星与太阳连线在相等时间内扫过相等面积（角动量守恒）
+// 第三定律：T² ∝ a³，即周期平方与半长轴立方成正比
+// ============================================================================
+
+// ============================================================================
+// RK4 (四阶龙格-库塔法) 数值积分：
+// 用四个中间斜率估计的加权平均来推进状态，具有 O(dt⁴) 的局部截断误差，
+// 远优于欧拉法的 O(dt²)，适合长时间轨道模拟。
+// 公式：y_{n+1} = y_n + (k1 + 2k2 + 2k3 + k4)/6
+// ============================================================================
+
+// ---------- 全局状态 ----------
+const G = 1.0;                       // 引力常数（归一化单位）
+const DT_BASE = 0.01;               // 基础时间步长
+const STEPS_PER_FRAME = 2;          // 每帧积分步数
+const PLANET_COLORS = [
+  '#58a6ff', '#f78166', '#3fb950', '#d2a8ff',
+  '#f0883e', '#79c0ff', '#ff7b72', '#a5d6ff',
+  '#7ee787', '#bc8cff'
+];
+
+let centralMass = 1.0;
+let planets = [];
+let isRunning = false;
+let showSectors = false;
+let showVectors = true;
+let simSpeed = 1.0;
+let simTime = 0;
+let animationId = null;
+let planetIdCounter = 0;
+
+let canvas, ctx;
+let canvasWidth, canvasHeight;
+let scale = 50;  // 像素/AU，动态计算
+
+// ---------- DOM元素 ----------
+const massSlider = document.getElementById('massSlider');
+const massValue = document.getElementById('massValue');
+const distSlider = document.getElementById('distSlider');
+const distValue = document.getElementById('distValue');
+const velSlider = document.getElementById('velSlider');
+const velValue = document.getElementById('velValue');
+const speedSlider = document.getElementById('speedSlider');
+const speedValue = document.getElementById('speedValue');
+const sectorToggle = document.getElementById('sectorToggle');
+const vectorToggle = document.getElementById('vectorToggle');
+const btnStart = document.getElementById('btnStart');
+const btnPause = document.getElementById('btnPause');
+const btnReset = document.getElementById('btnReset');
+const btnAddPlanet = document.getElementById('btnAddPlanet');
+const keplerTableBody = document.getElementById('keplerTableBody');
+const planetLegend = document.getElementById('planetLegend');
+const canvasPanel = document.getElementById('canvasPanel');
+
+// ============================================================================
+// 行星类 —— 封装每颗行星的位置、速度、轨道历史和开普勒元素
+// ============================================================================
+class Planet {
+  constructor(x, y, vx, vy, color, name) {
+    this.x = x;           // 当前位置 (AU)
+    this.y = y;
+    this.vx = vx;         // 当前速度 (AU/时间单位)
+    this.vy = vy;
+    this.color = color;
+    this.name = name;
+    this.id = planetIdCounter++;
+
+    // 轨道预计算数据
+    this.orbitPath = [];          // [{x, y, t}] 完整轨道轨迹
+    this.period = 0;             // 轨道周期
+    this.semiMajorAxis = 0;      // 半长轴 a
+    this.eccentricity = 0;       // 离心率 e
+    this.perihelionIdx = 0;     // 近日点在 orbitPath 中的索引
+    this.aphelionIdx = 0;       // 远日点在 orbitPath 中的索引
+    this.areaComputed = 0;      // 预计算的扇形面积（用于验证）
+    this.twoPiOverGM = 0;       // 4π²/GM，用于第三定律验证
+  }
+
+  // 克隆当前状态（用于重置）
+  clone() {
+    const p = new Planet(this.x, this.y, this.vx, this.vy, this.color, this.name);
+    p.orbitPath = [...this.orbitPath];
+    p.period = this.period;
+    p.semiMajorAxis = this.semiMajorAxis;
+    p.eccentricity = this.eccentricity;
+    p.perihelionIdx = this.perihelionIdx;
+    p.aphelionIdx = this.aphelionIdx;
+    p.areaComputed = this.areaComputed;
+    p.twoPiOverGM = this.twoPiOverGM;
+    p.id = this.id;
+    return p;
+  }
+
+  // 获取加速度分量 ax, ay（由中心恒星引力产生）
+  // F = -GMm/r² → a = -GM/r² * (r_hat)
+  getAcceleration(x, y, M) {
+    const r2 = x * x + y * y;
+    const r = Math.sqrt(r2);
+    if (r < 1e-6) return { ax: 0, ay: 0 }; // 防止除零
+    const factor = -G * M / (r2 * r);  // -GM / r³
+    return { ax: factor * x, ay: factor * y };
+  }
+
+  // =========================================================================
+  // RK4 单步积分 —— 四阶龙格-库塔法
+  // 将位置(x,y)和速度(vx,vy)作为4维状态向量进行积分
+  // k1: 当前斜率, k2/k3: 中点斜率, k4: 终点斜率
+  // 最终增量 = (k1 + 2*k2 + 2*k3 + k4) / 6
+  // =========================================================================
+  rk4Step(dt, M) {
+    // k1
+    const a1 = this.getAcceleration(this.x, this.y, M);
+    const k1x = this.vx * dt;
+    const k1y = this.vy * dt;
+    const k1vx = a1.ax * dt;
+    const k1vy = a1.ay * dt;
+
+    // k2 —— 使用 k1/2 处的中点评估
+    const a2 = this.getAcceleration(
+      this.x + k1x * 0.5, this.y + k1y * 0.5, M
+    );
+    const k2x = (this.vx + k1vx * 0.5) * dt;
+    const k2y = (this.vy + k1vy * 0.5) * dt;
+    const k2vx = a2.ax * dt;
+    const k2vy = a2.ay * dt;
+
+    // k3 —— 使用 k2/2 处的中点评估
+    const a3 = this.getAcceleration(
+      this.x + k2x * 0.5, this.y + k2y * 0.5, M
+    );
+    const k3x = (this.vx + k2vx * 0.5) * dt;
+    const k3y = (this.vy + k2vy * 0.5) * dt;
+    const k3vx = a3.ax * dt;
+    const k3vy = a3.ay * dt;
+
+    // k4 —— 使用 k3 处的终点评估
+    const a4 = this.getAcceleration(
+      this.x + k3x, this.y + k3y, M
+    );
+    const k4x = (this.vx + k3vx) * dt;
+    const k4y = (this.vy + k3vy) * dt;
+    const k4vx = a4.ax * dt;
+    const k4vy = a4.ay * dt;
+
+    // 加权平均更新状态
+    this.x += (k1x + 2 * k2x + 2 * k3x + k4x) / 6;
+    this.y += (k1y + 2 * k2y + 2 * k3y + k4y) / 6;
+    this.vx += (k1vx + 2 * k2vx + 2 * k3vx + k4vx) / 6;
+    this.vy += (k1vy + 2 * k2vy + 2 * k3vy + k4vy) / 6;
+  }
+}
+
+// ============================================================================
+// 轨道预计算 —— 积分一个完整周期，提取开普勒轨道元素
+// 通过检测近日点（距离最小值）来确定周期
+// 近日点检测：r 从减小变为增大 → 局部最小值
+// ============================================================================
+function precomputeOrbit(planet, M) {
+  const dt = DT_BASE;
+  const maxSteps = 200000;  // 安全上限
+  const path = [];
+
+  // 创建临时副本进行积分
+  let x = planet.x, y = planet.y;
+  let vx = planet.vx, vy = planet.vy;
+  let t = 0;
+
+  // 初始距离
+  let prevR = Math.sqrt(x * x + y * y);
+  let rDecreasing = true;  // 初始时距离是否在减小
+
+  path.push({ x, y, t: 0 });
+
+  let periCount = 0;      // 检测到的近日点次数
+  let periTimes = [];     // 近日点时间
+  let periDists = [];     // 近日点距离
+  let maxDist = prevR;    // 最大距离（远日点）
+  let maxDistT = 0;
+  let maxDistX = x, maxDistY = y;
+  let minDist = prevR;    // 最小距离（近日点）
+  let minDistT = 0;
+  let minDistX = x, minDistY = y;
+  let periIdx = 0;
+  let apoIdx = 0;
+
+  // 辅助函数：计算加速度
+  function accel(px, py) {
+    const r2 = px * px + py * py;
+    const r = Math.sqrt(r2);
+    if (r < 1e-6) return { ax: 0, ay: 0 };
+    const f = -G * M / (r2 * r);
+    return { ax: f * px, ay: f * py };
+  }
+
+  for (let step = 0; step < maxSteps; step++) {
+    // RK4 一步
+    const a1 = accel(x, y);
+    const k1x = vx * dt, k1y = vy * dt;
+    const k1vx = a1.ax * dt, k1vy = a1.ay * dt;
+
+    const a2 = accel(x + k1x * 0.5, y + k1y * 0.5);
+    const k2x = (vx + k1vx * 0.5) * dt;
+    const k2y = (vy + k1vy * 0.5) * dt;
+    const k2vx = a2.ax * dt, k2vy = a2.ay * dt;
+
+    const a3 = accel(x + k2x * 0.5, y + k2y * 0.5);
+    const k3x = (vx + k2vx * 0.5) * dt;
+    const k3y = (vy + k2vy * 0.5) * dt;
+    const k3vx = a3.ax * dt, k3vy = a3.ay * dt;
+
+    const a4 = accel(x + k3x, y + k3y);
+    const k4x = (vx + k3vx) * dt;
+    const k4y = (vy + k3vy) * dt;
+    const k4vx = a4.ax * dt, k4vy = a4.ay * dt;
+
+    x += (k1x + 2 * k2x + 2 * k3x + k4x) / 6;
+    y += (k1y + 2 * k2y + 2 * k3y + k4y) / 6;
+    vx += (k1vx + 2 * k2vx + 2 * k3vx + k4vx) / 6;
+    vy += (k1vy + 2 * k2vy + 2 * k3vy + k4vy) / 6;
+    t += dt;
+
+    const r = Math.sqrt(x * x + y * y);
+    path.push({ x, y, t });
+
+    // 追踪最大/最小距离
+    if (r < minDist) {
+      minDist = r;
+      minDistT = t;
+      minDistX = x;
+      minDistY = y;
+      periIdx = path.length - 1;
+    }
+    if (r > maxDist) {
+      maxDist = r;
+      maxDistT = t;
+      maxDistX = x;
+      maxDistY = y;
+      apoIdx = path.length - 1;
+    }
+
+    // 检测近日点通过：r从减小变为增大
+    if (rDecreasing && r > prevR && periCount === 0) {
+      // 第一次近日点通过
+      periCount++;
+      // 使用前一个点作为近日点（更接近最小值）
+      periTimes.push(t - dt);
+      periDists.push(prevR);
+    } else if (rDecreasing && r > prevR && periCount >= 1) {
+      // 第二次近日点通过 → 完成一个完整周期
+      periCount++;
+      periTimes.push(t - dt);
+      periDists.push(prevR);
+      break;
+    }
+
+    rDecreasing = r < prevR;
+    prevR = r;
+  }
+
+  // 从两次近日点通过计算周期
+  if (periTimes.length >= 1 && periCount >= 1) {
+    // 找到orbitPath中最接近minDist的点作为近日点
+    let bestPeriIdx = 0, bestPeriDist = Infinity;
+    let bestApoIdx = 0, bestApoDist = 0;
+    for (let i = 0; i < path.length; i++) {
+      const pr = Math.sqrt(path[i].x * path[i].x + path[i].y * path[i].y);
+      if (pr < bestPeriDist) { bestPeriDist = pr; bestPeriIdx = i; }
+      if (pr > bestApoDist) { bestApoDist = pr; bestApoIdx = i; }
+    }
+
+    // 周期：如果有两次近日点通过，用时间差；否则用轨道总时长估计
+    let period;
+    if (periTimes.length >= 2) {
+      period = periTimes[1] - periTimes[0];
+    } else {
+      // 只有一次近日点通过，用总时长
+      period = t;
+    }
+
+    // 确保 period 不为零
+    if (period < 1e-9) period = t;
+
+    const rPeri = bestPeriDist;
+    const rApo = bestApoDist;
+    const a = (rPeri + rApo) / 2;            // 半长轴
+    const ecc = (rApo - rPeri) / (rApo + rPeri); // 离心率
+
+    planet.orbitPath = path;
+    planet.period = period;
+    planet.semiMajorAxis = a;
+    planet.eccentricity = Math.max(0, Math.min(ecc, 0.999));
+    planet.perihelionIdx = bestPeriIdx;
+    planet.aphelionIdx = bestApoIdx;
+    planet.twoPiOverGM = (4 * Math.PI * Math.PI) / (G * M);
+
+    // 计算扇形面积用于第二定律验证
+    // 选择两个相等时间间隔，计算各自扫过的面积
+    const sectorDuration = period / 8;
+    if (sectorDuration > 0 && path.length > 10) {
+      // 近日点附近扇形
+      const periT = path[bestPeriIdx] ? path[bestPeriIdx].t : 0;
+      const areaPeri = computeSweptArea(path, periT, periT + sectorDuration);
+      // 远日点附近扇形
+      const apoT = path[bestApoIdx] ? path[bestApoIdx].t : period / 2;
+      const areaApo = computeSweptArea(path, apoT, apoT + sectorDuration);
+      planet.areaComputed = { areaPeri, areaApo, sectorDuration, periStartT: periT, apoStartT: apoT };
+    }
+  } else {
+    // 回退：使用路径数据
+    planet.orbitPath = path;
+    let minR = Infinity, maxR = 0;
+    let minI = 0, maxI = 0;
+    for (let i = 0; i < path.length; i++) {
+      const pr = Math.sqrt(path[i].x * path[i].x + path[i].y * path[i].y);
+      if (pr < minR) { minR = pr; minI = i; }
+      if (pr > maxR) { maxR = pr; maxI = i; }
+    }
+    planet.period = t;
+    planet.semiMajorAxis = (minR + maxR) / 2;
+    planet.eccentricity = (maxR - minR) / (maxR + minR);
+    planet.perihelionIdx = minI;
+    planet.aphelionIdx = maxI;
+    planet.twoPiOverGM = (4 * Math.PI * Math.PI) / (G * M);
+  }
+}
+
+// ============================================================================
+// 计算从 tStart 到 tEnd 期间行星-恒星连线扫过的面积（鞋带公式）
+// 扇形面积 = 0.5 * |Σ(x_i*y_{i+1} - x_{i+1}*y_i)|
+// 多边形顶点序列：恒星(0,0) → 轨道点1 → 轨道点2 → ... → 恒星(0,0)
+// ============================================================================
+function computeSweptArea(path, tStart, tEnd) {
+  // 找到时间范围内的路径点
+  let points = [];
+  for (let i = 0; i < path.length; i++) {
+    if (path[i].t >= tStart && path[i].t <= tEnd) {
+      points.push({ x: path[i].x, y: path[i].y });
+    }
+  }
+  if (points.length < 2) return 0;
+
+  // 鞋带公式（多边形顶点包括原点）
+  // 构建完整多边形：原点 → 路径点 → 原点
+  const allPts = [{ x: 0, y: 0 }, ...points, { x: 0, y: 0 }];
+  let area = 0;
+  for (let i = 0; i < allPts.length - 1; i++) {
+    area += allPts[i].x * allPts[i + 1].y - allPts[i + 1].x * allPts[i].y;
+  }
+  return Math.abs(area) / 2;
+}
+
+// ============================================================================
+// 辅助：根据轨道路径数据获取时间区间内的路径点
+// ============================================================================
+function getPathPointsInInterval(path, tStart, tEnd) {
+  const pts = [];
+  for (let i = 0; i < path.length; i++) {
+    if (path[i].t >= tStart && path[i].t <= tEnd) {
+      pts.push({ x: path[i].x, y: path[i].y });
+    }
+  }
+  return pts;
+}
+
+// ============================================================================
+// 创建一颗行星
+// 初始位置在 (r0, 0)，初始速度方向为 +y (切向)
+// v_circular = sqrt(GM/r0)，偏离此值产生椭圆轨道
+// ============================================================================
+function createPlanet(r0, v0, M, color, name) {
+  // 位置：x轴正方向，距离 r0
+  const x = r0;
+  const y = 0;
+  // 速度：纯切向 (沿 +y)
+  // 如果 v0 为 0 则使用圆轨道速度
+  const vCirc = Math.sqrt(G * M / r0);
+  const vActual = v0 > 0 ? v0 : vCirc;
+  const vx = 0;
+  const vy = vActual;
+
+  const planet = new Planet(x, y, vx, vy, color, name);
+  precomputeOrbit(planet, M);
+  return planet;
+}
+
+// ============================================================================
+// 重新计算所有行星的轨道（中心质量 M 改变时调用）
+// ============================================================================
+function recomputeAllOrbits(M) {
+  for (const p of planets) {
+    // 重新用当前质量和位置速度计算轨道
+    const tempP = new Planet(p.x, p.y, p.vx, p.vy, p.color, p.name);
+    tempP.id = p.id;
+    precomputeOrbit(tempP, M);
+    // 将预计算结果复制回行星
+    p.orbitPath = tempP.orbitPath;
+    p.period = tempP.period;
+    p.semiMajorAxis = tempP.semiMajorAxis;
+    p.eccentricity = tempP.eccentricity;
+    p.perihelionIdx = tempP.perihelionIdx;
+    p.aphelionIdx = tempP.aphelionIdx;
+    p.areaComputed = tempP.areaComputed;
+    p.twoPiOverGM = tempP.twoPiOverGM;
+    // 行星的 x,y,vx,vy 保持不变（当前运动状态）
+  }
+}
+
+// ============================================================================
+// 初始化默认行星
+// ============================================================================
+function initDefaultPlanets() {
+  planets = [];
+  planetIdCounter = 0;
+
+  // 行星1：r=3 AU，v略大于圆轨道 → 近日点在初始位置
+  const p1 = createPlanet(3.0, 0.58, centralMass, PLANET_COLORS[0], '行星 A');
+  planets.push(p1);
+
+  // 行星2：r=5 AU，接近圆轨道但稍快
+  const p2 = createPlanet(5.0, 0.45, centralMass, PLANET_COLORS[1], '行星 B');
+  planets.push(p2);
+}
+
+// ============================================================================
+// 计算轨道绘图的缩放因子
+// ============================================================================
+function computeScale() {
+  let maxR = 1;
+  for (const p of planets) {
+    if (p.orbitPath.length > 0) {
+      for (const pt of p.orbitPath) {
+        const r = Math.sqrt(pt.x * pt.x + pt.y * pt.y);
+        if (r > maxR) maxR = r;
+      }
+    }
+    const rCurrent = Math.sqrt(p.x * p.x + p.y * p.y);
+    if (rCurrent > maxR) maxR = rCurrent;
+  }
+  // 加上一些边距
+  maxR *= 1.15;
+  if (maxR < 5) maxR = 5;
+  scale = Math.min(canvasWidth, canvasHeight) / (2 * maxR);
+}
+
+// ============================================================================
+// 物理坐标 → 画布坐标
+// ============================================================================
+function toCanvasX(px) { return canvasWidth / 2 + px * scale; }
+function toCanvasY(py) { return canvasHeight / 2 - py * scale; }
+
+// ============================================================================
+// 渲染画布
+// ============================================================================
+function render() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  computeScale();
+
+  const cx = canvasWidth / 2;
+  const cy = canvasHeight / 2;
+
+  // ---------- 绘制坐标轴参考线 ----------
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([4, 8]);
+  ctx.beginPath();
+  ctx.moveTo(cx, 0); ctx.lineTo(cx, canvasHeight);
+  ctx.moveTo(0, cy); ctx.lineTo(canvasWidth, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ---------- 绘制等面积扇形（第二定律） ----------
+  if (showSectors) {
+    for (const planet of planets) {
+      if (!planet.areaComputed || planet.orbitPath.length < 2) continue;
+      const ac = planet.areaComputed;
+
+      // 绘制近日点附近扇形（半透明蓝色调）
+      const periPts = getPathPointsInInterval(planet.orbitPath, ac.periStartT, ac.periStartT + ac.sectorDuration);
+      if (periPts.length >= 2) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        for (const pt of periPts) {
+          ctx.lineTo(toCanvasX(pt.x), toCanvasY(pt.y));
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(88, 166, 255, 0.25)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(88, 166, 255, 0.6)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+
+      // 绘制远日点附近扇形（半透明橙色调）
+      const apoPts = getPathPointsInInterval(planet.orbitPath, ac.apoStartT, ac.apoStartT + ac.sectorDuration);
+      if (apoPts.length >= 2) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        for (const pt of apoPts) {
+          ctx.lineTo(toCanvasX(pt.x), toCanvasY(pt.y));
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(247, 129, 102, 0.25)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(247, 129, 102, 0.6)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+
+      // 标注扇形面积
+      if (ac.areaPeri > 0) {
+        ctx.fillStyle = '#58a6ff';
+        ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        const labelX = toCanvasX(planet.orbitPath[planet.perihelionIdx] ? planet.orbitPath[planet.perihelionIdx].x * 0.65 : 0);
+        const labelY = toCanvasY(planet.orbitPath[planet.perihelionIdx] ? planet.orbitPath[planet.perihelionIdx].y * 0.65 : 0);
+        ctx.fillText('面积=' + ac.areaPeri.toFixed(2), labelX, labelY);
+      }
+      if (ac.areaApo > 0) {
+        ctx.fillStyle = '#f78166';
+        ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        const labelX = toCanvasX(planet.orbitPath[planet.aphelionIdx] ? planet.orbitPath[planet.aphelionIdx].x * 0.65 : 0);
+        const labelY = toCanvasY(planet.orbitPath[planet.aphelionIdx] ? planet.orbitPath[planet.aphelionIdx].y * 0.65 : 0);
+        ctx.fillText('面积=' + ac.areaApo.toFixed(2), labelX, labelY);
+      }
+    }
+  }
+
+  // ---------- 绘制轨道椭圆路径 ----------
+  for (const planet of planets) {
+    if (planet.orbitPath.length < 2) continue;
+    ctx.beginPath();
+    const firstPt = planet.orbitPath[0];
+    ctx.moveTo(toCanvasX(firstPt.x), toCanvasY(firstPt.y));
+    for (let i = 1; i < planet.orbitPath.length; i++) {
+      ctx.lineTo(toCanvasX(planet.orbitPath[i].x), toCanvasY(planet.orbitPath[i].y));
+    }
+    ctx.strokeStyle = planet.color;
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------- 绘制近日点和远日点标记 ----------
+  for (const planet of planets) {
+    if (planet.orbitPath.length === 0) continue;
+
+    // 近日点
+    if (planet.perihelionIdx < planet.orbitPath.length) {
+      const peri = planet.orbitPath[planet.perihelionIdx];
+      const px = toCanvasX(peri.x), py = toCanvasY(peri.y);
+      ctx.beginPath();
+      ctx.arc(px, py, 5, 0, Math.PI * 2);
+      ctx.fillStyle = planet.color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#c9d1d9';
+      ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('近日点', px + 8, py - 4);
+    }
+
+    // 远日点
+    if (planet.aphelionIdx < planet.orbitPath.length) {
+      const apo = planet.orbitPath[planet.aphelionIdx];
+      const ax = toCanvasX(apo.x), ay = toCanvasY(apo.y);
+      ctx.beginPath();
+      ctx.arc(ax, ay, 5, 0, Math.PI * 2);
+      ctx.fillStyle = planet.color;
+      ctx.globalAlpha = 0.6;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#8b949e';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#c9d1d9';
+      ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('远日点', ax + 8, ay - 4);
+    }
+  }
+
+  // ---------- 绘制速度矢量箭头 ----------
+  if (showVectors) {
+    for (const planet of planets) {
+      const px = toCanvasX(planet.x), py = toCanvasY(planet.y);
+      const vMag = Math.sqrt(planet.vx * planet.vx + planet.vy * planet.vy);
+      if (vMag < 1e-9) continue;
+      // 速度矢量缩放
+      const vScale = 15 / vMag;
+      const vxEnd = px + planet.vx * vScale;
+      const vyEnd = py - planet.vy * vScale;  // 注意 y 轴翻转
+
+      // 箭头线
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(vxEnd, vyEnd);
+      ctx.strokeStyle = '#f0f6fc';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // 箭头尖
+      const angle = Math.atan2(vyEnd - py, vxEnd - px);
+      const arrowLen = 8;
+      ctx.beginPath();
+      ctx.moveTo(vxEnd, vyEnd);
+      ctx.lineTo(
+        vxEnd - arrowLen * Math.cos(angle - Math.PI / 6),
+        vyEnd - arrowLen * Math.sin(angle - Math.PI / 6)
+      );
+      ctx.moveTo(vxEnd, vyEnd);
+      ctx.lineTo(
+        vxEnd - arrowLen * Math.cos(angle + Math.PI / 6),
+        vyEnd - arrowLen * Math.sin(angle + Math.PI / 6)
+      );
+      ctx.strokeStyle = '#f0f6fc';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
+  }
+
+  // ---------- 绘制中心恒星 ----------
+  // 辉光效果
+  const starGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22);
+  starGrad.addColorStop(0, 'rgba(255, 230, 100, 1)');
+  starGrad.addColorStop(0.3, 'rgba(255, 200, 50, 0.8)');
+  starGrad.addColorStop(0.7, 'rgba(255, 160, 20, 0.2)');
+  starGrad.addColorStop(1, 'rgba(255, 140, 0, 0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+  ctx.fillStyle = starGrad;
+  ctx.fill();
+
+  // 恒星核心
+  ctx.beginPath();
+  ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffd54f';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff176';
+  ctx.fill();
+
+  // 恒星标注
+  ctx.fillStyle = '#ffd54f';
+  ctx.font = 'bold 11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('恒星 (焦点)', cx, cy - 18);
+
+  // ---------- 绘制行星 ----------
+  for (const planet of planets) {
+    const px = toCanvasX(planet.x), py = toCanvasY(planet.y);
+
+    // 行星辉光
+    const pGrad = ctx.createRadialGradient(px, py, 1, px, py, 10);
+    pGrad.addColorStop(0, planet.color);
+    pGrad.addColorStop(0.5, planet.color + '88');
+    pGrad.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(px, py, 10, 0, Math.PI * 2);
+    ctx.fillStyle = pGrad;
+    ctx.fill();
+
+    // 行星实体
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = planet.color;
+    ctx.fill();
+    ctx.strokeStyle = '#f0f6fc';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 行星名称
+    ctx.fillStyle = '#c9d1d9';
+    ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(planet.name, px, py - 14);
+  }
+}
+
+// ============================================================================
+// 更新开普勒第三定律验证表格
+// T² / a³ = 4π² / (GM) 对所有行星应为常数
+// ============================================================================
+function updateKeplerTable() {
+  keplerTableBody.innerHTML = '';
+  planetLegend.innerHTML = '';
+
+  for (const planet of planets) {
+    const T = planet.period;
+    const a = planet.semiMajorAxis;
+    const e = planet.eccentricity;
+    const T2 = T * T;
+    const a3 = a * a * a;
+    const ratio = a3 > 1e-9 ? (T2 / a3) : 0;
+    const expected = planet.twoPiOverGM;
+    // 判断是否与理论值接近（容差 5%）
+    const isMatch = expected > 0 && Math.abs(ratio - expected) / expected < 0.05;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${planet.color};margin-right:4px;"></span>${planet.name}</td>
+      <td>${T.toFixed(3)}</td>
+      <td>${a.toFixed(3)}</td>
+      <td>${e.toFixed(4)}</td>
+      <td>${T2.toFixed(4)}</td>
+      <td>${a3.toFixed(4)}</td>
+      <td class="${isMatch ? 'match' : ''}">${ratio.toFixed(4)}</td>
+    `;
+    keplerTableBody.appendChild(tr);
+
+    // 图例
+    const legendItem = document.createElement('span');
+    legendItem.innerHTML = `<span class="dot" style="background:${planet.color};"></span>${planet.name}`;
+    planetLegend.appendChild(legendItem);
+  }
+
+  // 显示理论值
+  if (planets.length > 0) {
+    const expected = planets[0].twoPiOverGM;
+    const theoryRow = document.createElement('tr');
+    theoryRow.innerHTML = `
+      <td style="color:#8b949e;">理论值</td>
+      <td colspan="3" style="color:#8b949e;">4π²/GM = ${expected.toFixed(4)}</td>
+      <td colspan="3" style="color:#8b949e;">所有行星 T²/a³ 应等于此值</td>
+    `;
+    keplerTableBody.appendChild(theoryRow);
+  }
+}
+
+// ============================================================================
+// 模拟步进 —— 对所有行星执行若干步 RK4 积分
+// ============================================================================
+function simulationStep() {
+  const dt = DT_BASE * simSpeed;
+  for (let s = 0; s < STEPS_PER_FRAME; s++) {
+    for (const planet of planets) {
+      planet.rk4Step(dt, centralMass);
+    }
+    simTime += dt;
+  }
+
+  // 检查行星是否完成一个周期，如果超过周期则回绕时间
+  for (const planet of planets) {
+    if (planet.period > 0 && simTime > planet.period * 20) {
+      // 防止时间无限增长
+    }
+  }
+}
+
+// ============================================================================
+// 动画循环
+// ============================================================================
+function animate() {
+  if (!isRunning) {
+    animationId = null;
+    return;
+  }
+
+  simulationStep();
+  render();
+  updateKeplerTable();
+
+  animationId = requestAnimationFrame(animate);
+}
+
+// ============================================================================
+// 开始模拟
+// ============================================================================
+function startSimulation() {
+  if (isRunning) return;
+  isRunning = true;
+  btnStart.textContent = '▶ 运行中...';
+  btnStart.classList.remove('green');
+  btnStart.classList.add('btn');
+  btnStart.style.opacity = '0.6';
+  animate();
+}
+
+// ============================================================================
+// 暂停模拟
+// ============================================================================
+function pauseSimulation() {
+  isRunning = false;
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+  btnStart.textContent = '▶ 开始';
+  btnStart.classList.add('green');
+  btnStart.classList.remove('btn');
+  btnStart.style.opacity = '1';
+}
+
+// ============================================================================
+// 重置模拟 —— 将所有行星恢复到初始状态
+// ============================================================================
+function resetSimulation() {
+  pauseSimulation();
+  simTime = 0;
+  initDefaultPlanets();
+  // 更新滑块到默认值
+  massSlider.value = 1.0;
+  massValue.textContent = '1.0';
+  distSlider.value = 3.0;
+  distValue.textContent = '3.0';
+  velSlider.value = 0.58;
+  velValue.textContent = '0.58';
+  centralMass = 1.0;
+  computeScale();
+  render();
+  updateKeplerTable();
+}
+
+// ============================================================================
+// 添加新行星
+// ============================================================================
+function addPlanet() {
+  const r0 = parseFloat(distSlider.value);
+  const v0 = parseFloat(velSlider.value);
+  const colorIdx = planets.length % PLANET_COLORS.length;
+  const color = PLANET_COLORS[colorIdx];
+  const name = '行星 ' + String.fromCharCode(65 + planets.length); // A, B, C, ...
+
+  const planet = createPlanet(r0, v0, centralMass, color, name);
+  planets.push(planet);
+
+  computeScale();
+  render();
+  updateKeplerTable();
+}
+
+// ============================================================================
+// 事件绑定
+// ============================================================================
+massSlider.addEventListener('input', () => {
+  centralMass = parseFloat(massSlider.value);
+  massValue.textContent = centralMass.toFixed(1);
+  recomputeAllOrbits(centralMass);
+  computeScale();
+  render();
+  updateKeplerTable();
+});
+
+distSlider.addEventListener('input', () => {
+  distValue.textContent = parseFloat(distSlider.value).toFixed(1);
+});
+
+velSlider.addEventListener('input', () => {
+  velValue.textContent = parseFloat(velSlider.value).toFixed(2);
+});
+
+speedSlider.addEventListener('input', () => {
+  simSpeed = parseFloat(speedSlider.value);
+  speedValue.textContent = simSpeed.toFixed(1) + '×';
+});
+
+sectorToggle.addEventListener('change', () => {
+  showSectors = sectorToggle.checked;
+  render();
+});
+
+vectorToggle.addEventListener('change', () => {
+  showVectors = vectorToggle.checked;
+  render();
+});
+
+btnStart.addEventListener('click', startSimulation);
+btnPause.addEventListener('click', pauseSimulation);
+btnReset.addEventListener('click', resetSimulation);
+btnAddPlanet.addEventListener('click', addPlanet);
+
+// ============================================================================
+// 处理窗口大小变化
+// ============================================================================
+function resizeCanvas() {
+  const panel = canvasPanel;
+  const rect = panel.getBoundingClientRect();
+  canvasWidth = Math.floor(rect.width) - 20;
+  canvasHeight = Math.floor(rect.height) - 20;
+  if (canvasWidth < 300) canvasWidth = 300;
+  if (canvasHeight < 300) canvasHeight = 300;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  computeScale();
+  render();
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+});
+
+// ============================================================================
+// 键盘快捷键
+// ============================================================================
+window.addEventListener('keydown', (e) => {
+  switch (e.key.toLowerCase()) {
+    case ' ':
+      e.preventDefault();
+      if (isRunning) pauseSimulation();
+      else startSimulation();
+      break;
+    case 'r':
+      if (!e.ctrlKey && !e.metaKey) {
+        resetSimulation();
+      }
+      break;
+    case 'a':
+      if (!e.ctrlKey && !e.metaKey) {
+        addPlanet();
+      }
+      break;
+  }
+});
+
+// ============================================================================
+// 初始化
+// ============================================================================
+function init() {
+  canvas = document.getElementById('orbitCanvas');
+  ctx = canvas.getContext('2d');
+
+  resizeCanvas();
+  initDefaultPlanets();
+  computeScale();
+  render();
+  updateKeplerTable();
+}
+
+init();
+</script>
+</body>
+</html>

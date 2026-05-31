@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>相干阵激光 - 物理数值仿真平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+.container{width:100%;max-width:1100px}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.canvas-row{display:flex;gap:16px;margin-bottom:20px}
+@media(max-width:860px){.canvas-row{flex-direction:column}}
+.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
+.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
+.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+.info-item{display:flex;align-items:baseline;gap:6px}
+.info-item .info-label{color:#8b949e}
+.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.btn-row{display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn-start{background:#238636;color:#fff;border-color:#2ea043}
+.btn-start:hover{background:#2ea043}
+.btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
+.btn-pause:hover{background:#bb8009}
+.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
+.btn-reset:hover{background:#30363d}
+.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>相干阵激光</h1>
+    <p class="subtitle">相干激光阵列通过多路激光相干合成实现高功率、高光束质量输出。远场光强分布遵循多缝干涉公式 I(θ)=I₀[sin(Nδ/2)/sin(δ/2)]²，其中 δ=2πd·sinθ/λ。</p>
+  </div>
+  <div class="canvas-row">
+    <div class="panel">
+      <h2>🔬 阵列远场光斑</h2>
+      <canvas id="canvasSpot" width="680" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h2>📊 光强分布</h2>
+      <canvas id="canvasCurve" width="680" height="420"></canvas>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>阵元数量 N <span class="val" id="valN">8</span></label>
+      <input type="range" id="sliderN" min="2" max="16" step="1" value="8">
+    </div>
+    <div class="control-group">
+      <label>阵元间距 d <span class="val" id="valD">5.0 μm</span></label>
+      <input type="range" id="sliderD" min="1" max="10" step="0.1" value="5">
+    </div>
+    <div class="control-group">
+      <label>波长 λ <span class="val" id="valLam">632.8 nm</span></label>
+      <input type="range" id="sliderLam" min="380" max="780" step="0.1" value="632.8">
+    </div>
+  </div>
+  <div class="info-bar">
+    <div class="info-item"><span class="info-label">主瓣宽度=</span><span class="info-value" id="infoMain">0.00°</span></div>
+    <div class="info-item"><span class="info-label">旁瓣比=</span><span class="info-value" id="infoSide">0.00 dB</span></div>
+    <div class="info-item"><span class="info-label">光束质量=</span><span class="info-value" id="infoQuality">0.00</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart">▶ 动画</button>
+    <button class="btn btn-pause" id="btnPause">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset">↺ 重置</button>
+  </div>
+  <p class="legend-note">💡 提示：增大阵元数量 N 可压窄主瓣、提高方向性；增大间距 d 可进一步收窄主瓣但会出现更多栅瓣。<br>相干合成要求各路激光相位锁定，是实现高功率定向输出的关键技术。按 Space 开始/暂停，按 R 重置。</p>
+</div>
+<script>
+var canvasSpot=document.getElementById('canvasSpot');
+var ctxS=canvasSpot.getContext('2d');
+var canvasCurve=document.getElementById('canvasCurve');
+var ctxC=canvasCurve.getContext('2d');
+var sliderN=document.getElementById('sliderN');
+var sliderD=document.getElementById('sliderD');
+var sliderLam=document.getElementById('sliderLam');
+var valN=document.getElementById('valN');
+var valD=document.getElementById('valD');
+var valLam=document.getElementById('valLam');
+var infoMain=document.getElementById('infoMain');
+var infoSide=document.getElementById('infoSide');
+var infoQuality=document.getElementById('infoQuality');
+var btnStart=document.getElementById('btnStart');
+var btnPause=document.getElementById('btnPause');
+var btnReset=document.getElementById('btnReset');
+
+var N=8,d=5,lam=632.8;
+var running=false,animTime=0,lastFrameTime=null,animFrameId=null;
+
+function wavelengthToRGB(wl){
+  var r=0,g=0,b=0;
+  if(wl>=380&&wl<440){r=-(wl-440)/(440-380);g=0;b=1}
+  else if(wl>=440&&wl<490){r=0;g=(wl-440)/(490-440);b=1}
+  else if(wl>=490&&wl<510){r=0;g=1;b=-(wl-510)/(510-490)}
+  else if(wl>=510&&wl<580){r=(wl-510)/(580-510);g=1;b=0}
+  else if(wl>=580&&wl<645){r=1;g=-(wl-645)/(645-580);b=0}
+  else if(wl>=645&&wl<=780){r=1;g=0;b=0}
+  var factor=1;
+  if(wl>=380&&wl<420)factor=0.3+0.7*(wl-380)/(420-380);
+  else if(wl>700&&wl<=780)factor=0.3+0.7*(780-wl)/(780-700);
+  else if(wl<380||wl>780)factor=0;
+  r=Math.round(255*Math.pow(r*factor,0.8));
+  g=Math.round(255*Math.pow(g*factor,0.8));
+  b=Math.round(255*Math.pow(b*factor,0.8));
+  return{r:r,g:g,b:b}
+}
+
+function arrayIntensity(sinTheta){
+  var delta=2*Math.PI*d*1e-6*sinTheta/(lam*1e-9);
+  var halfN=delta*N/2;
+  var half1=delta/2;
+  var denom=Math.sin(half1);
+  if(Math.abs(denom)<1e-12)return 1;
+  var val=Math.sin(halfN)/denom;
+  return val*val/(N*N)
+}
+
+function updateUI(){
+  valN.textContent=N;
+  valD.textContent=d.toFixed(1)+' μm';
+  valLam.textContent=lam.toFixed(1)+' nm';
+  var mainLobeWidthDeg=2*Math.asin(lam*1e-9/(N*d*1e-6))*180/Math.PI;
+  infoMain.textContent=mainLobeWidthDeg.toFixed(2)+'°';
+  var sideLobeRatio=1/(N*N)*Math.pow(1/Math.sin(1.5*Math.PI/N),2);
+  var sideLobeDB=10*Math.log10(sideLobeRatio);
+  infoSide.textContent=sideLobeDB.toFixed(2)+' dB';
+  var quality=1/Math.sqrt(N);
+  infoQuality.textContent=quality.toFixed(2);
+}
+
+sliderN.addEventListener('input',function(){N=+sliderN.value;updateUI();if(!running)draw()});
+sliderD.addEventListener('input',function(){d=+sliderD.value;updateUI();if(!running)draw()});
+sliderLam.addEventListener('input',function(){lam=+sliderLam.value;updateUI();if(!running)draw()});
+
+btnStart.addEventListener('click',function(){
+  if(running){pause();return}
+  running=true;btnStart.classList.add('active');btnPause.classList.remove('active');
+  if(!animFrameId)animFrameId=requestAnimationFrame(animate);
+});
+btnPause.addEventListener('click',pause);
+function pause(){running=false;btnStart.classList.remove('active');btnPause.classList.add('active')}
+btnReset.addEventListener('click',function(){
+  N=8;d=5;lam=632.8;animTime=0;lastFrameTime=null;
+  sliderN.value=8;sliderD.value=5;sliderLam.value=632.8;
+  updateUI();if(!running)draw();
+});
+
+function drawSpot(){
+  var W=canvasSpot.width,H=canvasSpot.height;
+  ctxS.fillStyle='#0d1117';ctxS.fillRect(0,0,W,H);
+  var imgData=ctxS.createImageData(W,H);
+  var data=imgData.data;
+  var rgb=wavelengthToRGB(lam);
+  var maxSinTheta=0.02;
+  var phaseShift=animTime*0.5;
+  for(var py=0;py<H;py++){
+    for(var px=0;px<W;px++){
+      var nx=(px-W/2)/(W/2);
+      var ny=(py-H/2)/(H/2);
+      var r2=nx*nx+ny*ny;
+      if(r2>1)continue;
+      var sinTheta=nx*maxSinTheta;
+      var intensity=arrayIntensity(sinTheta);
+      var envelope=Math.exp(-r2*3);
+      var flicker=1+0.05*Math.sin(phaseShift+nx*10)*Math.sin(phaseShift+ny*10);
+      var bright=intensity*envelope*flicker;
+      if(bright>1)bright=1;
+      var idx=(py*W+px)*4;
+      data[idx]=Math.round(rgb.r*bright);
+      data[idx+1]=Math.round(rgb.g*bright);
+      data[idx+2]=Math.round(rgb.b*bright);
+      data[idx+3]=255;
+    }
+  }
+  ctxS.putImageData(imgData,0,0);
+  ctxS.strokeStyle='rgba(48,54,61,0.6)';ctxS.lineWidth=1;
+  ctxS.beginPath();ctxS.arc(W/2,H/2,W/2-1,0,Math.PI*2);ctxS.stroke();
+  ctxS.beginPath();ctxS.moveTo(W/2,0);ctxS.lineTo(W/2,H);ctxS.stroke();
+  ctxS.beginPath();ctxS.moveTo(0,H/2);ctxS.lineTo(W,H/2);ctxS.stroke();
+  ctxS.fillStyle='#8b949e';ctxS.font='10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('0°',W/2,H-6);
+  ctxS.fillText('+'+Math.round(maxSinTheta*180/Math.PI)+'°',W-20,H/2-4);
+  ctxS.fillText('-'+Math.round(maxSinTheta*180/Math.PI)+'°',20,H/2-4);
+}
+
+function drawCurve(){
+  var W=canvasCurve.width,H=canvasCurve.height;
+  ctxC.fillStyle='#0d1117';ctxC.fillRect(0,0,W,H);
+  var ml=60,mt=30,mr=30,mb=50;
+  var pw=W-ml-mr,ph=H-mt-mb;
+  var maxSinTheta=0.02;
+  var maxAngleDeg=maxSinTheta*180/Math.PI;
+  ctxC.strokeStyle='#30363d';ctxC.lineWidth=1;
+  ctxC.beginPath();ctxC.moveTo(ml,mt);ctxC.lineTo(ml,H-mb);ctxC.lineTo(W-mr,H-mb);ctxC.stroke();
+  ctxC.strokeStyle='#30363d';ctxC.setLineDash([4,4]);
+  for(var i=1;i<=4;i++){
+    var y=mt+ph*(1-i/4);
+    ctxC.beginPath();ctxC.moveTo(ml,y);ctxC.lineTo(W-mr,y);ctxC.stroke();
+  }
+  ctxC.setLineDash([]);
+  ctxC.fillStyle='#8b949e';ctxC.font='10px sans-serif';ctxC.textAlign='right';
+  for(var i=0;i<=4;i++){
+    var y=mt+ph*(1-i/4);
+    ctxC.fillText((i*25)+'%',ml-6,y+3);
+  }
+  ctxC.textAlign='center';
+  var tickCount=6;
+  for(var i=0;i<=tickCount;i++){
+    var x=ml+pw*i/tickCount;
+    var angle=-maxAngleDeg+2*maxAngleDeg*i/tickCount;
+    ctxC.fillText(angle.toFixed(1)+'°',x,H-mb+16);
+  }
+  ctxC.fillStyle='#8b949e';ctxC.font='11px sans-serif';
+  ctxC.textAlign='center';
+  ctxC.fillText('θ',ml+pw/2,H-mb+38);
+  ctxC.save();ctxC.translate(14,mt+ph/2);ctxC.rotate(-Math.PI/2);
+  ctxC.fillText('I / I₀',0,0);ctxC.restore();
+  var rgb=wavelengthToRGB(lam);
+  var colorStr='rgb('+rgb.r+','+rgb.g+','+rgb.b+')';
+  ctxC.strokeStyle=colorStr;ctxC.lineWidth=2;
+  ctxC.beginPath();
+  var steps=pw*2;
+  for(var i=0;i<=steps;i++){
+    var sinTheta=-maxSinTheta+2*maxSinTheta*i/steps;
+    var intensity=arrayIntensity(sinTheta);
+    var x=ml+pw*i/steps;
+    var y=mt+ph*(1-intensity);
+    if(i===0)ctxC.moveTo(x,y);else ctxC.lineTo(x,y);
+  }
+  ctxC.stroke();
+  var grad=ctxC.createLinearGradient(ml,0,W-mr,0);
+  grad.addColorStop(0,'rgba('+rgb.r+','+rgb.g+','+rgb.b+',0)');
+  grad.addColorStop(0.5,'rgba('+rgb.r+','+rgb.g+','+rgb.b+',0.15)');
+  grad.addColorStop(1,'rgba('+rgb.r+','+rgb.g+','+rgb.b+',0)');
+  ctxC.fillStyle=grad;
+  ctxC.beginPath();
+  ctxC.moveTo(ml,mt+ph);
+  for(var i=0;i<=steps;i++){
+    var sinTheta=-maxSinTheta+2*maxSinTheta*i/steps;
+    var intensity=arrayIntensity(sinTheta);
+    var x=ml+pw*i/steps;
+    var y=mt+ph*(1-intensity);
+    ctxC.lineTo(x,y);
+  }
+  ctxC.lineTo(W-mr,mt+ph);ctxC.closePath();ctxC.fill();
+  ctxC.fillStyle='#3fb950';ctxC.font='bold 11px sans-serif';ctxC.textAlign='left';
+  ctxC.fillText('I(θ) = I₀[sin(Nδ/2)/sin(δ/2)]²',ml+8,mt+16);
+  ctxC.fillStyle='#8b949e';ctxC.font='10px sans-serif';
+  ctxC.fillText('δ = 2πd·sinθ/λ',ml+8,mt+30);
+}
+
+function draw(){drawSpot();drawCurve()}
+
+function animate(timestamp){
+  if(!running){animFrameId=null;return}
+  if(lastFrameTime===null)lastFrameTime=timestamp;
+  var dt=Math.min((timestamp-lastFrameTime)/1000,0.1);
+  lastFrameTime=timestamp;animTime+=dt;
+  d=5+3*Math.sin(animTime*0.4);
+  if(d<1)d=1;
+  sliderD.value=d.toFixed(1);
+  updateUI();draw();
+  if(running)animFrameId=requestAnimationFrame(animate);
+}
+
+function resizeCanvases(){
+  var rowW=document.querySelector('.canvas-row').clientWidth;var cw=Math.floor((rowW-16)/2)-26;if(cw>680)cw=680;if(cw<200)cw=200;
+  var sw=cw,sh=Math.round(sw*420/680);
+  canvasSpot.width=sw;canvasSpot.height=sh;
+  canvasSpot.style.width=sw+'px';canvasSpot.style.height=sh+'px';
+  var ew=cw,eh=Math.round(ew*420/680);
+  canvasCurve.width=ew;canvasCurve.height=eh;
+  canvasCurve.style.width=ew+'px';canvasCurve.style.height=eh+'px';
+}
+window.addEventListener('resize',function(){resizeCanvases();if(!running)draw()});
+resizeCanvases();
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(running)pause();else btnStart.click()}
+  else if(e.code==='KeyR'){e.preventDefault();btnReset.click()}
+});
+updateUI();draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>激光尾波加速 - 物理数值仿真平台</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
+#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#30363d}
+header h1{margin:0;font-size:18px;font-weight:600}
+#info{margin-left:auto;color:#8b949e;font-size:13px}
+main{flex:1;display:flex;overflow:hidden}
+#canvasWrap{flex:1;position:relative}
+canvas{display:block;width:100%;height:100%}
+#sidebar{width:280px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0}
+.row label{flex:0 0 120px;font-size:13px}
+.row input[type=range]{flex:1}
+.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<main>
+<div id="canvasWrap"><canvas id="c"></canvas></div>
+<div id="sidebar">
+<div class="sec">
+<h3>参数设置</h3>
+<div class="row"><label>激光强度 I</label><input id="p1" type="range" min="0.1" max="2" step="0.1" value="1"><input id="p1n" type="number" value="1"></div>
+<div class="row"><label>等离子体密度 n_e</label><input id="p2" type="range" min="0.2" max="2" step="0.1" value="1"><input id="p2n" type="number" value="1"></div>
+<div class="row"><label>电子初速度</label><input id="p3" type="range" min="0" max="0.5" step="0.01" value="0.05"><input id="p3n" type="number" value="0.05"></div>
+</div>
+<div class="sec">
+<h3>显示</h3>
+<div class="row"><label>粒子数</label><input id="p4" type="range" min="50" max="300" value="150"><input id="p4n" type="number" value="150"></div>
+</div>
+</div>
+</main>
+</div>
+<script>
+const canvas=document.getElementById('c');const ctx=canvas.getContext('2d');
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+window.addEventListener('resize',resize);
+let inited=false;
+const p1=document.getElementById('p1'),p1n=document.getElementById('p1n');
+const p2=document.getElementById('p2'),p2n=document.getElementById('p2n');
+const p3=document.getElementById('p3'),p3n=document.getElementById('p3n');
+const p4=document.getElementById('p4'),p4n=document.getElementById('p4n');
+function link(a,b){a.oninput=()=>{b.value=a.value;reset()};b.oninput=()=>{a.value=b.value;reset()}}
+link(p1,p1n);link(p2,p2n);link(p3,p3n);link(p4,p4n);
+let parts=[];let t=0;
+function reset(){const N=+p4.value;parts=[];for(let i=0;i<N;i++){parts.push({x:Math.random(),y:Math.random(),vx:+p3.value*(Math.random()-0.5),vy:(Math.random()-0.5)*0.01})}}
+reset();
+function draw(){
+if(!inited){resize();inited=true;}
+const W=canvas.clientWidth,H=canvas.clientHeight;
+ctx.clearRect(0,0,W,H);
+const I=+p1.value,n=+p2.value;
+t+=0.01;
+const margin=40,top=margin,bottom=H-margin,left=margin,right=W-margin;
+ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+// plasma wave
+ctx.strokeStyle='#21262d';for(let i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(left,top+(bottom-top)/10*i);ctx.lineTo(right,top+(bottom-top)/10*i);ctx.stroke();}
+ctx.beginPath();ctx.strokeStyle='#58a6ff';ctx.lineWidth=2;
+for(let x=0;x<=1;x+=0.002){const y=0.5+0.2*Math.sin(2*Math.PI*5*(x-t*0.5));ctx.lineTo(left+(right-left)*x,top+(bottom-top)*y)}
+ctx.stroke();
+// laser pulse
+ctx.fillStyle='#f78166';ctx.globalAlpha=0.3;
+const laserX=t*0.3%1;
+ctx.beginPath();ctx.ellipse(left+(right-left)*laserX,(top+bottom)/2,(right-left)*0.05,(bottom-top)*0.3,0,0,Math.PI*2);ctx.fill();
+ctx.globalAlpha=1;
+// particles
+ctx.fillStyle='#3fb950';
+for(const p of parts){
+const E=I*Math.sin(2*Math.PI*5*(p.x-t*0.5));
+p.vx+=E*0.0005*n;
+p.vy*=0.995;
+p.x+=p.vx*0.01;
+p.y+=p.vy*0.01;
+if(p.x>1)p.x-=1;if(p.x<0)p.x+=1;
+if(p.y>1)p.y-=1;if(p.y<0)p.y+=1;
+const v=Math.hypot(p.vx,p.vy);
+ctx.beginPath();ctx.arc(left+(right-left)*p.x,top+(bottom-top)*p.y,2+v*10,0,Math.PI*2);ctx.fill();
+}
+}
+function loop(){draw();requestAnimationFrame(loop)}
+loop();
+</script>
+</body>
+</html>

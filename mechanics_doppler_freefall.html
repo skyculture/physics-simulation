@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>结合多普勒效应与自由落体运动 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>声源频率 f₀(Hz)</label><input type="range" id="f0" min="200" max="2000" step="50" value="440"><input type="number" id="f0Val" value="440"></div>
+      <div class="ctrl-group"><label>释放高度(m)</label><input type="range" id="height" min="5" max="100" step="5" value="50"><input type="number" id="heightVal" value="50"></div>
+      <div class="ctrl-group"><label>声速 v_s(m/s)</label><input type="range" id="vs" min="300" max="400" step="10" value="343"><input type="number" id="vsVal" value="343"></div>
+      <div class="ctrl-group"><button id="dropBtn">🎵 释放</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">多普勒效应：当声源向观察者靠近时，观测频率升高；远离时频率降低。公式：f = f₀ × (v_s ± v_o) / (v_s ∓ v_s)。自由落体：v = gt，y = ½gt²。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let t = 0;
+let isDropping = false;
+let waves = [];
+
+const Y_SCALE = 10;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  t = 0;
+  isDropping = false;
+  waves = [];
+  if(animationId) cancelAnimationFrame(animationId);
+  draw();
+}
+
+function drop() {
+  isDropping = true;
+  waves = [];
+  t = 0;
+  draw();
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  const S = Math.min(w, h);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+  const f0 = parseFloat(document.getElementById('f0').value);
+  const H = parseFloat(document.getElementById('height').value);
+  const vs = parseFloat(document.getElementById('vs').value);
+  const g = 9.8;
+  if(isDropping) {
+    t += 0.02;
+    if(Math.floor(t * 10) > Math.floor((t - 0.02) * 10)) {
+      const y = Math.min(H, 0.5 * g * t * t);
+      waves.push({ t: t, y0: y, r: 0 });
+    }
+  }
+  const y = Math.min(H, 0.5 * g * t * t);
+  const v = g * t;
+  const cx = w / 2;
+  const cy0 = h * 0.1;
+  const cy = cy0 + y * Y_SCALE;
+  const groundY = cy0 + H * Y_SCALE;
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.1, groundY);
+  ctx.lineTo(w * 0.9, groundY);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(88,166,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy0);
+  ctx.lineTo(cx, groundY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  for(let i = waves.length - 1; i >= 0; i--) {
+    const wave = waves[i];
+    const waveAge = t - wave.t;
+    const waveR = waveAge * vs * 0.5;
+    const waveCy = cy0 + wave.y0 * Y_SCALE;
+    const alpha = Math.max(0, 1 - waveAge / 3);
+    if(alpha <= 0) { waves.splice(i, 1); continue; }
+    ctx.strokeStyle = `rgba(247,129,102,${alpha * 0.6})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, waveCy, waveR, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#f78166';
+  ctx.beginPath();
+  ctx.arc(cx, Math.min(cy, groundY - 8), 8, 0, Math.PI * 2);
+  ctx.fill();
+  const observerY = h * 0.9;
+  ctx.fillStyle = '#3fb950';
+  ctx.beginPath();
+  ctx.arc(cx, observerY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 10, observerY);
+  ctx.lineTo(cx + 10, observerY);
+  ctx.stroke();
+  let observedF = f0;
+  if(cy < groundY - 8 && y > 0) {
+    const distanceToObserver = groundY - y;
+    const v_rel = v;
+    observedF = f0 * vs / (vs + v_rel);
+  }
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${S * 0.025}px sans-serif`;
+  ctx.fillText(`时间 t = ${t.toFixed(2)} s`, 10, S * 0.04);
+  ctx.fillText(`高度 y = ${y.toFixed(2)} m`, 10, S * 0.075);
+  ctx.fillText(`速度 v = ${v.toFixed(2)} m/s`, 10, S * 0.11);
+  ctx.fillText(`观测频率 f = ${observedF.toFixed(0)} Hz`, 10, S * 0.145);
+  ctx.fillStyle = '#3fb950';
+  ctx.font = `bold ${S * 0.03}px sans-serif`;
+  if(y >= H && isDropping) {
+    ctx.fillText('落地！', cx - 30, S * 0.04);
+    isDropping = false;
+  }
+  if(isDropping || t > 0) {
+    animationId = requestAnimationFrame(draw);
+  }
+}
+
+document.getElementById('f0').addEventListener('input', e => document.getElementById('f0Val').value = e.target.value);
+document.getElementById('height').addEventListener('input', e => document.getElementById('heightVal').value = e.target.value);
+document.getElementById('vs').addEventListener('input', e => document.getElementById('vsVal').value = e.target.value);
+document.getElementById('dropBtn').addEventListener('click', drop);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

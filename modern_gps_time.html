@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>导航卫星时间修正 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>卫星高度(km):</label><input type="range" id="height" min="10000" max="40000" step="1000" value="20200"><span id="heightVal">20200</span></div>
+    <div class="ctrl-group"><label>动画速度:</label><input type="range" id="animSpeed" min="0.1" max="3" step="0.1" value="1"><span id="animSpeedVal">1.0</span>×</div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">GPS时间修正：由于相对论效应，卫星上的时钟与地面时钟存在差异。狭义相对论（运动时钟变慢）使卫星时钟每天慢约7.2μs，广义相对论（引力红移）使卫星时钟每天快约45.9μs，净效应是每天快约38.7μs，必须进行修正才能保证定位精度。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let lastTime = 0;
+let simTime = 0;
+const GM = 3.986e14;
+const R_EARTH = 6.371e6;
+const C = 3e8;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw(timestamp) {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) { animationId = requestAnimationFrame(draw); return; }
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const height = parseFloat(document.getElementById('height').value) * 1000;
+  const animSpeed = parseFloat(document.getElementById('animSpeed').value);
+  const orbitR = R_EARTH + height;
+
+  if (!lastTime) lastTime = timestamp;
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+  simTime += dt * animSpeed;
+
+  const omega = Math.sqrt(GM / (orbitR * orbitR * orbitR));
+  const timeScale = 500;
+  const visualAngle = simTime * omega * timeScale;
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, w, h);
+
+  const scale = S * 0.35 / orbitR;
+  const earthR = Math.max(R_EARTH * scale, S * 0.06);
+
+  const grad = ctx.createRadialGradient(cx - earthR * 0.2, cy - earthR * 0.2, 0, cx, cy, earthR);
+  grad.addColorStop(0, '#3fb950');
+  grad.addColorStop(1, '#1a7f37');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, earthR, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(139,148,158,0.3)';
+  ctx.lineWidth = S * 0.001;
+  ctx.beginPath();
+  ctx.arc(cx, cy, earthR * 0.8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, earthR * 0.5, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const orbitScreenR = orbitR * scale;
+
+  ctx.strokeStyle = 'rgba(88,166,255,0.3)';
+  ctx.lineWidth = S * 0.002;
+  ctx.setLineDash([S * 0.005, S * 0.005]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, orbitScreenR, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  for (let i = 0; i < 4; i++) {
+    const th = visualAngle + i * Math.PI / 2;
+    const x = cx + orbitScreenR * Math.cos(th);
+    const y = cy + orbitScreenR * Math.sin(th);
+
+    ctx.fillStyle = '#58a6ff';
+    ctx.beginPath();
+    ctx.arc(x, y, S * 0.015, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(88,166,255,0.6)';
+    ctx.lineWidth = S * 0.003;
+    ctx.beginPath();
+    ctx.moveTo(x - S * 0.022, y);
+    ctx.lineTo(x + S * 0.022, y);
+    ctx.moveTo(x, y - S * 0.022);
+    ctx.lineTo(x, y + S * 0.022);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(88,166,255,0.15)';
+    ctx.lineWidth = S * 0.001;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+
+  const groundX = cx + earthR * Math.cos(visualAngle * 0.08);
+  const groundY = cy + earthR * Math.sin(visualAngle * 0.08);
+  ctx.fillStyle = '#f78166';
+  ctx.beginPath();
+  ctx.arc(groundX, groundY, S * 0.008, 0, Math.PI * 2);
+  ctx.fill();
+
+  const satIdx = 0;
+  const satTh = visualAngle + satIdx * Math.PI / 2;
+  const satX = cx + orbitScreenR * Math.cos(satTh);
+  const satY = cy + orbitScreenR * Math.sin(satTh);
+
+  ctx.strokeStyle = 'rgba(63,185,80,0.4)';
+  ctx.lineWidth = S * 0.002;
+  ctx.setLineDash([S * 0.004, S * 0.004]);
+  ctx.beginPath();
+  ctx.moveTo(satX, satY);
+  ctx.lineTo(groundX, groundY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const v = Math.sqrt(GM / orbitR);
+  const beta = v / C;
+  const timeDilationSpecial = -0.5 * beta * beta * 86400 * 1e6;
+
+  const phi0 = GM / R_EARTH;
+  const phiSat = GM / orbitR;
+  const timeDilationGeneral = (phiSat - phi0) / (C * C) * 86400 * 1e6;
+
+  const netCorrection = timeDilationSpecial + timeDilationGeneral;
+  const posError = Math.abs(netCorrection) * 300;
+
+  const fs = S * 0.025;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.textAlign = 'left';
+  const infoX = S * 0.03, infoY = fs + 5;
+
+  ctx.fillStyle = '#ffa657';
+  ctx.fillText(`卫星高度: ${height / 1000} km`, infoX, infoY);
+  ctx.fillText(`轨道速度: ${(v / 1000).toFixed(2)} km/s`, infoX, infoY + fs * 1.4);
+
+  ctx.fillStyle = '#f78166';
+  ctx.fillText(`狭义相对论: ${timeDilationSpecial.toFixed(2)} μs/天 (变慢)`, infoX, infoY + fs * 3);
+
+  ctx.fillStyle = '#3fb950';
+  ctx.fillText(`广义相对论: +${timeDilationGeneral.toFixed(2)} μs/天 (变快)`, infoX, infoY + fs * 4.4);
+
+  ctx.fillStyle = '#58a6ff';
+  ctx.font = `bold ${fs}px sans-serif`;
+  ctx.fillText(`净修正: +${netCorrection.toFixed(2)} μs/天`, infoX, infoY + fs * 5.8);
+
+  ctx.fillStyle = '#d2a8ff';
+  ctx.fillText(`定位误差(无修正): ${posError.toFixed(1)} 米/天`, infoX, infoY + fs * 7.2);
+
+  const period = 2 * Math.PI * Math.sqrt(orbitR * orbitR * orbitR / GM) / 3600;
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${fs * 0.85}px sans-serif`;
+  ctx.fillText(`轨道周期: ${period.toFixed(1)} 小时`, infoX, infoY + fs * 8.6);
+
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('height').addEventListener('input', e => {
+  document.getElementById('heightVal').textContent = e.target.value;
+});
+document.getElementById('animSpeed').addEventListener('input', e => {
+  document.getElementById('animSpeedVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('height').value = 20200;
+  document.getElementById('heightVal').textContent = '20200';
+  document.getElementById('animSpeed').value = 1;
+  document.getElementById('animSpeedVal').textContent = '1.0';
+  simTime = 0;
+});
+
+resize();
+window.addEventListener('resize', resize);
+animationId = requestAnimationFrame(draw);
+</script>
+</body>
+</html>

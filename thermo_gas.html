@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>理想气体分子运动 - 气体动理论数值仿真</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  gap: 12px;
+}
+
+.header {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 14px 24px;
+}
+
+.header-left h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #58a6ff;
+  line-height: 1.2;
+}
+
+.header-left .subtitle {
+  font-size: 0.82rem;
+  color: #8b949e;
+  margin-top: 2px;
+}
+
+.back-link {
+  color: #58a6ff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 6px 14px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.back-link:hover { background: #1f2937; }
+
+.main-container {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.canvas-panel {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+canvas#simCanvas {
+  display: block;
+  border-radius: 4px;
+  background: #0d1117;
+}
+
+.side-panel {
+  width: 300px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-box {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.panel-box h3 {
+  font-size: 0.9rem;
+  color: #58a6ff;
+  margin-bottom: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.control-row label {
+  font-size: 0.82rem;
+  color: #c9d1d9;
+  white-space: nowrap;
+}
+
+.control-row input[type="range"] {
+  flex: 1;
+  accent-color: #58a6ff;
+  height: 4px;
+}
+
+.control-row .val {
+  font-size: 0.78rem;
+  color: #58a6ff;
+  min-width: 36px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.btn-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.btn {
+  padding: 7px 12px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #21262d;
+  color: #c9d1d9;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+  flex: 1;
+  text-align: center;
+  min-width: 48px;
+}
+
+.btn:hover { background: #30363d; }
+.btn.active { background: #1f6feb33; border-color: #58a6ff; color: #58a6ff; }
+.btn.heat { border-color: #f8514966; }
+.btn.heat:hover { background: #f8514922; border-color: #f85149; color: #f85149; }
+.btn.cool { border-color: #79c0ff66; }
+.btn.cool:hover { background: #79c0ff22; border-color: #79c0ff; color: #79c0ff; }
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #30363d;
+  font-size: 0.82rem;
+}
+
+.stat-item:last-child { border-bottom: none; }
+
+.stat-label { color: #8b949e; }
+.stat-value { color: #58a6ff; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.check-row input[type="checkbox"] {
+  accent-color: #58a6ff;
+  width: 15px;
+  height: 15px;
+}
+
+.histogram-panel {
+  width: 100%;
+  max-width: 1100px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 14px 20px;
+}
+
+.histogram-panel h3 {
+  font-size: 0.9rem;
+  color: #58a6ff;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+canvas#histCanvas {
+  display: block;
+  width: 100%;
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .main-container { flex-direction: column; }
+  .side-panel { width: 100%; min-width: unset; flex-direction: row; flex-wrap: wrap; }
+  .side-panel .panel-box { flex: 1; min-width: 200px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>理想气体分子运动</h1>
+    <div class="subtitle">气体动理论 (Kinetic Theory of Gases) — 基于麦克斯韦-玻尔兹曼分布的二维分子动力学模拟</div>
+  </div>
+  <a class="back-link" href="index.html">← 返回首页</a>
+</div>
+
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 控制参数</h3>
+      <div class="control-row">
+        <label>分子数 N</label>
+        <input type="range" id="numParticles" min="10" max="200" value="80" step="1">
+        <span class="val" id="numVal">80</span>
+      </div>
+      <div class="control-row">
+        <label>温度 T (K)</label>
+        <input type="range" id="temperature" min="50" max="500" value="300" step="1">
+        <span class="val" id="tempVal">300</span>
+      </div>
+      <div class="control-row">
+        <label>粒子半径 r (px)</label>
+        <input type="range" id="radius" min="2" max="14" value="5" step="0.5">
+        <span class="val" id="radiusVal">5.0</span>
+      </div>
+      <div class="check-row" id="collisionToggle">
+        <input type="checkbox" id="interCollisions" checked>
+        <span>启用分子间碰撞 (弹性硬球)</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn active" id="btnStart">▶ 开始</button>
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn" id="btnReset">↺ 重置</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn heat" id="btnHeat">🔥 加热</button>
+        <button class="btn cool" id="btnCool">❄️ 冷却</button>
+      </div>
+    </div>
+
+    <div class="panel-box">
+      <h3>📊 实时物理量</h3>
+      <div class="stat-item">
+        <span class="stat-label">瞬时温度 (K)</span>
+        <span class="stat-value" id="statTemp">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">压强 P (a.u.)</span>
+        <span class="stat-value" id="statPressure">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">理论压强 P_th</span>
+        <span class="stat-value" id="statPressureTh">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">平均速率 ⟨v⟩</span>
+        <span class="stat-value" id="statAvgSpeed">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">方均根速率 v_rms</span>
+        <span class="stat-value" id="statVrms">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">最概然速率 v_p</span>
+        <span class="stat-value" id="statVp">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">平均动能 ⟨KE⟩</span>
+        <span class="stat-value" id="statAvgKE">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="histogram-panel">
+  <h3>📈 速率分布直方图 & 麦克斯韦-玻尔兹曼理论曲线</h3>
+  <canvas id="histCanvas"></canvas>
+</div>
+
+<script>
+/* ============================================================================
+ * 理想气体分子动力学模拟 (Ideal Gas Molecular Dynamics Simulation)
+ *
+ * 物理模型说明：
+ * 1. 气体动理论 (Kinetic Theory of Gases)：
+ *    气体由大量微观粒子（分子）组成，它们处于永不停息的无规则热运动之中。
+ *    宏观物理量（温度、压强等）是微观粒子运动的统计平均结果。
+ *
+ * 2. 温度与平均动能的关系 (Equipartition Theorem)：
+ *    在二维系统中，每个自由度贡献 (1/2)kT 的平均动能。
+ *    二维空间有2个平动自由度 → ⟨KE⟩ = (2/2)kT = kT
+ *    即 T = ⟨KE⟩ / k = (1/2)m⟨v²⟩ / k
+ *    模拟中取 k_B = 1, m = 1 → T = ⟨v²⟩/2
+ *
+ * 3. 麦克斯韦-玻尔兹曼速率分布 (Maxwell-Boltzmann Speed Distribution)：
+ *    二维 M-B 分布的概率密度函数：
+ *      f(v) = (m/kT) · v · exp(-mv²/(2kT))
+ *    取 m=1, k=1: f(v) = (1/T) · v · exp(-v²/(2T))
+ *    最概然速率 v_p = sqrt(kT/m) = sqrt(T)
+ *    平均速率 ⟨v⟩ = sqrt(πkT/(2m)) = sqrt(πT/2)
+ *    方均根速率 v_rms = sqrt(2kT/m) = sqrt(2T)
+ *
+ * 4. 压强来自分子对器壁的碰撞 (Pressure from Wall Collisions)：
+ *    每次碰撞传递给器壁的动量为 2m|v_perp|
+ *    压强 P = F / L_wall = (Δp/Δt) / L_wall
+ *    二维理想气体状态方程：P = NkT / A  (A为面积)
+ *    与三维类比：三维 P = (2/3)(N/V)⟨KE⟩，二维 P = (N/A)⟨KE⟩
+ *
+ * 5. 分子间碰撞：弹性硬球模型 (Elastic Hard Sphere Collisions)
+ *    等质量粒子的弹性碰撞：交换碰撞法线方向的速度分量
+ * ============================================================================ */
+
+(function() {
+  /* ============ DOM 元素引用 ============ */
+  const simCanvas = document.getElementById('simCanvas');
+  const simCtx = simCanvas.getContext('2d');
+  const histCanvas = document.getElementById('histCanvas');
+  const histCtx = histCanvas.getContext('2d');
+
+  const sliderN = document.getElementById('numParticles');
+  const sliderT = document.getElementById('temperature');
+  const sliderR = document.getElementById('radius');
+  const numVal = document.getElementById('numVal');
+  const tempVal = document.getElementById('tempVal');
+  const radiusVal = document.getElementById('radiusVal');
+  const interCheck = document.getElementById('interCollisions');
+
+  const btnStart = document.getElementById('btnStart');
+  const btnPause = document.getElementById('btnPause');
+  const btnReset = document.getElementById('btnReset');
+  const btnHeat = document.getElementById('btnHeat');
+  const btnCool = document.getElementById('btnCool');
+
+  const statTemp = document.getElementById('statTemp');
+  const statPressure = document.getElementById('statPressure');
+  const statPressureTh = document.getElementById('statPressureTh');
+  const statAvgSpeed = document.getElementById('statAvgSpeed');
+  const statVrms = document.getElementById('statVrms');
+  const statVp = document.getElementById('statVp');
+  const statAvgKE = document.getElementById('statAvgKE');
+
+  /* ============ 模拟参数 ============ */
+  const SIM_WIDTH = 680;          // 模拟盒子的宽度 (像素)
+  const SIM_HEIGHT = 420;         // 模拟盒子的高度 (像素)
+  let N = 80;                     // 分子数
+  let targetT = 300;              // 目标温度 (K, 模拟单位)
+  let particleRadius = 5;         // 粒子显示半径 (px)
+  let interCollisionsEnabled = true; // 是否启用分子间碰撞
+
+  /*
+   * 在模拟单位制中：
+   *   玻尔兹曼常数 k_B = 1
+   *   分子质量 m = 1
+   *   二维盒子面积 A = SIM_WIDTH × SIM_HEIGHT
+   *   温度 T = ⟨v²⟩ / 2  (2个自由度)
+   *   压强 P = NkT / A = NT / A
+   */
+
+  /* ============ 粒子数组 ============ */
+  let particles = []; /* 每个元素: { x, y, vx, vy } */
+
+  /* ============ 压强计算用的动量累积器 ============ */
+  /*
+   * 为平滑压强读数，维护一个动量传递的滑动窗口。
+   * 每次器壁碰撞时，将 2*m*|v_perp| 加入累加器。
+   * 压强 P = 累积动量 / (时间窗口 × 总器壁周长)
+   * 总器壁周长 = 2*(SIM_WIDTH + SIM_HEIGHT)
+   */
+  const PRESSURE_WINDOW_SIZE = 60; /* 帧数 */
+  let momentumBuffer = [];         /* 每帧的动量传递总和 */
+  let windowMomentumSum = 0;       /* 窗口内动量总和 */
+  let frameDtSum = 0;              /* 窗口内时间总和 */
+
+  /* ============ 模拟状态 ============ */
+  let running = true;
+  let animId = null;
+  let frameCount = 0;
+  const DT_PER_STEP = 0.1;        /* 每次物理子步的时间步长 */
+  const SUBSTEPS = 16;             /* 每帧物理子步数 */
+
+  /* ============ 颜色映射：根据速率从蓝→绿→红 ============ */
+  /*
+   * 速率越高颜色越"热"，速率越低颜色越"冷"。
+   * 以当前温度下的最概然速率 v_p = sqrt(T) 为参考：
+   *   v/v_p < 0.6  → 蓝色 (慢)
+   *   v/v_p ≈ 1.0  → 青色/绿色 (中等)
+   *   v/v_p > 1.8  → 红色 (快)
+   */
+  function speedToColor(v, vp) {
+    if (vp < 0.01) vp = 1;
+    const t = Math.min(v / (vp * 2.2), 1.0);
+    const r = Math.floor(t * 255);
+    const g = Math.floor((1 - Math.abs(t - 0.5) * 2) * 200 + 30);
+    const b = Math.floor((1 - t) * 255);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  /* ============ 画布尺寸适配 ============ */
+  function resizeSimCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    simCanvas.style.width = SIM_WIDTH + 'px';
+    simCanvas.style.height = SIM_HEIGHT + 'px';
+    simCanvas.width = SIM_WIDTH * dpr;
+    simCanvas.height = SIM_HEIGHT * dpr;
+    simCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function resizeHistCanvas() {
+    const panel = histCanvas.parentElement;
+    const w = panel.clientWidth - 40;
+    const h = 200;
+    const dpr = window.devicePixelRatio || 1;
+    histCanvas.style.width = w + 'px';
+    histCanvas.style.height = h + 'px';
+    histCanvas.width = w * dpr;
+    histCanvas.height = h * dpr;
+    histCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  /* ============ 粒子初始化 ============ */
+  /*
+   * 初始化粒子位置和速度：
+   * - 位置：在盒子内随机分布，避免与器壁和其他粒子重叠
+   * - 速度：服从二维麦克斯韦-玻尔兹曼分布
+   *   二维M-B：速度分量 v_x, v_y 各自服从正态分布 N(0, kT/m)
+   *   在模拟单位制中 (k=1, m=1): v_x, v_y ~ N(0, T)
+   *   使用 Box-Muller 变换生成正态分布随机数
+   */
+  function boxMuller() {
+    let u1, u2;
+    do { u1 = Math.random(); } while (u1 === 0);
+    u2 = Math.random();
+    return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  }
+
+  function initParticles() {
+    particles = [];
+    const r = particleRadius;
+    const margin = r + 2;
+
+    for (let i = 0; i < N; i++) {
+      let x, y, overlapping;
+      let attempts = 0;
+      const maxAttempts = 1000;
+
+      do {
+        x = margin + Math.random() * (SIM_WIDTH - 2 * margin);
+        y = margin + Math.random() * (SIM_HEIGHT - 2 * margin);
+        overlapping = false;
+
+        for (let j = 0; j < particles.length; j++) {
+          const dx = x - particles[j].x;
+          const dy = y - particles[j].y;
+          if (dx * dx + dy * dy < (2 * r) * (2 * r)) {
+            overlapping = true;
+            break;
+          }
+        }
+        attempts++;
+      } while (overlapping && attempts < maxAttempts);
+
+      /*
+       * 速度初始化：二维 M-B 分布
+       * 每个分量 v_x, v_y 独立服从 N(0, T)，因为 k=1, m=1
+       * 这样速率 v = sqrt(vx² + vy²) 自然服从二维 M-B 分布：
+       *   f(v) = (v/T) · exp(-v²/(2T))
+       */
+      const sigma = Math.sqrt(targetT); /* 标准差 = sqrt(kT/m) = sqrt(T) */
+      const vx = boxMuller() * sigma;
+      const vy = boxMuller() * sigma;
+
+      particles.push({ x, y, vx, vy });
+    }
+  }
+
+  /* ============ 重置模拟 ============ */
+  function resetSimulation() {
+    initParticles();
+    momentumBuffer = [];
+    windowMomentumSum = 0;
+    frameDtSum = 0;
+    frameCount = 0;
+    drawFrame();
+  }
+
+  /* ============ 调整粒子数量（保持当前温度分布） ============ */
+  function adjustParticleCount(newN) {
+    if (newN === particles.length) return;
+
+    if (newN > particles.length) {
+      /* 增加粒子 */
+      const toAdd = newN - particles.length;
+      const r = particleRadius;
+      const margin = r + 2;
+      const sigma = Math.sqrt(targetT);
+
+      for (let i = 0; i < toAdd; i++) {
+        let x, y, overlapping;
+        let attempts = 0;
+        do {
+          x = margin + Math.random() * (SIM_WIDTH - 2 * margin);
+          y = margin + Math.random() * (SIM_HEIGHT - 2 * margin);
+          overlapping = false;
+          for (const p of particles) {
+            const dx = x - p.x;
+            const dy = y - p.y;
+            if (dx * dx + dy * dy < (2 * r) * (2 * r)) { overlapping = true; break; }
+          }
+          attempts++;
+        } while (overlapping && attempts < 500);
+
+        particles.push({
+          x, y,
+          vx: boxMuller() * sigma,
+          vy: boxMuller() * sigma
+        });
+      }
+    } else {
+      /* 减少粒子 */
+      particles.length = newN;
+    }
+    N = newN;
+  }
+
+  /* ============ 调整温度（缩放所有速度） ============ */
+  /*
+   * 加热/冷却通过缩放所有粒子的速度实现：
+   *   新速度 = 旧速度 × sqrt(T_new / T_current)
+   * 这样新的平均动能对应新的温度。
+   */
+  function scaleTemperature(newT) {
+    if (particles.length === 0) return;
+    const currentT = measureTemperature();
+    if (currentT < 0.001) {
+      /* 如果当前温度接近零，直接用目标温度重新初始化速度 */
+      const sigma = Math.sqrt(newT);
+      for (const p of particles) {
+        p.vx = boxMuller() * sigma;
+        p.vy = boxMuller() * sigma;
+      }
+    } else {
+      const scale = Math.sqrt(newT / currentT);
+      for (const p of particles) {
+        p.vx *= scale;
+        p.vy *= scale;
+      }
+    }
+    targetT = newT;
+  }
+
+  /* ============ 测量当前温度 ============ */
+  /*
+   * 二维系统：⟨KE⟩ = (2/2)kT = kT
+   * T = ⟨KE⟩ / k = (1/N) Σ(½mv²) / k
+   * 取 k=1, m=1: T = (1/N) Σ(v²/2) = ⟨v²⟩/2
+   */
+  function measureTemperature() {
+    if (particles.length === 0) return 0;
+    let sumV2 = 0;
+    for (const p of particles) {
+      sumV2 += p.vx * p.vx + p.vy * p.vy;
+    }
+    return sumV2 / (2 * particles.length);
+  }
+
+  /* ============ 测量平均速率、方均根速率、最概然速率 ============ */
+  function measureSpeeds() {
+    if (particles.length === 0) return { avg: 0, rms: 0, vp: 0 };
+    const speeds = [];
+    let sumV = 0;
+    let sumV2 = 0;
+    for (const p of particles) {
+      const v = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      speeds.push(v);
+      sumV += v;
+      sumV2 += v * v;
+    }
+    const n = particles.length;
+    const avg = sumV / n;
+    const rms = Math.sqrt(sumV2 / n);
+
+    /* 最概然速率：从速率直方图中找峰值，或理论值 vp = sqrt(T) */
+    speeds.sort((a, b) => a - b);
+    let vp = 0;
+    const numBins = 30;
+    const vMax = speeds[n - 1] || 1;
+    const binWidth = vMax / numBins;
+    if (binWidth > 0) {
+      const bins = new Array(numBins).fill(0);
+      for (const s of speeds) {
+        const idx = Math.min(Math.floor(s / binWidth), numBins - 1);
+        bins[idx]++;
+      }
+      let maxCount = 0;
+      for (let i = 0; i < numBins; i++) {
+        if (bins[i] > maxCount) {
+          maxCount = bins[i];
+          vp = (i + 0.5) * binWidth;
+        }
+      }
+    }
+
+    return { avg, rms, vp, speeds };
+  }
+
+  /* ============ 物理更新（单个子步） ============ */
+  function physicsStep(dt) {
+    const r = particleRadius;
+    let stepMomentum = 0; /* 本子步累积的器壁动量传递 */
+
+    /* 1. 位置更新 */
+    for (const p of particles) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+
+    /* 2. 器壁碰撞检测与响应 */
+    /*
+     * 弹性碰撞：速度在碰撞方向上的分量反转。
+     * 每次碰撞传递给器壁的动量 = 2*m*|v_perp|
+     * 二维压强：P = F/L_wall = (Δp/Δt) / 器壁长度
+     * 对所有器壁求平均。
+     */
+    for (const p of particles) {
+      if (p.x - r < 0) {
+        p.x = r;
+        p.vx = Math.abs(p.vx);
+        stepMomentum += 2 * Math.abs(p.vx); /* m=1 */
+      } else if (p.x + r > SIM_WIDTH) {
+        p.x = SIM_WIDTH - r;
+        p.vx = -Math.abs(p.vx);
+        stepMomentum += 2 * Math.abs(p.vx);
+      }
+
+      if (p.y - r < 0) {
+        p.y = r;
+        p.vy = Math.abs(p.vy);
+        stepMomentum += 2 * Math.abs(p.vy);
+      } else if (p.y + r > SIM_HEIGHT) {
+        p.y = SIM_HEIGHT - r;
+        p.vy = -Math.abs(p.vy);
+        stepMomentum += 2 * Math.abs(p.vy);
+      }
+    }
+
+    /* 3. 分子间弹性碰撞 (可选) */
+    /*
+     * 弹性硬球碰撞 (Elastic Hard Sphere Collision)：
+     * 对于两个质量相等的粒子 i 和 j：
+     *   碰撞法线方向 n = (r_j - r_i) / |r_j - r_i| (从 i 指向 j)
+     *   相对速度沿法线分量 dv_n = (v_i - v_j) · n
+     *   若 dv_n > 0 则粒子相互靠近，发生碰撞
+     *   碰撞后：v_i' = v_i - dv_n · n
+     *           v_j' = v_j + dv_n · n
+     *   同时分离重叠：各移动 overlap/2
+     */
+    if (interCollisionsEnabled && particles.length > 1) {
+      const d = 2 * r; /* 碰撞距离 = 直径 */
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const pi = particles[i];
+          const pj = particles[j];
+          const dx = pj.x - pi.x;
+          const dy = pj.y - pi.y;
+          const distSq = dx * dx + dy * dy;
+
+          if (distSq < d * d && distSq > 0.0001) {
+            const dist = Math.sqrt(distSq);
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            /* 相对速度沿碰撞法线方向的分量 */
+            const dvx = pi.vx - pj.vx;
+            const dvy = pi.vy - pj.vy;
+            const dvn = dvx * nx + dvy * ny;
+
+            /* 仅当粒子相互靠近时才处理碰撞 */
+            if (dvn > 0) {
+              /* 速度更新：交换法线方向的速度分量 */
+              pi.vx -= dvn * nx;
+              pi.vy -= dvn * ny;
+              pj.vx += dvn * nx;
+              pj.vy += dvn * ny;
+
+              /* 分离重叠粒子，避免它们"粘"在一起 */
+              const overlap = d - dist;
+              const sepX = (overlap / 2) * nx;
+              const sepY = (overlap / 2) * ny;
+              pi.x -= sepX;
+              pi.y -= sepY;
+              pj.x += sepX;
+              pj.y += sepY;
+            }
+          }
+        }
+      }
+    }
+
+    return stepMomentum;
+  }
+
+  /* ============ 主模拟循环 ============ */
+  function simulateFrame() {
+    if (!running) return;
+
+    let totalMomentum = 0;
+    const dt = DT_PER_STEP;
+
+    for (let s = 0; s < SUBSTEPS; s++) {
+      totalMomentum += physicsStep(dt);
+    }
+
+    const totalDt = dt * SUBSTEPS;
+
+    /* 更新压强滑动窗口 */
+    momentumBuffer.push(totalMomentum);
+    windowMomentumSum += totalMomentum;
+    frameDtSum += totalDt;
+
+    if (momentumBuffer.length > PRESSURE_WINDOW_SIZE) {
+      const old = momentumBuffer.shift();
+      windowMomentumSum -= old;
+      /* frameDtSum 保持对应窗口大小 */
+      frameDtSum -= totalDt; /* 近似 */
+    }
+
+    drawFrame();
+
+    frameCount++;
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  /* ============ 绘制主模拟画布 ============ */
+  function drawFrame() {
+    simCtx.clearRect(0, 0, SIM_WIDTH, SIM_HEIGHT);
+
+    /* 绘制盒子边框 */
+    simCtx.strokeStyle = '#30363d';
+    simCtx.lineWidth = 2;
+    simCtx.strokeRect(0, 0, SIM_WIDTH, SIM_HEIGHT);
+
+    /* 绘制网格 (弱) */
+    simCtx.strokeStyle = '#30363d33';
+    simCtx.lineWidth = 0.5;
+    const gridSize = 40;
+    for (let x = gridSize; x < SIM_WIDTH; x += gridSize) {
+      simCtx.beginPath();
+      simCtx.moveTo(x, 0);
+      simCtx.lineTo(x, SIM_HEIGHT);
+      simCtx.stroke();
+    }
+    for (let y = gridSize; y < SIM_HEIGHT; y += gridSize) {
+      simCtx.beginPath();
+      simCtx.moveTo(0, y);
+      simCtx.lineTo(SIM_WIDTH, y);
+      simCtx.stroke();
+    }
+
+    /* 绘制粒子 */
+    const T = measureTemperature();
+    const vp = Math.sqrt(Math.max(T, 0.01));
+
+    for (const p of particles) {
+      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      const color = speedToColor(speed, vp);
+      const r = particleRadius;
+
+      simCtx.beginPath();
+      simCtx.arc(p.x, p.y, r, 0, 2 * Math.PI);
+      simCtx.fillStyle = color;
+      simCtx.fill();
+
+      /* 高光效果 */
+      const grad = simCtx.createRadialGradient(p.x - r * 0.25, p.y - r * 0.3, r * 0.05, p.x, p.y, r);
+      grad.addColorStop(0, 'rgba(255,255,255,0.5)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      simCtx.beginPath();
+      simCtx.arc(p.x, p.y, r, 0, 2 * Math.PI);
+      simCtx.fillStyle = grad;
+      simCtx.fill();
+
+      simCtx.strokeStyle = '#30363d66';
+      simCtx.lineWidth = 0.5;
+      simCtx.stroke();
+    }
+
+    /* 更新统计面板 */
+    updateStats(T);
+
+    /* 更新直方图 */
+    drawHistogram();
+  }
+
+  /* ============ 更新实时统计面板 ============ */
+  function updateStats(T) {
+    const speedsData = measureSpeeds();
+
+    statTemp.textContent = T.toFixed(1);
+    statAvgSpeed.textContent = speedsData.avg.toFixed(2);
+    statVrms.textContent = speedsData.rms.toFixed(2);
+    statVp.textContent = speedsData.vp.toFixed(2);
+    statAvgKE.textContent = (T).toFixed(2); /* ⟨KE⟩ = kT = T (k=1) */
+
+    /* 压强：从器壁动量传递计算 */
+    const wallPerimeter = 2 * (SIM_WIDTH + SIM_HEIGHT);
+    let pressureSim = 0;
+    if (frameDtSum > 0.001 && wallPerimeter > 0) {
+      pressureSim = windowMomentumSum / (frameDtSum * wallPerimeter);
+    }
+    statPressure.textContent = pressureSim.toFixed(4);
+
+    /* 理论压强：二维理想气体状态方程 P = NkT/A = NT/A */
+    const area = SIM_WIDTH * SIM_HEIGHT;
+    const pressureTh = (particles.length * T) / area;
+    statPressureTh.textContent = pressureTh.toFixed(4);
+  }
+
+  /* ============ 绘制速率分布直方图 ============ */
+  /*
+   * 直方图显示粒子速率分布，并与二维麦克斯韦-玻尔兹曼理论曲线对比。
+   *
+   * 二维 M-B 分布概率密度函数：
+   *   f(v) = (1/T) · v · exp(-v²/(2T))
+   * 归一化：∫₀^∞ f(v) dv = 1
+   *
+   * 直方图归一化方法：
+   *   区间 i 的宽度 Δv，该区间有 n_i 个粒子
+   *   概率密度 ≈ n_i / (N × Δv)
+   *   这样直方图总面积 = 1，可以与理论 PDF 直接对比
+   */
+  function drawHistogram() {
+    resizeHistCanvas();
+    const W = histCanvas.width / (window.devicePixelRatio || 1);
+    const H = histCanvas.height / (window.devicePixelRatio || 1);
+    const margin = { top: 10, right: 20, bottom: 30, left: 42 };
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+
+    histCtx.clearRect(0, 0, W, H);
+
+    if (particles.length === 0) return;
+
+    /* 收集速率数据 */
+    const speeds = [];
+    for (const p of particles) {
+      speeds.push(Math.sqrt(p.vx * p.vx + p.vy * p.vy));
+    }
+
+    const T = measureTemperature();
+    if (T < 0.001) return;
+
+    const vMax = Math.max(...speeds, Math.sqrt(2 * T) * 3); /* 至少覆盖到 3×v_rms */
+    const numBins = 35;
+    const binWidth = vMax / numBins;
+    const bins = new Array(numBins).fill(0);
+
+    for (const s of speeds) {
+      const idx = Math.min(Math.floor(s / binWidth), numBins - 1);
+      bins[idx]++;
+    }
+
+    const Npart = particles.length;
+
+    /* 绘制坐标轴 */
+    histCtx.strokeStyle = '#30363d';
+    histCtx.lineWidth = 1;
+    histCtx.beginPath();
+    histCtx.moveTo(margin.left, margin.top);
+    histCtx.lineTo(margin.left, margin.top + plotH);
+    histCtx.lineTo(margin.left + plotW, margin.top + plotH);
+    histCtx.stroke();
+
+    /* X 轴刻度 */
+    histCtx.fillStyle = '#8b949e';
+    histCtx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    histCtx.textAlign = 'center';
+    const xTicks = 5;
+    for (let i = 0; i <= xTicks; i++) {
+      const v = (vMax / xTicks) * i;
+      const x = margin.left + (v / vMax) * plotW;
+      histCtx.fillText(v.toFixed(1), x, margin.top + plotH + 16);
+    }
+    histCtx.fillText('速率 v', margin.left + plotW / 2, margin.top + plotH + 28);
+
+    /* Y 轴标签 */
+    histCtx.save();
+    histCtx.translate(12, margin.top + plotH / 2);
+    histCtx.rotate(-Math.PI / 2);
+    histCtx.textAlign = 'center';
+    histCtx.fillText('概率密度 f(v)', 0, 0);
+    histCtx.restore();
+
+    /* 计算理论曲线的最大值用于 Y 轴缩放 */
+    /* 二维 M-B：f(v) = (v/T) exp(-v²/(2T)), 最大值在 v = sqrt(T) = v_p */
+    const vpMB = Math.sqrt(T);
+    const fMax = (vpMB / T) * Math.exp(-vpMB * vpMB / (2 * T));
+
+    /* 直方图最大概率密度 */
+    let histMax = 0;
+    for (let i = 0; i < numBins; i++) {
+      const density = bins[i] / (Npart * binWidth);
+      if (density > histMax) histMax = density;
+    }
+    const yMax = Math.max(histMax, fMax) * 1.15;
+
+    /* Y 轴刻度 */
+    histCtx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const val = (yMax / 4) * i;
+      const y = margin.top + plotH - (val / yMax) * plotH;
+      if (i === 0 || i === 4) {
+        histCtx.fillText(val.toFixed(3), margin.left - 5, y + 4);
+      }
+    }
+
+    /* 绘制直方图柱子 */
+    for (let i = 0; i < numBins; i++) {
+      const density = bins[i] / (Npart * binWidth);
+      const barH = (density / yMax) * plotH;
+      const x = margin.left + (i / numBins) * plotW;
+      const barW = plotW / numBins;
+      const y = margin.top + plotH - barH;
+
+      /* 柱子颜色：根据对应速率渐变 */
+      const vMid = (i + 0.5) * binWidth;
+      const t = Math.min(vMid / (vMax * 0.8), 1);
+      const cr = Math.floor(t * 220 + 35);
+      const cg = Math.floor((1 - Math.abs(t - 0.5) * 2) * 140 + 40);
+      const cb = Math.floor((1 - t) * 220 + 35);
+      histCtx.fillStyle = `rgba(${cr},${cg},${cb},0.7)`;
+      histCtx.fillRect(x + 1, y, barW - 1, barH);
+
+      histCtx.strokeStyle = `rgba(${cr},${cg},${cb},0.35)`;
+      histCtx.lineWidth = 0.5;
+      histCtx.strokeRect(x + 1, y, barW - 1, barH);
+    }
+
+    /* 绘制麦克斯韦-玻尔兹曼理论曲线 (二维) */
+    /*
+     * f(v) = (v/T) · exp(-v²/(2T))
+     */
+    histCtx.beginPath();
+    histCtx.strokeStyle = '#ffa500';
+    histCtx.lineWidth = 2;
+    histCtx.setLineDash([6, 3]);
+
+    const curvePoints = 200;
+    for (let i = 0; i <= curvePoints; i++) {
+      const v = (vMax / curvePoints) * i;
+      const fv = (v / T) * Math.exp(-v * v / (2 * T));
+      const x = margin.left + (v / vMax) * plotW;
+      const y = margin.top + plotH - (fv / yMax) * plotH;
+
+      if (i === 0) histCtx.moveTo(x, y);
+      else histCtx.lineTo(x, y);
+    }
+    histCtx.stroke();
+    histCtx.setLineDash([]);
+
+    /* 绘制最概然速率参考线 */
+    const xVp = margin.left + (vpMB / vMax) * plotW;
+    histCtx.beginPath();
+    histCtx.strokeStyle = '#58a6ff66';
+    histCtx.lineWidth = 1;
+    histCtx.setLineDash([3, 4]);
+    histCtx.moveTo(xVp, margin.top);
+    histCtx.lineTo(xVp, margin.top + plotH);
+    histCtx.stroke();
+    histCtx.setLineDash([]);
+
+    histCtx.fillStyle = '#58a6ff';
+    histCtx.textAlign = 'center';
+    histCtx.fillText(`v_p=${vpMB.toFixed(1)}`, xVp, margin.top - 2);
+
+    /* 图例 */
+    histCtx.fillStyle = '#ffa500';
+    histCtx.textAlign = 'left';
+    histCtx.fillText('— M-B理论曲线 (2D)', margin.left + 6, margin.top + 14);
+    histCtx.fillStyle = '#c9d1d9';
+    histCtx.fillText('▇ 模拟速率分布', margin.left + 140, margin.top + 14);
+  }
+
+  /* ============ 更新 UI 显示值 ============ */
+  function updateDisplayValues() {
+    numVal.textContent = N;
+    tempVal.textContent = targetT;
+    radiusVal.textContent = particleRadius.toFixed(1);
+  }
+
+  /* ============ 开始/暂停/重置 ============ */
+  function startSimulation() {
+    if (running) return;
+    running = true;
+    btnStart.classList.add('active');
+    btnPause.classList.remove('active');
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  function pauseSimulation() {
+    running = false;
+    btnStart.classList.remove('active');
+    btnPause.classList.add('active');
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+  }
+
+  function resetAndStart() {
+    pauseSimulation();
+    N = parseInt(sliderN.value) || 80;
+    targetT = parseInt(sliderT.value) || 300;
+    particleRadius = parseFloat(sliderR.value) || 5;
+    updateDisplayValues();
+    resetSimulation();
+    startSimulation();
+  }
+
+  /* ============ 事件绑定 ============ */
+  sliderN.addEventListener('input', () => {
+    const val = parseInt(sliderN.value);
+    numVal.textContent = val;
+  });
+
+  sliderN.addEventListener('change', () => {
+    const val = parseInt(sliderN.value);
+    if (val !== N) {
+      adjustParticleCount(val);
+      updateDisplayValues();
+      if (!running) drawFrame();
+    }
+  });
+
+  sliderT.addEventListener('input', () => {
+    const val = parseInt(sliderT.value);
+    tempVal.textContent = val;
+  });
+
+  sliderT.addEventListener('change', () => {
+    const val = parseInt(sliderT.value);
+    if (val !== targetT) {
+      scaleTemperature(val);
+      updateDisplayValues();
+      if (!running) drawFrame();
+    }
+  });
+
+  sliderR.addEventListener('input', () => {
+    const val = parseFloat(sliderR.value);
+    radiusVal.textContent = val.toFixed(1);
+  });
+
+  sliderR.addEventListener('change', () => {
+    particleRadius = parseFloat(sliderR.value);
+    updateDisplayValues();
+    if (!running) drawFrame();
+  });
+
+  interCheck.addEventListener('change', () => {
+    interCollisionsEnabled = interCheck.checked;
+  });
+
+  btnStart.addEventListener('click', startSimulation);
+  btnPause.addEventListener('click', pauseSimulation);
+  btnReset.addEventListener('click', resetAndStart);
+
+  /* 加热：温度 × 1.3 */
+  btnHeat.addEventListener('click', () => {
+    const newT = Math.min(targetT * 1.3, 500);
+    scaleTemperature(newT);
+    sliderT.value = Math.round(newT);
+    updateDisplayValues();
+    if (!running) drawFrame();
+  });
+
+  /* 冷却：温度 × 0.7 */
+  btnCool.addEventListener('click', () => {
+    const newT = Math.max(targetT * 0.7, 50);
+    scaleTemperature(newT);
+    sliderT.value = Math.round(newT);
+    updateDisplayValues();
+    if (!running) drawFrame();
+  });
+
+  /* 窗口大小变化时重绘 */
+  window.addEventListener('resize', () => {
+    if (!running) drawFrame();
+  });
+
+  /* 键盘快捷键 */
+  window.addEventListener('keydown', (e) => {
+    switch (e.key.toLowerCase()) {
+      case ' ':
+        e.preventDefault();
+        if (running) pauseSimulation();
+        else startSimulation();
+        break;
+      case 'r':
+        if (!e.ctrlKey && !e.metaKey) {
+          resetAndStart();
+        }
+        break;
+      case 'h':
+        btnHeat.click();
+        break;
+      case 'c':
+        btnCool.click();
+        break;
+    }
+  });
+
+  /* ============ 启动 ============ */
+  function init() {
+    resizeSimCanvas();
+    resizeHistCanvas();
+    N = parseInt(sliderN.value) || 80;
+    targetT = parseInt(sliderT.value) || 300;
+    particleRadius = parseFloat(sliderR.value) || 5;
+    interCollisionsEnabled = interCheck.checked;
+    updateDisplayValues();
+    initParticles();
+    drawFrame();
+    startSimulation();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

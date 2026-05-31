@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>不确定度 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>测量次数:</label><input type="range" id="n" min="3" max="20" step="1" value="10"><input type="number" id="nVal" value="10"></div>
+      <div class="ctrl-group"><label>误差范围:</label><input type="range" id="error" min="0.1" max="2" step="0.1" value="0.5"><input type="number" id="errorVal" value="0.5"></div>
+      <div class="ctrl-group"><label>真值:</label><input type="range" id="trueVal" min="10" max="50" step="1" value="25"><input type="number" id="trueValVal" value="25"></div>
+    </div>
+    <div id="info">不确定度分析：通过多次测量计算平均值、标准差和不确定度。Δx × Δp ≥ ħ/2（海森堡不确定性原理）。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let time = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  const n = parseInt(document.getElementById('n').value);
+  const error = parseFloat(document.getElementById('error').value);
+  const trueVal = parseFloat(document.getElementById('trueVal').value);
+  
+  const cx = canvas.width/2, cy = canvas.height/2;
+  
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, canvas.height*0.25, 0, Math.PI*2);
+  ctx.stroke();
+  
+  ctx.fillStyle = '#3fb950';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, Math.PI*2);
+  ctx.fill();
+  
+  let sum = 0;
+  const measurements = [];
+  for(let i=0;i<n;i++) {
+    const m = trueVal + (Math.random()-0.5)*2*error;
+    measurements.push(m);
+    sum += m;
+  }
+  const mean = sum / n;
+  
+  let sumSq = 0;
+  measurements.forEach(m => { sumSq += Math.pow(m - mean, 2); });
+  const std = Math.sqrt(sumSq / (n-1));
+  const uncertainty = std / Math.sqrt(n);
+  
+  ctx.fillStyle = '#58a6ff';
+  measurements.forEach((m, i) => {
+    const angle = (i / n) * Math.PI * 2;
+    const r = canvas.height * 0.18 * (1 + (m - trueVal) / error);
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 4, 0, Math.PI*2);
+    ctx.fill();
+  });
+  
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`真值 = ${trueVal}`, canvas.width*0.05, canvas.height*0.1);
+  ctx.fillText(`测量次数 n = ${n}`, canvas.width*0.05, canvas.height*0.1+20);
+  ctx.fillText(`平均值 = ${mean.toFixed(3)}`, canvas.width*0.05, canvas.height*0.1+40);
+  ctx.fillText(`标准差 = ${std.toFixed(3)}`, canvas.width*0.05, canvas.height*0.1+60);
+  
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`结果: ${mean.toFixed(3)} ± ${uncertainty.toFixed(3)}`, cx-80, canvas.height*0.9);
+  
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('n').addEventListener('input', e => { document.getElementById('nVal').value = e.target.value; });
+document.getElementById('error').addEventListener('input', e => { document.getElementById('errorVal').value = e.target.value; });
+document.getElementById('trueVal').addEventListener('input', e => { document.getElementById('trueValVal').value = e.target.value; });
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

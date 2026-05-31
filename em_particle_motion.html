@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔵 带电粒子运动</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔵 带电粒子在电磁场中的运动</h1>
+  <p>模拟带电粒子在电场和磁场共同作用下的运动轨迹</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>电场强度 Ey (V/m): <span id="eVal">0</span></label>
+      <input type="range" id="eField" min="-200" max="200" step="10" value="0">
+    </div>
+    <div class="control-group">
+      <label>磁场强度 Bz (T): <span id="bVal">0.5</span></label>
+      <input type="range" id="bField" min="0" max="2" step="0.1" value="0.5">
+    </div>
+    <div class="control-group">
+      <label>粒子电荷 q (e): <span id="qVal">1</span></label>
+      <input type="range" id="charge" min="-3" max="3" step="1" value="1">
+    </div>
+    <div class="control-group">
+      <label>初始速度 vx (m/s): <span id="vxVal">5000</span></label>
+      <input type="range" id="vx" min="1000" max="20000" step="1000" value="5000">
+    </div>
+    <div class="control-group">
+      <label>初始速度 vy (m/s): <span id="vyVal">0</span></label>
+      <input type="range" id="vy" min="-10000" max="10000" step="1000" value="0">
+    </div>
+    <div class="control-group">
+      <button id="startBtn">▶️ 发射粒子</button>
+      <button id="clearBtn">🗑️ 清除轨迹</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span style="color:#8b949e">速度大小:</span><span style="color:#3b82f6; font-weight:600" id="speed">0 m/s</span></div>
+      <div class="item"><span style="color:#8b949e">回旋半径:</span><span style="color:#3b82f6; font-weight:600" id="radius">0 m</span></div>
+      <div class="item"><span style="color:#8b949e">回旋周期:</span><span style="color:#3b82f6; font-weight:600" id="period">0 s</span></div>
+      <div class="item"><span style="color:#8b949e">漂移速度:</span><span style="color:#3b82f6; font-weight:600" id="drift">0 m/s</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let Ey = 0;
+let Bz = 0.5;
+let q = 1;
+let vx0 = 5000;
+let vy0 = 0;
+let particle = null;
+let trail = [];
+
+function createParticle() {
+  return {
+    x: 50,
+    y: canvas.height / 2,
+    vx: vx0,
+    vy: vy0
+  };
+}
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= canvas.width; i += 50) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+  }
+  for (let i = 0; i <= canvas.height; i += 50) {
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+  }
+
+  if (Bz > 0) {
+    ctx.fillStyle = 'rgba(251,191,36,0.15)';
+    ctx.font = '16px sans-serif';
+    for (let x = 40; x < canvas.width; x += 60) {
+      for (let y = 40; y < canvas.height; y += 60) {
+        ctx.fillText('⊙', x - 8, y + 5);
+      }
+    }
+  }
+
+  if (Ey !== 0) {
+    ctx.strokeStyle = Ey > 0 ? 'rgba(59,130,246,0.3)' : 'rgba(247,129,102,0.3)';
+    ctx.lineWidth = 1;
+    for (let x = 30; x < canvas.width; x += 40) {
+      const dir = Ey > 0 ? 1 : -1;
+      ctx.beginPath();
+      ctx.moveTo(x, canvas.height / 2);
+      ctx.lineTo(x, canvas.height / 2 - dir * 20);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 4, canvas.height / 2 - dir * 15);
+      ctx.lineTo(x, canvas.height / 2 - dir * 20);
+      ctx.lineTo(x + 4, canvas.height / 2 - dir * 15);
+      ctx.stroke();
+    }
+  }
+
+  if (trail.length > 1) {
+    ctx.beginPath();
+    ctx.moveTo(trail[0].x, trail[0].y);
+    for (let i = 1; i < trail.length; i++) {
+      ctx.lineTo(trail[i].x, trail[i].y);
+    }
+    ctx.strokeStyle = q > 0 ? '#3fb95080' : '#f7816680';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  if (particle) {
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = q > 0 ? '#3fb950' : '#f78166';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const spd = Math.hypot(particle.vx, particle.vy);
+    if (spd > 0) {
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(particle.x, particle.y);
+      ctx.lineTo(particle.x + (particle.vx / spd) * 18, particle.y + (particle.vy / spd) * 18);
+      ctx.stroke();
+    }
+  }
+
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('B⊙ (垂直纸面向外)', canvas.width - 140, 20);
+  if (Ey !== 0) {
+    ctx.fillText('E↑ (竖直方向)', canvas.width - 110, 35);
+  }
+}
+
+function update() {
+  if (!particle) return;
+
+  const m = 9.11e-31;
+  const qe = q * 1.6e-19;
+  const dt = 0.0005;
+  const steps = 5;
+
+  for (let s = 0; s < steps; s++) {
+    const ax = (qe / m) * (particle.vy * Bz);
+    const ay = (qe / m) * (Ey - particle.vx * Bz);
+
+    particle.vx += ax * dt * 800;
+    particle.vy += ay * dt * 800;
+    particle.x += particle.vx * dt * 40;
+    particle.y += particle.vy * dt * 40;
+
+    if (particle.x < 10) { particle.x = 10; particle.vx *= -0.8; }
+    if (particle.x > canvas.width - 10) { particle.x = canvas.width - 10; particle.vx *= -0.8; }
+    if (particle.y < 10) { particle.y = 10; particle.vy *= -0.8; }
+    if (particle.y > canvas.height - 10) { particle.y = canvas.height - 10; particle.vy *= -0.8; }
+
+    trail.push({ x: particle.x, y: particle.y });
+    if (trail.length > 2000) trail.shift();
+  }
+
+  const spd = Math.hypot(particle.vx, particle.vy);
+  const r = Bz > 0 ? (m * spd) / Math.abs(qe * Bz) : 0;
+  const T = Bz > 0 ? (2 * Math.PI * m) / Math.abs(qe * Bz) : 0;
+  const vd = (Ey !== 0 && Bz > 0) ? Ey / Bz : 0;
+
+  document.getElementById('speed').textContent = spd.toFixed(0) + ' m/s';
+  document.getElementById('radius').textContent = (r * 100).toFixed(2) + ' cm';
+  document.getElementById('period').textContent = (T * 1e9).toFixed(2) + ' ns';
+  document.getElementById('drift').textContent = vd.toFixed(1) + ' m/s';
+}
+
+function animate() {
+  update();
+  draw();
+  requestAnimationFrame(animate);
+}
+
+document.getElementById('eField').addEventListener('input', (e) => {
+  Ey = parseFloat(e.target.value);
+  document.getElementById('eVal').textContent = Ey;
+});
+
+document.getElementById('bField').addEventListener('input', (e) => {
+  Bz = parseFloat(e.target.value);
+  document.getElementById('bVal').textContent = Bz;
+});
+
+document.getElementById('charge').addEventListener('input', (e) => {
+  q = parseFloat(e.target.value);
+  document.getElementById('qVal').textContent = q;
+});
+
+document.getElementById('vx').addEventListener('input', (e) => {
+  vx0 = parseInt(e.target.value);
+  document.getElementById('vxVal').textContent = vx0;
+});
+
+document.getElementById('vy').addEventListener('input', (e) => {
+  vy0 = parseInt(e.target.value);
+  document.getElementById('vyVal').textContent = vy0;
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  particle = createParticle();
+  trail = [];
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  particle = null;
+  trail = [];
+});
+
+draw();
+animate();
+</script>
+</body>
+</html>

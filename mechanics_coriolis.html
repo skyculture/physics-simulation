@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科里奥利力 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>角速度ω(rad/s):</label><input type="range" id="omega" min="0" max="2" step="0.1" value="1"><input type="number" id="omegaVal" value="1"></div>
+      <div class="ctrl-group"><label>初速度v(m/s):</label><input type="range" id="v" min="1" max="10" step="0.5" value="5"><input type="number" id="vVal" value="5"></div>
+      <div class="ctrl-group"><button id="startBtn">▶ 开始</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">科里奥利力：F = -2m(ω × v)。在旋转参考系中，运动物体受到垂直于速度方向的偏转力，这是地球自转产生的惯性力。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let particles = [];
+let isRunning = false;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  particles = [{ x: canvas.width/2 + canvas.width*0.15, y: canvas.height/2, vx: 0, vy: -3 }];
+  isRunning = false;
+  if(animationId) cancelAnimationFrame(animationId);
+  draw();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  const omega = parseFloat(document.getElementById('omega').value);
+  const v = parseFloat(document.getElementById('v').value);
+  
+  const cx = canvas.width/2, cy = canvas.height/2;
+  
+  ctx.fillStyle = '#161b22';
+  ctx.beginPath();
+  ctx.arc(cx, cy, canvas.height*0.35, 0, Math.PI*2);
+  ctx.fill();
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, canvas.height*0.35, 0, Math.PI*2);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - canvas.height*0.35);
+  ctx.lineTo(cx, cy + canvas.height*0.35);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx - canvas.width*0.35, cy);
+  ctx.lineTo(cx + canvas.width*0.35, cy);
+  ctx.stroke();
+  
+  particles.forEach(p => {
+    if(isRunning) {
+      const coriolisX = 2 * omega * p.vy;
+      const coriolisY = -2 * omega * p.vx;
+      p.vx += coriolisX * 0.05;
+      p.vy += coriolisY * 0.05;
+      p.x += p.vx * 0.5;
+      p.y += p.vy * 0.5;
+    }
+    
+    ctx.fillStyle = '#ffa657';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI*2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#ffa657';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + p.vx*3, p.y + p.vy*3);
+    ctx.stroke();
+  });
+  
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`角速度 ω = ${omega} rad/s`, canvas.width*0.05, canvas.height*0.1);
+  ctx.fillText(`初速度 v = ${v} m/s`, canvas.width*0.05, canvas.height*0.1+20);
+  
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`科里奥利力方向: ${omega > 0 ? '向右偏转' : '向左偏转'}`, cx-100, canvas.height*0.9);
+  
+  if(isRunning) animationId = requestAnimationFrame(draw);
+}
+
+function start() {
+  isRunning = true;
+  draw();
+}
+
+document.getElementById('omega').addEventListener('input', e => { document.getElementById('omegaVal').value = e.target.value; });
+document.getElementById('v').addEventListener('input', e => { document.getElementById('vVal').value = e.target.value; });
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+</script>
+</body>
+</html>

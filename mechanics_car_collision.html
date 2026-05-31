@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汽车碰撞 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>质量m₁(kg):</label><input type="range" id="m1" min="500" max="2000" step="100" value="1000"><input type="number" id="m1Val" value="1000"></div>
+      <div class="ctrl-group"><label>质量m₂(kg):</label><input type="range" id="m2" min="500" max="2000" step="100" value="1000"><input type="number" id="m2Val" value="1000"></div>
+      <div class="ctrl-group"><label>初速度v₁(km/h):</label><input type="range" id="v1" min="10" max="120" step="5" value="60"><input type="number" id="v1Val" value="60"></div>
+      <div class="ctrl-group"><label>恢复系数e:</label><input type="range" id="e" min="0" max="1" step="0.05" value="0.5"><input type="number" id="eVal" value="0.5"></div>
+      <div class="ctrl-group"><button id="startBtn">▶ 开始</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">汽车碰撞：完全弹性碰撞(e=1)时动能守恒，完全非弹性碰撞(e=0)时两物体共速。动量守恒定律：m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂'。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let x1 = -150, x2 = 100, v1 = 0, v2 = 0;
+let isRunning = false;
+let collided = false;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  x1 = -150;
+  x2 = 100;
+  const v1_kmh = parseFloat(document.getElementById('v1').value);
+  v1 = v1_kmh / 3.6;
+  v2 = 0;
+  collided = false;
+  isRunning = false;
+  if(animationId) cancelAnimationFrame(animationId);
+  draw();
+}
+
+function drawCar(px, cy, carW, carH, bodyColor, windowColor) {
+  ctx.fillStyle = bodyColor;
+  const r = carH * 0.15;
+  ctx.beginPath();
+  ctx.moveTo(px - carW / 2 + r, cy - carH / 2);
+  ctx.lineTo(px + carW / 2 - r, cy - carH / 2);
+  ctx.quadraticCurveTo(px + carW / 2, cy - carH / 2, px + carW / 2, cy - carH / 2 + r);
+  ctx.lineTo(px + carW / 2, cy + carH / 2 - r);
+  ctx.quadraticCurveTo(px + carW / 2, cy + carH / 2, px + carW / 2 - r, cy + carH / 2);
+  ctx.lineTo(px - carW / 2 + r, cy + carH / 2);
+  ctx.quadraticCurveTo(px - carW / 2, cy + carH / 2, px - carW / 2, cy + carH / 2 - r);
+  ctx.lineTo(px - carW / 2, cy - carH / 2 + r);
+  ctx.quadraticCurveTo(px - carW / 2, cy - carH / 2, px - carW / 2 + r, cy - carH / 2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = windowColor;
+  const winW = carW * 0.2;
+  const winH = carH * 0.3;
+  ctx.fillRect(px - carW * 0.3, cy - carH * 0.35, winW, winH);
+  ctx.fillRect(px + carW * 0.1, cy - carH * 0.35, winW, winH);
+
+  ctx.fillStyle = '#161b22';
+  const wheelR = carH * 0.15;
+  ctx.beginPath();
+  ctx.arc(px - carW * 0.25, cy + carH / 2, wheelR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(px + carW * 0.25, cy + carH / 2, wheelR, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const m1 = parseFloat(document.getElementById('m1').value);
+  const m2 = parseFloat(document.getElementById('m2').value);
+  const e = parseFloat(document.getElementById('e').value);
+
+  if(isRunning) {
+    if(!collided && x1 + 40 >= x2 - 40) {
+      const v1_final = ((m1 - e * m2) * v1) / (m1 + m2);
+      const v2_final = ((1 + e) * m1 * v1) / (m1 + m2);
+      v1 = v1_final;
+      v2 = v2_final;
+      collided = true;
+    }
+    x1 += v1 * 3;
+    x2 += v2 * 3;
+  }
+
+  const W = canvas.width, H = canvas.height;
+  const S = Math.min(W, H);
+  const cx = W / 2, cy = H / 2;
+  const scale = S * 0.0025;
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = Math.max(2, S * 0.005);
+  ctx.beginPath();
+  ctx.moveTo(W * 0.05, cy + S * 0.08);
+  ctx.lineTo(W * 0.95, cy + S * 0.08);
+  ctx.stroke();
+
+  const px1 = cx + x1 * scale;
+  const px2 = cx + x2 * scale;
+  const carW = S * 0.12;
+  const carH = S * 0.07;
+
+  drawCar(px1, cy, carW, carH, '#f78166', '#3fb950');
+  drawCar(px2, cy, carW, carH, '#58a6ff', '#ffa657');
+
+  const KE_before = 0.5 * m1 * (parseFloat(document.getElementById('v1').value) / 3.6) ** 2;
+  const KE_after = collided ? 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2 : KE_before;
+  const KE_loss = collided ? ((KE_before - KE_after) / KE_before * 100) : 0;
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${S * 0.03}px sans-serif`;
+  const fs = S * 0.03;
+  ctx.fillText(`质量 m₁ = ${m1} kg`, 10, fs + 5);
+  ctx.fillText(`质量 m₂ = ${m2} kg`, 10, fs * 2 + 5);
+  ctx.fillText(`初速度 v₁ = ${parseFloat(document.getElementById('v1').value)} km/h`, 10, fs * 3 + 5);
+  ctx.fillText(`恢复系数 e = ${e}`, 10, fs * 4 + 5);
+  ctx.fillText(`碰撞后 v₁' = ${v1.toFixed(2)} m/s`, 10, fs * 5 + 5);
+  ctx.fillText(`碰撞后 v₂' = ${v2.toFixed(2)} m/s`, 10, fs * 6 + 5);
+
+  ctx.fillStyle = collided ? '#f78166' : '#3fb950';
+  ctx.font = `bold ${S * 0.035}px sans-serif`;
+  ctx.fillText(collided ? `碰撞完成! 动能损失: ${KE_loss.toFixed(1)}%` : '点击开始碰撞', cx - S * 0.18, H - S * 0.05);
+
+  if(isRunning && Math.abs(x1) < W && Math.abs(x2) < W) {
+    animationId = requestAnimationFrame(draw);
+  } else if(isRunning) {
+    isRunning = false;
+  }
+}
+
+function start() {
+  if(collided) {
+    reset();
+  }
+  isRunning = true;
+  draw();
+}
+
+document.getElementById('m1').addEventListener('input', e => { document.getElementById('m1Val').value = e.target.value; });
+document.getElementById('m2').addEventListener('input', e => { document.getElementById('m2Val').value = e.target.value; });
+document.getElementById('v1').addEventListener('input', e => { document.getElementById('v1Val').value = e.target.value; });
+document.getElementById('e').addEventListener('input', e => { document.getElementById('eVal').value = e.target.value; });
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+</script>
+</body>
+</html>

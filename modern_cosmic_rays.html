@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宇宙射线 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>射线强度:</label><input type="range" id="intensity" min="10" max="100" step="10" value="50"><span id="intensityVal">50</span>%</div>
+    <div class="ctrl-group"><label>能量范围:</label><input type="range" id="energyRange" min="1" max="10" step="1" value="5"><span id="energyRangeVal">5</span></div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">宇宙射线：来自外太空的高能带电粒子流，主要是质子和原子核。它们与大气相互作用产生次级粒子簇射，是研究宇宙线物理和天体物理的重要窗口。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let rays = [];
+let particles = [];
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const intensity = parseFloat(document.getElementById('intensity').value) / 100;
+  const energyRange = parseFloat(document.getElementById('energyRange').value);
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = 'rgba(63,185,80,0.15)';
+  ctx.fillRect(0, 0, w, S * 0.35);
+
+  ctx.fillStyle = 'rgba(63,185,80,0.08)';
+  ctx.fillRect(0, S * 0.35, w, S * 0.15);
+
+  if (Math.random() < 0.01 * intensity) {
+    const x = Math.random() * w;
+    const energy = Math.random() * energyRange + 1;
+    rays.push({ x, y: 0, energy, alpha: 1 });
+  }
+
+  for (let i = rays.length - 1; i >= 0; i--) {
+    const ray = rays[i];
+    ray.y += 2 * ray.energy;
+    ray.alpha -= 0.005;
+
+    if (ray.y > S * 0.35 && ray.y < S * 0.5 && Math.random() < 0.02) {
+      for (let j = 0; j < 3; j++) {
+        particles.push({
+          x: ray.x,
+          y: ray.y,
+          vx: (Math.random() - 0.5) * 3,
+          vy: Math.random() * 2 + 1,
+          life: 1
+        });
+      }
+    }
+
+    ctx.strokeStyle = `rgba(${255 - ray.energy * 20},${166 + ray.energy * 5},${81 + ray.energy * 10},${ray.alpha})`;
+    ctx.lineWidth = S * 0.003 + ray.energy * S * 0.0005;
+    ctx.beginPath();
+    ctx.moveTo(ray.x, ray.y - S * 0.04);
+    ctx.lineTo(ray.x, ray.y);
+    ctx.stroke();
+
+    if (ray.y > h || ray.alpha <= 0) {
+      rays.splice(i, 1);
+    }
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= 0.01;
+
+    ctx.fillStyle = `rgba(210,168,255,${p.life})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, S * 0.005, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (p.life <= 0 || p.y > h) {
+      particles.splice(i, 1);
+    }
+  }
+
+  ctx.fillStyle = '#ffa657';
+  for (let i = 0; i < 40; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * w, Math.random() * h, S * 0.002, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const fs = S * 0.03;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'left';
+  ctx.fillText(`射线强度: ${(intensity * 100).toFixed(0)}%`, w * 0.02, fs + 5);
+  ctx.fillText(`能量范围: ${energyRange} GeV`, w * 0.02, fs * 2 + 5);
+  ctx.fillText(`宇宙射线: ${rays.length}`, w * 0.02, fs * 3 + 5);
+  ctx.fillText(`次级粒子: ${particles.length}`, w * 0.02, fs * 4 + 5);
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('intensity').addEventListener('input', e => {
+  document.getElementById('intensityVal').textContent = e.target.value;
+});
+document.getElementById('energyRange').addEventListener('input', e => {
+  document.getElementById('energyRangeVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('intensity').value = 50;
+  document.getElementById('intensityVal').textContent = '50';
+  document.getElementById('energyRange').value = 5;
+  document.getElementById('energyRangeVal').textContent = '5';
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

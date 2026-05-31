@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>热力学理想气体 - 物理数值仿真平台</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0d1117; color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px;
+}
+.header {
+  width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 24px;
+}
+.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #ffa657; line-height: 1.2; }
+.header-left .subtitle { font-size: 0.82rem; color: #8b949e; margin-top: 2px; }
+.back-link {
+  color: #58a6ff; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
+  border: 1px solid #30363d; border-radius: 6px; transition: background 0.2s;
+}
+.back-link:hover { background: #1f2937; }
+.main-container { width: 100%; max-width: 1100px; display: flex; gap: 12px; flex: 1; }
+.canvas-panel {
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px;
+  display: flex; align-items: center; justify-content: center; flex: 1;
+}
+canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; }
+.side-panel { width: 300px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
+.panel-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
+.panel-box h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+.control-row label { font-size: 0.82rem; color: #c9d1d9; white-space: nowrap; }
+.control-row input[type="range"] { flex: 1; accent-color: #ffa657; height: 4px; }
+.control-row .val { font-size: 0.78rem; color: #ffa657; min-width: 42px; text-align: right; font-weight: 600; }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.btn {
+  padding: 7px 12px; border: 1px solid #30363d; border-radius: 6px; background: #21262d;
+  color: #c9d1d9; cursor: pointer; font-size: 0.82rem; font-family: inherit;
+  transition: background 0.15s, border-color 0.15s; flex: 1; text-align: center; min-width: 48px;
+}
+.btn:hover { background: #30363d; }
+.btn.active { background: #ffa65733; border-color: #ffa657; color: #ffa657; }
+.btn.heat { border-color: #f8514966; }
+.btn.heat:hover { background: #f8514922; border-color: #f85149; color: #f85149; }
+.btn.cool { border-color: #79c0ff66; }
+.btn.cool:hover { background: #79c0ff22; border-color: #79c0ff; color: #79c0ff; }
+.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; font-size: 0.82rem; }
+.stat-item:last-child { border-bottom: none; }
+.stat-label { color: #8b949e; }
+.stat-value { color: #ffa657; font-weight: 600; font-variant-numeric: tabular-nums; }
+.check-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 0.82rem; cursor: pointer; }
+.check-row input[type="checkbox"] { accent-color: #ffa657; width: 15px; height: 15px; }
+.pv-panel {
+  width: 100%; max-width: 1100px; background: #161b22; border: 1px solid #30363d;
+  border-radius: 8px; padding: 14px 20px;
+}
+.pv-panel h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 6px; font-weight: 600; }
+canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
+@media (max-width: 900px) {
+  .main-container { flex-direction: column; }
+  .side-panel { width: 100%; min-width: unset; flex-direction: row; flex-wrap: wrap; }
+  .side-panel .panel-box { flex: 1; min-width: 200px; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>热力学理想气体</h1>
+    <div class="subtitle">PV = nRT 状态方程 — 活塞-气缸模型与分子动力学模拟</div>
+  </div>
+  <a class="back-link" href="index.html">← 返回首页</a>
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 控制参数</h3>
+      <div class="control-row">
+        <label>温度 T (K)</label>
+        <input type="range" id="temperature" min="100" max="800" value="300" step="10">
+        <span class="val" id="tempVal">300</span>
+      </div>
+      <div class="control-row">
+        <label>体积 V (a.u.)</label>
+        <input type="range" id="volume" min="2" max="10" value="6" step="0.5">
+        <span class="val" id="volVal">6.0</span>
+      </div>
+      <div class="control-row">
+        <label>分子数 N</label>
+        <input type="range" id="numParticles" min="20" max="200" value="80" step="5">
+        <span class="val" id="numVal">80</span>
+      </div>
+      <div class="control-row">
+        <label>粒子半径 r</label>
+        <input type="range" id="radius" min="2" max="8" value="4" step="0.5">
+        <span class="val" id="radiusVal">4.0</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn active" id="btnStart">▶ 开始</button>
+        <button class="btn" id="btnPause">⏸ 暂停</button>
+        <button class="btn" id="btnReset">↺ 重置</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn heat" id="btnHeat">🔥 加热</button>
+        <button class="btn cool" id="btnCool">❄️ 冷却</button>
+        <button class="btn" id="btnCompress">⬅ 压缩</button>
+        <button class="btn" id="btnExpand">➡ 膨胀</button>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h3>📊 实时物理量</h3>
+      <div class="stat-item"><span class="stat-label">温度 T (K)</span><span class="stat-value" id="statTemp">—</span></div>
+      <div class="stat-item"><span class="stat-label">压强 P (a.u.)</span><span class="stat-value" id="statPressure">—</span></div>
+      <div class="stat-item"><span class="stat-label">理论压强 P=nkT/V</span><span class="stat-value" id="statPressureTh">—</span></div>
+      <div class="stat-item"><span class="stat-label">体积 V</span><span class="stat-value" id="statVolume">—</span></div>
+      <div class="stat-item"><span class="stat-label">平均速率 ⟨v⟩</span><span class="stat-value" id="statAvgSpeed">—</span></div>
+      <div class="stat-item"><span class="stat-label">方均根速率 v_rms</span><span class="stat-value" id="statVrms">—</span></div>
+      <div class="stat-item"><span class="stat-label">平均动能 ⟨KE⟩</span><span class="stat-value" id="statAvgKE">—</span></div>
+    </div>
+  </div>
+</div>
+<div class="pv-panel">
+  <h3>📈 PV状态图 (等温线)</h3>
+  <canvas id="pvCanvas"></canvas>
+</div>
+<script>
+(function() {
+  const simCanvas = document.getElementById('simCanvas');
+  const simCtx = simCanvas.getContext('2d');
+  const pvCanvas = document.getElementById('pvCanvas');
+  const pvCtx = pvCanvas.getContext('2d');
+
+  const sliderT = document.getElementById('temperature');
+  const sliderV = document.getElementById('volume');
+  const sliderN = document.getElementById('numParticles');
+  const sliderR = document.getElementById('radius');
+  const tempVal = document.getElementById('tempVal');
+  const volVal = document.getElementById('volVal');
+  const numVal = document.getElementById('numVal');
+  const radiusVal = document.getElementById('radiusVal');
+
+  const btnStart = document.getElementById('btnStart');
+  const btnPause = document.getElementById('btnPause');
+  const btnReset = document.getElementById('btnReset');
+  const btnHeat = document.getElementById('btnHeat');
+  const btnCool = document.getElementById('btnCool');
+  const btnCompress = document.getElementById('btnCompress');
+  const btnExpand = document.getElementById('btnExpand');
+
+  const statTemp = document.getElementById('statTemp');
+  const statPressure = document.getElementById('statPressure');
+  const statPressureTh = document.getElementById('statPressureTh');
+  const statVolume = document.getElementById('statVolume');
+  const statAvgSpeed = document.getElementById('statAvgSpeed');
+  const statVrms = document.getElementById('statVrms');
+  const statAvgKE = document.getElementById('statAvgKE');
+
+  const SIM_W = 680, SIM_H = 420;
+  let targetT = 300, volumeFactor = 6, N = 80, particleRadius = 4;
+  let particles = [];
+  let running = true, animId = null, frameCount = 0;
+  const DT = 0.08, SUBSTEPS = 12;
+  let momentumBuffer = [], windowMomentumSum = 0, frameDtSum = 0;
+  const PRESSURE_WINDOW = 60;
+  let pvTrail = [];
+
+  function boxMuller() {
+    let u1, u2;
+    do { u1 = Math.random(); } while (u1 === 0);
+    u2 = Math.random();
+    return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  }
+
+  function getBoxWidth() { return SIM_W * (volumeFactor / 10); }
+
+  function speedToColor(v, vp) {
+    if (vp < 0.01) vp = 1;
+    const t = Math.min(v / (vp * 2.2), 1.0);
+    const r = Math.floor(t * 255);
+    const g = Math.floor((1 - Math.abs(t - 0.5) * 2) * 200 + 30);
+    const b = Math.floor((1 - t) * 255);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function resizeSimCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    simCanvas.style.width = SIM_W + 'px';
+    simCanvas.style.height = SIM_H + 'px';
+    simCanvas.width = SIM_W * dpr;
+    simCanvas.height = SIM_H * dpr;
+    simCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function resizePvCanvas() {
+    const panel = pvCanvas.parentElement;
+    const w = panel.clientWidth - 40, h = 200;
+    const dpr = window.devicePixelRatio || 1;
+    pvCanvas.style.width = w + 'px';
+    pvCanvas.style.height = h + 'px';
+    pvCanvas.width = w * dpr;
+    pvCanvas.height = h * dpr;
+    pvCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function initParticles() {
+    particles = [];
+    const bw = getBoxWidth(), r = particleRadius, margin = r + 2;
+    const sigma = Math.sqrt(targetT);
+    for (let i = 0; i < N; i++) {
+      let x, y, overlapping, attempts = 0;
+      do {
+        x = margin + Math.random() * (bw - 2 * margin);
+        y = margin + Math.random() * (SIM_H - 2 * margin);
+        overlapping = false;
+        for (let j = 0; j < particles.length; j++) {
+          const dx = x - particles[j].x, dy = y - particles[j].y;
+          if (dx * dx + dy * dy < (2 * r) * (2 * r)) { overlapping = true; break; }
+        }
+        attempts++;
+      } while (overlapping && attempts < 500);
+      particles.push({ x, y, vx: boxMuller() * sigma, vy: boxMuller() * sigma });
+    }
+  }
+
+  function adjustParticleCount(newN) {
+    if (newN === particles.length) return;
+    const bw = getBoxWidth(), r = particleRadius, margin = r + 2, sigma = Math.sqrt(targetT);
+    if (newN > particles.length) {
+      for (let i = particles.length; i < newN; i++) {
+        let x, y, overlapping, attempts = 0;
+        do {
+          x = margin + Math.random() * (bw - 2 * margin);
+          y = margin + Math.random() * (SIM_H - 2 * margin);
+          overlapping = false;
+          for (const p of particles) {
+            const dx = x - p.x, dy = y - p.y;
+            if (dx * dx + dy * dy < (2 * r) * (2 * r)) { overlapping = true; break; }
+          }
+          attempts++;
+        } while (overlapping && attempts < 300);
+        particles.push({ x, y, vx: boxMuller() * sigma, vy: boxMuller() * sigma });
+      }
+    } else {
+      particles.length = newN;
+    }
+    N = newN;
+  }
+
+  function scaleTemperature(newT) {
+    if (particles.length === 0) return;
+    const currentT = measureTemperature();
+    if (currentT < 0.001) {
+      const sigma = Math.sqrt(newT);
+      for (const p of particles) { p.vx = boxMuller() * sigma; p.vy = boxMuller() * sigma; }
+    } else {
+      const scale = Math.sqrt(newT / currentT);
+      for (const p of particles) { p.vx *= scale; p.vy *= scale; }
+    }
+    targetT = newT;
+  }
+
+  function measureTemperature() {
+    if (particles.length === 0) return 0;
+    let sumV2 = 0;
+    for (const p of particles) sumV2 += p.vx * p.vx + p.vy * p.vy;
+    return sumV2 / (2 * particles.length);
+  }
+
+  function physicsStep(dt) {
+    const bw = getBoxWidth(), r = particleRadius;
+    let stepMomentum = 0;
+    for (const p of particles) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+    for (const p of particles) {
+      if (p.x - r < 0) { p.x = r; p.vx = Math.abs(p.vx); stepMomentum += 2 * Math.abs(p.vx); }
+      else if (p.x + r > bw) { p.x = bw - r; p.vx = -Math.abs(p.vx); stepMomentum += 2 * Math.abs(p.vx); }
+      if (p.y - r < 0) { p.y = r; p.vy = Math.abs(p.vy); stepMomentum += 2 * Math.abs(p.vy); }
+      else if (p.y + r > SIM_H) { p.y = SIM_H - r; p.vy = -Math.abs(p.vy); stepMomentum += 2 * Math.abs(p.vy); }
+    }
+    const d = 2 * r;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const pi = particles[i], pj = particles[j];
+        const dx = pj.x - pi.x, dy = pj.y - pi.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < d * d && distSq > 0.0001) {
+          const dist = Math.sqrt(distSq);
+          const nx = dx / dist, ny = dy / dist;
+          const dvx = pi.vx - pj.vx, dvy = pi.vy - pj.vy;
+          const dvn = dvx * nx + dvy * ny;
+          if (dvn > 0) {
+            pi.vx -= dvn * nx; pi.vy -= dvn * ny;
+            pj.vx += dvn * nx; pj.vy += dvn * ny;
+            const overlap = d - dist;
+            pi.x -= (overlap / 2) * nx; pi.y -= (overlap / 2) * ny;
+            pj.x += (overlap / 2) * nx; pj.y += (overlap / 2) * ny;
+          }
+        }
+      }
+    }
+    return stepMomentum;
+  }
+
+  function simulateFrame() {
+    if (!running) return;
+    let totalMomentum = 0;
+    for (let s = 0; s < SUBSTEPS; s++) totalMomentum += physicsStep(DT);
+    const totalDt = DT * SUBSTEPS;
+    momentumBuffer.push(totalMomentum);
+    windowMomentumSum += totalMomentum;
+    frameDtSum += totalDt;
+    if (momentumBuffer.length > PRESSURE_WINDOW) {
+      windowMomentumSum -= momentumBuffer.shift();
+      frameDtSum -= totalDt;
+    }
+    const T = measureTemperature();
+    const bw = getBoxWidth();
+    const area = bw * SIM_H;
+    const pressureSim = (frameDtSum > 0.001 && area > 0) ? windowMomentumSum / (frameDtSum * 2 * (bw + SIM_H)) : 0;
+    const pressureTh = (N * T) / area;
+    pvTrail.push({ v: volumeFactor, p: pressureSim });
+    if (pvTrail.length > 500) pvTrail.shift();
+    drawFrame(T, pressureSim, pressureTh);
+    frameCount++;
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  function drawFrame(T, pressureSim, pressureTh) {
+    simCtx.clearRect(0, 0, SIM_W, SIM_H);
+    const bw = getBoxWidth();
+
+    simCtx.fillStyle = '#0d1117';
+    simCtx.fillRect(0, 0, bw, SIM_H);
+
+    simCtx.strokeStyle = '#30363d33';
+    simCtx.lineWidth = 0.5;
+    for (let x = 40; x < bw; x += 40) { simCtx.beginPath(); simCtx.moveTo(x, 0); simCtx.lineTo(x, SIM_H); simCtx.stroke(); }
+    for (let y = 40; y < SIM_H; y += 40) { simCtx.beginPath(); simCtx.moveTo(0, y); simCtx.lineTo(bw, y); simCtx.stroke(); }
+
+    const vp = Math.sqrt(Math.max(T, 0.01));
+    for (const p of particles) {
+      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      const color = speedToColor(speed, vp);
+      const r = particleRadius;
+      simCtx.beginPath(); simCtx.arc(p.x, p.y, r, 0, 2 * Math.PI); simCtx.fillStyle = color; simCtx.fill();
+      const grad = simCtx.createRadialGradient(p.x - r * 0.25, p.y - r * 0.3, r * 0.05, p.x, p.y, r);
+      grad.addColorStop(0, 'rgba(255,255,255,0.4)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+      simCtx.beginPath(); simCtx.arc(p.x, p.y, r, 0, 2 * Math.PI); simCtx.fillStyle = grad; simCtx.fill();
+    }
+
+    simCtx.fillStyle = '#161b22';
+    simCtx.fillRect(bw, 0, SIM_W - bw, SIM_H);
+
+    const pistonW = 12;
+    const pistonGrad = simCtx.createLinearGradient(bw - pistonW / 2, 0, bw + pistonW / 2, 0);
+    pistonGrad.addColorStop(0, '#4a5568');
+    pistonGrad.addColorStop(0.5, '#718096');
+    pistonGrad.addColorStop(1, '#4a5568');
+    simCtx.fillStyle = pistonGrad;
+    simCtx.fillRect(bw - pistonW / 2, 0, pistonW, SIM_H);
+
+    simCtx.strokeStyle = '#a0aec0';
+    simCtx.lineWidth = 1;
+    for (let y = 10; y < SIM_H; y += 20) {
+      simCtx.beginPath(); simCtx.moveTo(bw - pistonW / 2 + 2, y); simCtx.lineTo(bw + pistonW / 2 - 2, y + 10); simCtx.stroke();
+    }
+
+    simCtx.strokeStyle = '#30363d';
+    simCtx.lineWidth = 2;
+    simCtx.strokeRect(0, 0, bw, SIM_H);
+
+    simCtx.fillStyle = '#8b949e';
+    simCtx.font = '12px sans-serif';
+    simCtx.fillText(`T = ${T.toFixed(1)} K`, 10, 20);
+    simCtx.fillText(`V = ${volumeFactor.toFixed(1)}`, 10, 38);
+    simCtx.fillText(`N = ${particles.length}`, 10, 56);
+
+    if (bw < SIM_W - 30) {
+      simCtx.fillStyle = '#ffa657';
+      simCtx.font = 'bold 13px sans-serif';
+      simCtx.fillText('活塞', bw + 16, SIM_H / 2 - 8);
+      simCtx.fillText('→', bw + 22, SIM_H / 2 + 10);
+    }
+
+    updateStats(T, pressureSim, pressureTh);
+    drawPvDiagram(T);
+  }
+
+  function updateStats(T, pressureSim, pressureTh) {
+    statTemp.textContent = T.toFixed(1);
+    statPressure.textContent = pressureSim.toFixed(4);
+    statPressureTh.textContent = pressureTh.toFixed(4);
+    statVolume.textContent = volumeFactor.toFixed(1);
+    if (particles.length > 0) {
+      let sumV = 0, sumV2 = 0;
+      for (const p of particles) {
+        const v = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        sumV += v; sumV2 += v * v;
+      }
+      statAvgSpeed.textContent = (sumV / particles.length).toFixed(2);
+      statVrms.textContent = Math.sqrt(sumV2 / particles.length).toFixed(2);
+      statAvgKE.textContent = T.toFixed(2);
+    }
+  }
+
+  function drawPvDiagram(T) {
+    resizePvCanvas();
+    const W = pvCanvas.width / (window.devicePixelRatio || 1);
+    const H = pvCanvas.height / (window.devicePixelRatio || 1);
+    const margin = { top: 10, right: 20, bottom: 30, left: 50 };
+    const plotW = W - margin.left - margin.right;
+    const plotH = H - margin.top - margin.bottom;
+    pvCtx.clearRect(0, 0, W, H);
+
+    pvCtx.strokeStyle = '#30363d';
+    pvCtx.lineWidth = 1;
+    pvCtx.beginPath();
+    pvCtx.moveTo(margin.left, margin.top);
+    pvCtx.lineTo(margin.left, margin.top + plotH);
+    pvCtx.lineTo(margin.left + plotW, margin.top + plotH);
+    pvCtx.stroke();
+
+    const vMin = 2, vMax = 10;
+    const area = getBoxWidth() * SIM_H;
+    const pMaxCalc = (N * 800) / (2 * SIM_W * SIM_H / 10);
+    const pMax = Math.max(pMaxCalc * 1.2, 0.01);
+
+    pvCtx.fillStyle = '#8b949e';
+    pvCtx.font = '10px sans-serif';
+    pvCtx.textAlign = 'center';
+    for (let i = 0; i <= 4; i++) {
+      const v = vMin + (vMax - vMin) * i / 4;
+      const x = margin.left + (v - vMin) / (vMax - vMin) * plotW;
+      pvCtx.fillText(v.toFixed(0), x, margin.top + plotH + 16);
+    }
+    pvCtx.fillText('体积 V', margin.left + plotW / 2, margin.top + plotH + 28);
+
+    pvCtx.save();
+    pvCtx.translate(12, margin.top + plotH / 2);
+    pvCtx.rotate(-Math.PI / 2);
+    pvCtx.textAlign = 'center';
+    pvCtx.fillText('压强 P', 0, 0);
+    pvCtx.restore();
+
+    const isotherms = [200, 300, 400, 600, 800];
+    isotherms.forEach((tIso, idx) => {
+      pvCtx.beginPath();
+      pvCtx.strokeStyle = idx === 1 ? '#ffa65788' : '#30363d88';
+      pvCtx.lineWidth = idx === 1 ? 1.5 : 0.8;
+      if (idx !== 1) pvCtx.setLineDash([4, 4]);
+      for (let i = 0; i <= 200; i++) {
+        const v = vMin + (vMax - vMin) * i / 200;
+        const a = v / 10 * SIM_W * SIM_H;
+        const p = (N * tIso) / a;
+        const x = margin.left + (v - vMin) / (vMax - vMin) * plotW;
+        const y = margin.top + plotH - (p / pMax) * plotH;
+        if (i === 0) pvCtx.moveTo(x, y); else pvCtx.lineTo(x, y);
+      }
+      pvCtx.stroke();
+      pvCtx.setLineDash([]);
+      const labelV = vMax - 0.5;
+      const labelA = labelV / 10 * SIM_W * SIM_H;
+      const labelP = (N * tIso) / labelA;
+      const lx = margin.left + (labelV - vMin) / (vMax - vMin) * plotW;
+      const ly = margin.top + plotH - (labelP / pMax) * plotH;
+      if (ly > margin.top + 5) {
+        pvCtx.fillStyle = idx === 1 ? '#ffa657' : '#8b949e';
+        pvCtx.font = '9px sans-serif';
+        pvCtx.textAlign = 'left';
+        pvCtx.fillText(`${tIso}K`, lx + 2, ly - 3);
+      }
+    });
+
+    if (pvTrail.length > 1) {
+      pvCtx.beginPath();
+      pvCtx.strokeStyle = '#f7816688';
+      pvCtx.lineWidth = 1;
+      for (let i = Math.max(0, pvTrail.length - 200); i < pvTrail.length; i++) {
+        const pt = pvTrail[i];
+        const x = margin.left + (pt.v - vMin) / (vMax - vMin) * plotW;
+        const y = margin.top + plotH - (pt.p / pMax) * plotH;
+        if (i === Math.max(0, pvTrail.length - 200)) pvCtx.moveTo(x, y); else pvCtx.lineTo(x, y);
+      }
+      pvCtx.stroke();
+    }
+
+    const currentP = parseFloat(statPressure.textContent) || 0;
+    const cx = margin.left + (volumeFactor - vMin) / (vMax - vMin) * plotW;
+    const cy = margin.top + plotH - (currentP / pMax) * plotH;
+    pvCtx.fillStyle = '#f78166';
+    pvCtx.beginPath(); pvCtx.arc(cx, cy, 5, 0, 2 * Math.PI); pvCtx.fill();
+    pvCtx.strokeStyle = '#ffa657'; pvCtx.lineWidth = 1.5; pvCtx.stroke();
+  }
+
+  function startSimulation() {
+    if (running) { pauseSimulation(); return; }
+    running = true;
+    btnStart.classList.add('active'); btnPause.classList.remove('active');
+    animId = requestAnimationFrame(simulateFrame);
+  }
+
+  function pauseSimulation() {
+    running = false;
+    btnStart.classList.remove('active'); btnPause.classList.add('active');
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+  }
+
+  function resetAndStart() {
+    pauseSimulation();
+    N = parseInt(sliderN.value) || 80;
+    targetT = parseInt(sliderT.value) || 300;
+    volumeFactor = parseFloat(sliderV.value) || 6;
+    particleRadius = parseFloat(sliderR.value) || 4;
+    momentumBuffer = []; windowMomentumSum = 0; frameDtSum = 0; frameCount = 0;
+    pvTrail = [];
+    initParticles();
+    updateDisplayValues();
+    startSimulation();
+  }
+
+  function updateDisplayValues() {
+    tempVal.textContent = targetT;
+    volVal.textContent = volumeFactor.toFixed(1);
+    numVal.textContent = N;
+    radiusVal.textContent = particleRadius.toFixed(1);
+  }
+
+  sliderT.addEventListener('input', () => { tempVal.textContent = sliderT.value; });
+  sliderT.addEventListener('change', () => {
+    const val = parseInt(sliderT.value);
+    if (val !== targetT) { scaleTemperature(val); updateDisplayValues(); }
+  });
+  sliderV.addEventListener('input', () => { volVal.textContent = parseFloat(sliderV.value).toFixed(1); });
+  sliderV.addEventListener('change', () => {
+    volumeFactor = parseFloat(sliderV.value);
+    const bw = getBoxWidth(), r = particleRadius;
+    for (const p of particles) {
+      if (p.x + r > bw) { p.x = bw - r; p.vx = -Math.abs(p.vx); }
+    }
+    updateDisplayValues();
+  });
+  sliderN.addEventListener('input', () => { numVal.textContent = sliderN.value; });
+  sliderN.addEventListener('change', () => {
+    adjustParticleCount(parseInt(sliderN.value));
+    updateDisplayValues();
+  });
+  sliderR.addEventListener('input', () => { radiusVal.textContent = parseFloat(sliderR.value).toFixed(1); });
+  sliderR.addEventListener('change', () => {
+    particleRadius = parseFloat(sliderR.value);
+    updateDisplayValues();
+  });
+
+  btnStart.addEventListener('click', startSimulation);
+  btnPause.addEventListener('click', pauseSimulation);
+  btnReset.addEventListener('click', resetAndStart);
+  btnHeat.addEventListener('click', () => {
+    const newT = Math.min(targetT * 1.3, 800);
+    scaleTemperature(newT); sliderT.value = Math.round(newT); updateDisplayValues();
+  });
+  btnCool.addEventListener('click', () => {
+    const newT = Math.max(targetT * 0.7, 100);
+    scaleTemperature(newT); sliderT.value = Math.round(newT); updateDisplayValues();
+  });
+  btnCompress.addEventListener('click', () => {
+    volumeFactor = Math.max(2, volumeFactor - 1);
+    sliderV.value = volumeFactor; updateDisplayValues();
+    const bw = getBoxWidth(), r = particleRadius;
+    for (const p of particles) { if (p.x + r > bw) { p.x = bw - r; p.vx = -Math.abs(p.vx); } }
+  });
+  btnExpand.addEventListener('click', () => {
+    volumeFactor = Math.min(10, volumeFactor + 1);
+    sliderV.value = volumeFactor; updateDisplayValues();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    switch (e.key.toLowerCase()) {
+      case ' ': e.preventDefault(); if (running) pauseSimulation(); else startSimulation(); break;
+      case 'r': if (!e.ctrlKey && !e.metaKey) resetAndStart(); break;
+    }
+  });
+
+  function init() {
+    resizeSimCanvas(); resizePvCanvas();
+    N = parseInt(sliderN.value) || 80;
+    targetT = parseInt(sliderT.value) || 300;
+    volumeFactor = parseFloat(sliderV.value) || 6;
+    particleRadius = parseFloat(sliderR.value) || 4;
+    updateDisplayValues();
+    initParticles();
+    startSimulation();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

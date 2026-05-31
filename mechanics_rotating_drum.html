@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚筒法测量手机的转动惯量 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>圆柱质量 M(kg)</label><input type="range" id="mass" min="0.1" max="2" step="0.1" value="0.2"><input type="number" id="massVal" value="0.2"></div>
+      <div class="ctrl-group"><label>圆柱半径 R(m)</label><input type="range" id="radius" min="0.02" max="0.2" step="0.01" value="0.05"><input type="number" id="radiusVal" value="0.05"></div>
+      <div class="ctrl-group"><label>斜面倾角 θ(°)</label><input type="range" id="theta" min="5" max="45" step="5" value="20"><input type="number" id="thetaVal" value="20"></div>
+      <div class="ctrl-group"><label>转动惯量因子</label><input type="range" id="k" min="0.2" max="1" step="0.1" value="0.5"><input type="number" id="kVal" value="0.5"></div>
+      <div class="ctrl-group"><button id="releaseBtn">🔄 释放</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">滚筒法测转动惯量：圆柱沿斜面无滑动滚动时，a = g sinθ / (1 + k)，其中 k = I/(MR²)。实心圆柱 k=0.5，空心圆柱 k=1，球体 k=0.4。通过 a 可反算 I。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let physDist = 0, physVel = 0;
+let isRolling = false;
+let prevTime = 0;
+
+const SLOPE_LENGTH_M = 2.0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+  if(!isRolling) drawScene(0, 0);
+}
+
+function reset() {
+  physDist = 0; physVel = 0;
+  isRolling = false;
+  prevTime = 0;
+  if(animationId) { cancelAnimationFrame(animationId); animationId = null; }
+  drawScene(0, 0);
+}
+
+function release() {
+  if(isRolling) return;
+  isRolling = true;
+  prevTime = 0;
+  animationId = requestAnimationFrame(step);
+}
+
+function step(ts) {
+  if(prevTime === 0) prevTime = ts;
+  const dt = Math.min((ts - prevTime) / 1000, 0.04);
+  prevTime = ts;
+
+  const thetaDeg = parseFloat(document.getElementById('theta').value);
+  const thetaRad = thetaDeg * Math.PI / 180;
+  const k = parseFloat(document.getElementById('k').value);
+  const g = 9.8;
+  const a = g * Math.sin(thetaRad) / (1 + k);
+
+  physVel += a * dt;
+  physDist += physVel * dt;
+
+  drawScene(physDist, physVel);
+
+  if(physDist < SLOPE_LENGTH_M) {
+    animationId = requestAnimationFrame(step);
+  } else {
+    isRolling = false;
+    animationId = null;
+  }
+}
+
+function drawScene(distM, velM) {
+  const w = canvas.width, h = canvas.height;
+  if(!w || !h) return;
+  const S = Math.min(w, h);
+
+  const thetaDeg = parseFloat(document.getElementById('theta').value);
+  const thetaRad = thetaDeg * Math.PI / 180;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const sx = w * 0.1, sy = h * 0.2;
+  const slopeLen = w * 0.7;
+  const ex = sx + slopeLen, ey = sy + slopeLen * Math.tan(thetaRad);
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(63,185,80,0.12)';
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.lineTo(ex, h * 0.9);
+  ctx.lineTo(sx, h * 0.9);
+  ctx.closePath();
+  ctx.fill();
+
+  const progress = Math.min(distM / SLOPE_LENGTH_M, 1);
+  const contactX = sx + progress * (ex - sx);
+  const contactY = sy + progress * (ey - sy);
+
+  const cylR = S * 0.035;
+  const normX = -Math.sin(thetaRad);
+  const normY = -Math.cos(thetaRad);
+  const centerX = contactX + normX * cylR;
+  const centerY = contactY + normY * cylR;
+
+  const slopeVisualLen = Math.sqrt((ex - sx) ** 2 + (ey - sy) ** 2);
+  const visualDist = progress * slopeVisualLen;
+  const rollAngle = visualDist / cylR;
+
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.rotate(rollAngle);
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, cylR, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(247,129,102,0.1)';
+  ctx.beginPath();
+  ctx.arc(0, 0, cylR, 0, Math.PI * 2);
+  ctx.fill();
+
+  const spokeLen = cylR * 0.85;
+  for(let i = 0; i < 4; i++) {
+    const angle = i * Math.PI / 2;
+    ctx.strokeStyle = i === 0 ? '#ffa657' : 'rgba(255,166,87,0.5)';
+    ctx.lineWidth = i === 0 ? 2.5 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(angle) * spokeLen, Math.sin(angle) * spokeLen);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(spokeLen, 0, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.beginPath();
+  ctx.arc(0, 0, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  const M = parseFloat(document.getElementById('mass').value);
+  const R = parseFloat(document.getElementById('radius').value);
+  const k = parseFloat(document.getElementById('k').value);
+  const g = 9.8;
+  const a = g * Math.sin(thetaRad) / (1 + k);
+  const I = k * M * R * R;
+  const omega = velM / R;
+  const KE_t = 0.5 * M * velM * velM;
+  const KE_r = 0.5 * I * omega * omega;
+  const PE = M * g * Math.max(0, SLOPE_LENGTH_M - distM) * Math.sin(thetaRad);
+
+  ctx.fillStyle = '#8b949e';
+  const fs = S * 0.028;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText(`位移 s = ${distM.toFixed(3)} m`, 10, fs + 5);
+  ctx.fillText(`速度 v = ${velM.toFixed(3)} m/s`, 10, fs * 2 + 5);
+  ctx.fillText(`角速度 ω = ${omega.toFixed(2)} rad/s`, 10, fs * 3 + 5);
+  ctx.fillText(`加速度 a = ${a.toFixed(3)} m/s²`, 10, fs * 4 + 5);
+  ctx.fillText(`转动惯量 I = ${(I * 10000).toFixed(2)} g·cm²`, 10, fs * 5 + 5);
+  ctx.fillStyle = '#3fb950';
+  ctx.fillText(`平动动能 = ${KE_t.toFixed(4)} J`, 10, fs * 6 + 5);
+  ctx.fillText(`转动动能 = ${KE_r.toFixed(4)} J`, 10, fs * 7 + 5);
+  ctx.fillStyle = '#f78166';
+  ctx.fillText(`总动能 = ${(KE_t + KE_r).toFixed(4)} J`, 10, fs * 8 + 5);
+  ctx.fillStyle = '#d2a8ff';
+  ctx.fillText(`势能 PE = ${PE.toFixed(4)} J`, 10, fs * 9 + 5);
+
+  const totalTime = distM > 0 ? Math.sqrt(2 * distM / a) : 0;
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText(`时间 t = ${totalTime.toFixed(2)} s`, 10, fs * 10 + 5);
+}
+
+document.getElementById('mass').addEventListener('input', e => document.getElementById('massVal').value = e.target.value);
+document.getElementById('radius').addEventListener('input', e => document.getElementById('radiusVal').value = e.target.value);
+document.getElementById('theta').addEventListener('input', e => document.getElementById('thetaVal').value = e.target.value);
+document.getElementById('k').addEventListener('input', e => document.getElementById('kVal').value = e.target.value);
+document.getElementById('releaseBtn').addEventListener('click', release);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+</script>
+</body>
+</html>

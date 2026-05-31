@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>波的叠加与驻波模拟器 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>波1振幅 A₁:</label><input type="range" id="amp1" min="0" max="2" step="0.1" value="1"><span id="amp1Val">1</span></div>
+    <div class="ctrl-group"><label>波1频率 f₁:</label><input type="range" id="freq1" min="0.5" max="3" step="0.1" value="1"><span id="freq1Val">1</span></div>
+    <div class="ctrl-group"><label>波2振幅 A₂:</label><input type="range" id="amp2" min="0" max="2" step="0.1" value="1"><span id="amp2Val">1</span></div>
+    <div class="ctrl-group"><label>波2频率 f₂:</label><input type="range" id="freq2" min="0.5" max="3" step="0.1" value="1.5"><span id="freq2Val">1.5</span></div>
+    <div class="ctrl-group"><label>相位差:</label><input type="range" id="phaseDiff" min="0" max="360" step="10" value="0"><span id="phaseDiffVal">0</span>°</div>
+    <div class="ctrl-group"><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">波的叠加原理：两列或多列波相遇时，在相遇区域内任一点的振动位移是各列波单独存在时在该点所产生位移的矢量和。当两列频率相同、振幅相同、传播方向相反的波叠加时，会形成驻波。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const amp1 = parseFloat(document.getElementById('amp1').value);
+  const freq1 = parseFloat(document.getElementById('freq1').value);
+  const amp2 = parseFloat(document.getElementById('amp2').value);
+  const freq2 = parseFloat(document.getElementById('freq2').value);
+  const phaseDiff = parseFloat(document.getElementById('phaseDiff').value) * Math.PI / 180;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const waveAmp = S * 0.12;
+  const waveTop = cy - waveAmp * 2.5;
+  const waveMid1 = cy - waveAmp * 0.8;
+  const waveMid2 = cy + waveAmp * 0.8;
+  const waveBot = cy + waveAmp * 2.5;
+
+  const fs = S * 0.028;
+  ctx.font = `${fs}px sans-serif`;
+
+  ctx.strokeStyle = 'rgba(139,148,158,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  [waveTop, waveMid1, waveMid2, waveBot].forEach(y => {
+    ctx.beginPath();
+    ctx.moveTo(S * 0.05, y);
+    ctx.lineTo(w - S * 0.05, y);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  const xStart = S * 0.05;
+  const xEnd = w - S * 0.05;
+  const waveWidth = xEnd - xStart;
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 0; px <= waveWidth; px += 2) {
+    const x = xStart + px;
+    const y = waveTop + amp1 * Math.sin(px / waveWidth * Math.PI * 6 * freq1 + t * 3) * waveAmp;
+    if (px === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = '#3fb950';
+  ctx.fillText(`波1: A=${amp1}, f=${freq1}`, xStart, waveTop - fs * 0.5);
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let px = 0; px <= waveWidth; px += 2) {
+    const x = xStart + px;
+    const y = waveMid1 + amp2 * Math.sin(px / waveWidth * Math.PI * 6 * freq2 + t * 3 + phaseDiff) * waveAmp;
+    if (px === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = '#f78166';
+  ctx.fillText(`波2: A=${amp2}, f=${freq2}, φ=${(phaseDiff * 180 / Math.PI).toFixed(0)}°`, xStart, waveMid1 - waveAmp - fs * 0.5);
+
+  ctx.strokeStyle = '#d2a8ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let px = 0; px <= waveWidth; px += 2) {
+    const x = xStart + px;
+    const y1 = amp1 * Math.sin(px / waveWidth * Math.PI * 6 * freq1 + t * 3);
+    const y2 = amp2 * Math.sin(px / waveWidth * Math.PI * 6 * freq2 + t * 3 + phaseDiff);
+    const y = waveMid2 + (y1 + y2) * waveAmp;
+    if (px === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = '#d2a8ff';
+  ctx.fillText(`叠加波: A_max=${(amp1 + amp2).toFixed(1)}`, xStart, waveMid2 - waveAmp * 2 - fs * 0.5);
+
+  const beatFreq = Math.abs(freq1 - freq2);
+  if (beatFreq > 0.01) {
+    ctx.fillStyle = '#ffa657';
+    ctx.fillText(`拍频 = ${beatFreq.toFixed(2)} Hz`, xStart, waveBot + fs * 1.5);
+  }
+
+  const isStanding = Math.abs(freq1 - freq2) < 0.1;
+  if (isStanding && amp1 > 0.5 && amp2 > 0.5) {
+    ctx.strokeStyle = 'rgba(255,166,87,0.4)';
+    ctx.lineWidth = 1.5;
+    for (let px = 0; px <= waveWidth; px += S * 0.015) {
+      const x = xStart + px;
+      const env = Math.abs(Math.sin(px / waveWidth * Math.PI * 6 * freq1));
+      ctx.beginPath();
+      ctx.moveTo(x, waveMid2 + env * waveAmp * (amp1 + amp2));
+      ctx.lineTo(x, waveMid2 - env * waveAmp * (amp1 + amp2));
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#ffa657';
+    ctx.fillText('驻波模式', xStart + waveWidth * 0.5, waveBot + fs * 1.5);
+
+    for (let px = 0; px <= waveWidth; px += S * 0.02) {
+      const env = Math.abs(Math.sin(px / waveWidth * Math.PI * 6 * freq1));
+      if (env < 0.1) {
+        ctx.fillStyle = '#f78166';
+        ctx.beginPath();
+        ctx.arc(xStart + px, waveMid2, S * 0.008, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('amp1').addEventListener('input', e => {
+  document.getElementById('amp1Val').textContent = e.target.value;
+});
+document.getElementById('freq1').addEventListener('input', e => {
+  document.getElementById('freq1Val').textContent = e.target.value;
+});
+document.getElementById('amp2').addEventListener('input', e => {
+  document.getElementById('amp2Val').textContent = e.target.value;
+});
+document.getElementById('freq2').addEventListener('input', e => {
+  document.getElementById('freq2Val').textContent = e.target.value;
+});
+document.getElementById('phaseDiff').addEventListener('input', e => {
+  document.getElementById('phaseDiffVal').textContent = e.target.value;
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('amp1').value = 1; document.getElementById('amp1Val').textContent = '1';
+  document.getElementById('freq1').value = 1; document.getElementById('freq1Val').textContent = '1';
+  document.getElementById('amp2').value = 1; document.getElementById('amp2Val').textContent = '1';
+  document.getElementById('freq2').value = 1; document.getElementById('freq2Val').textContent = '1';
+  document.getElementById('phaseDiff').value = 0; document.getElementById('phaseDiffVal').textContent = '0';
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

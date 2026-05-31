@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>微波阻抗变换器 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>源阻抗 Zs:</label><input type="range" id="zs" min="10" max="200" step="10" value="50"><span id="zsVal">50</span> Ω</div>
+    <div class="ctrl-group"><label>负载阻抗 Zl:</label><input type="range" id="zl" min="10" max="500" step="10" value="200"><span id="zlVal">200</span> Ω</div>
+    <div class="ctrl-group"><label>波长 λ:</label><input type="range" id="lambda" min="0.5" max="3" step="0.1" value="1"><span id="lambdaVal">1</span> m</div>
+  </div>
+  <div id="info">λ/4波长变换器：通过插入一段特性阻抗为Z₀=√(Zs×Zl)、长度为λ/4的传输线，可实现源阻抗Zs与负载阻抗Zl的匹配。匹配条件：Z₀=√(Zs×Zl)。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const Zs = parseFloat(document.getElementById('zs').value);
+  const Zl = parseFloat(document.getElementById('zl').value);
+  const lambda = parseFloat(document.getElementById('lambda').value);
+  const Z0 = Math.sqrt(Zs * Zl);
+  const length = lambda / 4;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const boxH = S * 0.2;
+  const boxW = S * 0.2;
+  const totalW = boxW * 3 + S * 0.04;
+  const startX = cx - totalW / 2;
+  const boxY = cy - boxH / 2;
+
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillRect(startX, boxY, boxW, boxH);
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(startX, boxY, boxW, boxH);
+
+  const fs = S * 0.03;
+  ctx.font = `bold ${fs}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#0d1117';
+  ctx.fillText(`Zs`, startX + boxW / 2, cy - fs * 0.3);
+  ctx.font = `${fs * 0.8}px sans-serif`;
+  ctx.fillText(`${Zs}Ω`, startX + boxW / 2, cy + fs * 0.7);
+
+  const midX = startX + boxW + S * 0.02;
+  ctx.fillStyle = 'rgba(210,168,255,0.3)';
+  ctx.fillRect(midX, boxY, boxW, boxH);
+  ctx.strokeStyle = '#d2a8ff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(midX, boxY, boxW, boxH);
+
+  ctx.strokeStyle = 'rgba(210,168,255,0.5)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    const x = midX + i * boxW / 4;
+    ctx.beginPath();
+    ctx.moveTo(x, boxY);
+    ctx.lineTo(x, boxY + boxH);
+    ctx.stroke();
+  }
+
+  ctx.font = `bold ${fs}px sans-serif`;
+  ctx.fillStyle = '#d2a8ff';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Z₀`, midX + boxW / 2, cy - fs * 0.3);
+  ctx.font = `${fs * 0.8}px sans-serif`;
+  ctx.fillText(`${Z0.toFixed(1)}Ω`, midX + boxW / 2, cy + fs * 0.5);
+  ctx.font = `${fs * 0.65}px sans-serif`;
+  ctx.fillText(`l=λ/4`, midX + boxW / 2, cy + fs * 1.3);
+
+  const rightX = startX + boxW * 2 + S * 0.04;
+  ctx.fillStyle = '#3fb950';
+  ctx.fillRect(rightX, boxY, boxW, boxH);
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(rightX, boxY, boxW, boxH);
+
+  ctx.font = `bold ${fs}px sans-serif`;
+  ctx.fillStyle = '#0d1117';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Zl`, rightX + boxW / 2, cy - fs * 0.3);
+  ctx.font = `${fs * 0.8}px sans-serif`;
+  ctx.fillText(`${Zl}Ω`, rightX + boxW / 2, cy + fs * 0.7);
+
+  ctx.strokeStyle = 'rgba(247,129,102,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = startX; x < startX + totalW; x += 3) {
+    const relX = x - startX;
+    const y = cy + boxH / 2 + S * 0.05 + Math.sin(relX * 0.03 + t * 2) * S * 0.04;
+    if (x === startX) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  const reflectionCoeff = (Zl - Zs) / (Zl + Zs);
+  const SWR = (1 + Math.abs(reflectionCoeff)) / (1 - Math.abs(reflectionCoeff));
+
+  ctx.textAlign = 'left';
+  const infoX = w * 0.02;
+  const infoY = S * 0.05;
+  ctx.font = `${S * 0.03}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText(`无匹配:`, infoX, infoY);
+  ctx.fillText(`  ρ = ${reflectionCoeff.toFixed(3)}`, infoX, infoY + fs * 1.3);
+  ctx.fillText(`  SWR = ${SWR.toFixed(2)}`, infoX, infoY + fs * 2.6);
+
+  ctx.fillStyle = '#3fb950';
+  ctx.fillText(`λ/4匹配后:`, infoX, infoY + fs * 4);
+  ctx.fillText(`  ρ = 0 (完全匹配)`, infoX, infoY + fs * 5.3);
+  ctx.fillText(`  SWR = 1.00`, infoX, infoY + fs * 6.6);
+
+  t += 0.02;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('zs').addEventListener('input', e => {
+  document.getElementById('zsVal').textContent = e.target.value;
+});
+document.getElementById('zl').addEventListener('input', e => {
+  document.getElementById('zlVal').textContent = e.target.value;
+});
+document.getElementById('lambda').addEventListener('input', e => {
+  document.getElementById('lambdaVal').textContent = e.target.value;
+});
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

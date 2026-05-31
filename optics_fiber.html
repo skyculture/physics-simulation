@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光纤 - 物理数值仿真平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+.container{width:100%;max-width:1100px}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.canvas-row{display:flex;gap:16px;margin-bottom:20px}
+@media(max-width:860px){.canvas-row{flex-direction:column}}
+.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
+.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
+.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+.info-item{display:flex;align-items:baseline;gap:6px}
+.info-item .info-label{color:#8b949e}
+.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.btn-row{display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn-start{background:#238636;color:#fff;border-color:#2ea043}
+.btn-start:hover{background:#2ea043}
+.btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
+.btn-pause:hover{background:#bb8009}
+.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
+.btn-reset:hover{background:#30363d}
+.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>光纤</h1>
+    <p class="subtitle">光纤利用全反射原理在纤芯中传输光信号。纤芯折射率n₁大于包层折射率n₂，当入射角大于临界角时发生全反射。</p>
+  </div>
+  <div class="canvas-row">
+    <div class="panel">
+      <h2>🔬 光纤截面与传输</h2>
+      <canvas id="canvasFiber" width="680" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h2>📊 数值孔径与模式</h2>
+      <canvas id="canvasNA" width="680" height="420"></canvas>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>纤芯折射率 n₁ <span class="val" id="valN1">1.50</span></label>
+      <input type="range" id="sliderN1" min="1.40" max="1.60" step="0.01" value="1.50">
+    </div>
+    <div class="control-group">
+      <label>包层折射率 n₂ <span class="val" id="valN2">1.45</span></label>
+      <input type="range" id="sliderN2" min="1.30" max="1.55" step="0.01" value="1.45">
+    </div>
+    <div class="control-group">
+      <label>入射角 θ <span class="val" id="valTheta">15°</span></label>
+      <input type="range" id="sliderTheta" min="0" max="40" step="0.5" value="15">
+    </div>
+  </div>
+  <div class="info-bar">
+    <div class="info-item"><span class="info-label">数值孔径 NA=</span><span class="info-value" id="infoNA">0.38</span></div>
+    <div class="info-item"><span class="info-label">临界角 θc=</span><span class="info-value" id="infoCritical">75.2°</span></div>
+    <div class="info-item"><span class="info-label">状态=</span><span class="info-value" id="infoStatus">全反射 ✓</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart">▶ 动画</button>
+    <button class="btn btn-pause" id="btnPause">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset">↺ 重置</button>
+  </div>
+  <p class="legend-note">💡 提示：NA = √(n₁²-n₂²)，临界角 θc = arcsin(n₂/n₁)。<br>入射角小于NA对应的接收角时，光在纤芯中全反射传输。</p>
+</div>
+<script>
+var canvasFiber=document.getElementById('canvasFiber');
+var ctxF=canvasFiber.getContext('2d');
+var canvasNA=document.getElementById('canvasNA');
+var ctxN=canvasNA.getContext('2d');
+var sliderN1=document.getElementById('sliderN1');
+var sliderN2=document.getElementById('sliderN2');
+var sliderTheta=document.getElementById('sliderTheta');
+var valN1=document.getElementById('valN1');
+var valN2=document.getElementById('valN2');
+var valTheta=document.getElementById('valTheta');
+var infoNA=document.getElementById('infoNA');
+var infoCritical=document.getElementById('infoCritical');
+var infoStatus=document.getElementById('infoStatus');
+var btnStart=document.getElementById('btnStart');
+var btnPause=document.getElementById('btnPause');
+var btnReset=document.getElementById('btnReset');
+
+var n1=1.50,n2=1.45,theta=15;
+var running=false,animTime=0,lastFrameTime=null,animFrameId=null;
+
+function updateUI(){
+  valN1.textContent=n1.toFixed(2);
+  valN2.textContent=n2.toFixed(2);
+  valTheta.textContent=theta.toFixed(1)+'°';
+  var NA=Math.sqrt(Math.max(0,n1*n1-n2*n2));
+  var critAngle=Math.asin(n2/n1)*180/Math.PI;
+  var maxAccept=Math.asin(Math.min(NA,1))*180/Math.PI;
+  infoNA.textContent=NA.toFixed(3);
+  infoCritical.textContent=critAngle.toFixed(1)+'°';
+  var totalReflect=theta<=maxAccept;
+  infoStatus.textContent=totalReflect?'全反射 ✓':'泄漏 ✗';
+  infoStatus.style.color=totalReflect?'#3fb950':'#f85149';
+}
+
+sliderN1.addEventListener('input',function(){n1=+sliderN1.value;updateUI();if(!running)draw()});
+sliderN2.addEventListener('input',function(){n2=+sliderN2.value;if(n2>=n1){n2=n1-0.01;sliderN2.value=n2}updateUI();if(!running)draw()});
+sliderTheta.addEventListener('input',function(){theta=+sliderTheta.value;updateUI();if(!running)draw()});
+
+btnStart.addEventListener('click',function(){
+  if(running){pause();return}
+  running=true;btnStart.classList.add('active');btnPause.classList.remove('active');
+  if(!animFrameId)animFrameId=requestAnimationFrame(animate);
+});
+btnPause.addEventListener('click',pause);
+function pause(){running=false;btnStart.classList.remove('active');btnPause.classList.add('active')}
+btnReset.addEventListener('click',function(){
+  n1=1.50;n2=1.45;theta=15;animTime=0;lastFrameTime=null;
+  sliderN1.value=1.50;sliderN2.value=1.45;sliderTheta.value=15;
+  updateUI();if(!running)draw();
+});
+
+function drawFiber(){
+  var W=canvasFiber.width,H=canvasFiber.height;
+  ctxF.clearRect(0,0,W,H);
+  ctxF.fillStyle='#0d1117';ctxF.fillRect(0,0,W,H);
+  var cy=H/2;
+  var coreR=H*0.15;
+  var cladR=H*0.25;
+
+  ctxF.strokeStyle='rgba(139,148,158,0.4)';ctxF.lineWidth=cladR*2;
+  ctxF.beginPath();ctxF.moveTo(W*0.05,cy);ctxF.lineTo(W*0.95,cy);ctxF.stroke();
+
+  ctxF.fillStyle='rgba(88,166,255,0.15)';
+  ctxF.fillRect(W*0.05,cy-coreR,W*0.9,coreR*2);
+  ctxF.strokeStyle='rgba(88,166,255,0.5)';ctxF.lineWidth=1;
+  ctxF.beginPath();ctxF.moveTo(W*0.05,cy-coreR);ctxF.lineTo(W*0.95,cy-coreR);ctxF.stroke();
+  ctxF.beginPath();ctxF.moveTo(W*0.05,cy+coreR);ctxF.lineTo(W*0.95,cy+coreR);ctxF.stroke();
+
+  ctxF.strokeStyle='rgba(139,148,158,0.6)';ctxF.lineWidth=1;
+  ctxF.beginPath();ctxF.moveTo(W*0.05,cy-cladR);ctxF.lineTo(W*0.95,cy-cladR);ctxF.stroke();
+  ctxF.beginPath();ctxF.moveTo(W*0.05,cy+cladR);ctxF.lineTo(W*0.95,cy+cladR);ctxF.stroke();
+
+  var NA=Math.sqrt(Math.max(0,n1*n1-n2*n2));
+  var maxAccept=Math.asin(Math.min(NA,1))*180/Math.PI;
+  var totalReflect=theta<=maxAccept;
+
+  var thetaRad=theta*Math.PI/180;
+  var sinInternal=Math.sin(thetaRad)/n1;
+  if(sinInternal>1)sinInternal=1;
+  var internalAngle=Math.asin(sinInternal);
+  var bounceAngle=Math.PI/2-internalAngle;
+
+  var rayY=cy;
+  var rayDirY=Math.tan(bounceAngle);
+  ctxF.strokeStyle=totalReflect?'#3fb950':'#f85149';
+  ctxF.lineWidth=2;
+  ctxF.beginPath();
+
+  var startX=W*0.05;
+  var x=startX,y=cy;
+  ctxF.moveTo(x,y);
+
+  var dx=3;
+  var dy=rayDirY*dx*(coreR/30);
+  var stepCount=0;
+  while(x<W*0.95&&stepCount<500){
+    x+=dx;y+=dy;
+    if(y<=cy-coreR){y=cy-coreR;dy=Math.abs(dy);if(!totalReflect)break;}
+    if(y>=cy+coreR){y=cy+coreR;dy=-Math.abs(dy);if(!totalReflect)break;}
+    ctxF.lineTo(x,y);
+    stepCount++;
+  }
+  if(!totalReflect&&stepCount<500){
+    ctxF.lineTo(x,y);
+    ctxF.strokeStyle='#f85149';ctxF.lineWidth=2;
+    var leakX=x+30;var leakY=y+dy*30/dx;
+    ctxF.lineTo(leakX,leakY);
+  }
+  ctxF.stroke();
+
+  ctxF.fillStyle='#ffa657';ctxF.beginPath();ctxF.arc(W*0.05,cy,5,0,Math.PI*2);ctxF.fill();
+  ctxF.fillStyle='#c9d1d9';ctxF.font='10px sans-serif';ctxF.textAlign='center';
+  ctxF.fillText('纤芯 n₁='+n1.toFixed(2),W*0.5,cy-coreR-8);
+  ctxF.fillText('包层 n₂='+n2.toFixed(2),W*0.5,cy-cladR-8);
+  ctxF.fillStyle=totalReflect?'#3fb950':'#f85149';
+  ctxF.font='bold 11px sans-serif';
+  ctxF.fillText(totalReflect?'全反射传输':'光信号泄漏',W*0.5,H-12);
+}
+
+function drawNA(){
+  var W=canvasNA.width,H=canvasNA.height;
+  ctxN.clearRect(0,0,W,H);
+  ctxN.fillStyle='#0d1117';ctxN.fillRect(0,0,W,H);
+  var cx=W*0.35,cy=H*0.5;
+  var coreR=H*0.12;
+  var cladR=H*0.22;
+
+  ctxN.fillStyle='rgba(139,148,158,0.15)';
+  ctxN.beginPath();ctxN.arc(cx,cy,cladR,0,Math.PI*2);ctxN.fill();
+  ctxN.strokeStyle='rgba(139,148,158,0.5)';ctxN.lineWidth=1.5;
+  ctxN.beginPath();ctxN.arc(cx,cy,cladR,0,Math.PI*2);ctxN.stroke();
+
+  ctxN.fillStyle='rgba(88,166,255,0.2)';
+  ctxN.beginPath();ctxN.arc(cx,cy,coreR,0,Math.PI*2);ctxN.fill();
+  ctxN.strokeStyle='#58a6ff';ctxN.lineWidth=1.5;
+  ctxN.beginPath();ctxN.arc(cx,cy,coreR,0,Math.PI*2);ctxN.stroke();
+
+  var NA=Math.sqrt(Math.max(0,n1*n1-n2*n2));
+  var maxAccept=Math.asin(Math.min(NA,1));
+
+  ctxN.strokeStyle='#3fb950';ctxN.lineWidth=2;
+  ctxN.beginPath();ctxN.moveTo(cx-coreR-40,cy-Math.tan(maxAccept)*40);ctxN.lineTo(cx-coreR,cy);ctxN.stroke();
+  ctxN.beginPath();ctxN.moveTo(cx-coreR-40,cy+Math.tan(maxAccept)*40);ctxN.lineTo(cx-coreR,cy);ctxN.stroke();
+  ctxN.strokeStyle='#ffa657';ctxN.lineWidth=1.5;
+  ctxN.beginPath();ctxN.arc(cx-coreR,cy,30,-maxAccept,maxAccept);ctxN.stroke();
+  ctxN.fillStyle='#ffa657';ctxN.font='9px sans-serif';ctxN.textAlign='center';
+  ctxN.fillText('NA',cx-coreR-5,cy-35);
+
+  ctxN.fillStyle='#c9d1d9';ctxN.font='10px sans-serif';ctxN.textAlign='center';
+  ctxN.fillText('端面',cx,cy+cladR+18);
+
+  var gx=W*0.6,gy=H*0.15,gw=W*0.35,gh=H*0.7;
+  ctxN.strokeStyle='#8b949e';ctxN.lineWidth=1.5;
+  ctxN.beginPath();ctxN.moveTo(gx,gy+gh);ctxN.lineTo(gx,gy);ctxN.stroke();
+  ctxN.beginPath();ctxN.moveTo(gx,gy+gh);ctxN.lineTo(gx+gw,gy+gh);ctxN.stroke();
+
+  ctxN.fillStyle='#8b949e';ctxN.font='9px sans-serif';ctxN.textAlign='center';
+  ctxN.fillText('n₁',gx+gw/2,gy+gh+15);
+  ctxN.save();ctxN.translate(gx-12,gy+gh/2);ctxN.rotate(-Math.PI/2);ctxN.fillText('NA',0,0);ctxN.restore();
+
+  ctxN.strokeStyle='#3fb950';ctxN.lineWidth=2.5;ctxN.shadowColor='#3fb950';ctxN.shadowBlur=6;
+  ctxN.beginPath();
+  for(var i=0;i<=100;i++){
+    var nn=1.3+i*(1.7-1.3)/100;
+    var na=Math.sqrt(Math.max(0,nn*nn-n2*n2));
+    var px=gx+i/100*gw;
+    var py=gy+gh-na*gh;
+    if(i===0)ctxN.moveTo(px,py);else ctxN.lineTo(px,py);
+  }
+  ctxN.stroke();ctxN.shadowBlur=0;
+
+  var currentNA=Math.sqrt(Math.max(0,n1*n1-n2*n2));
+  var pxMark=gx+(n1-1.3)/(1.7-1.3)*gw;
+  var pyMark=gy+gh-currentNA*gh;
+  ctxN.fillStyle='#3fb950';ctxN.beginPath();ctxN.arc(pxMark,pyMark,6,0,Math.PI*2);ctxN.fill();
+  ctxN.strokeStyle='#ffa657';ctxN.lineWidth=2;ctxN.strokeRect(gx,gy,gw,gh);
+}
+
+function draw(){drawFiber();drawNA()}
+
+function animate(timestamp){
+  if(!running){animFrameId=null;return}
+  if(lastFrameTime===null)lastFrameTime=timestamp;
+  var dt=Math.min((timestamp-lastFrameTime)/1000,0.1);
+  lastFrameTime=timestamp;animTime+=dt;
+  theta=15+10*Math.sin(animTime*0.5);
+  if(theta<0)theta=0;if(theta>40)theta=40;
+  sliderTheta.value=theta.toFixed(1);
+  updateUI();draw();
+  if(running)animFrameId=requestAnimationFrame(animate);
+}
+
+function resizeCanvases(){
+  var rowW=document.querySelector('.canvas-row').clientWidth;var cw=Math.floor((rowW-16)/2)-26;if(cw>680)cw=680;if(cw<200)cw=200;
+  var sw=cw,sh=Math.round(sw*420/680);
+  canvasFiber.width=sw;canvasFiber.height=sh;
+  canvasFiber.style.width=sw+'px';canvasFiber.style.height=sh+'px';
+  var nw=cw,nh=Math.round(nw*420/680);
+  canvasNA.width=nw;canvasNA.height=nh;
+  canvasNA.style.width=nw+'px';canvasNA.style.height=nh+'px';
+}
+window.addEventListener('resize',resizeCanvases);resizeCanvases();
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(running)pause();else btnStart.click()}
+  else if(e.code==='KeyR'){e.preventDefault();btnReset.click()}
+});
+updateUI();draw();
+</script>
+</body>
+</html>

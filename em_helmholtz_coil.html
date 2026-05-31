@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔶 亥姆霍兹线圈</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔶 亥姆霍兹线圈磁场分布</h1>
+  <p>两个同轴载流线圈产生均匀磁场区域</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>线圈电流 I (A): <span id="currentVal">2</span></label>
+      <input type="range" id="current" min="0.1" max="5" step="0.1" value="2">
+    </div>
+    <div class="control-group">
+      <label>线圈匝数 N: <span id="turnsVal">100</span></label>
+      <input type="range" id="turns" min="10" max="500" step="10" value="100">
+    </div>
+    <div class="control-group">
+      <label>线圈半径 R (cm): <span id="radiusVal">10</span></label>
+      <input type="range" id="radius" min="5" max="20" step="1" value="10">
+    </div>
+    <div class="control-group">
+      <button id="showFieldBtn">📊 显示磁场剖面</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">中心磁场 B₀:</span><span class="value" id="bCenter">0 mT</span></div>
+      <div class="item"><span class="label">均匀区范围:</span><span class="value" id="uniformRange">0 cm</span></div>
+      <div class="item"><span class="label">最大磁场:</span><span class="value" id="bMax">0 mT</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let I = 2;
+let N = 100;
+let R = 0.1;
+let showField = false;
+
+function calculateBz(z) {
+  const mu0 = 4 * Math.PI * 1e-7;
+  const d = R;
+  const z1 = z + d/2;
+  const z2 = z - d/2;
+  
+  const B1 = (mu0 * N * I * R * R) / (2 * Math.pow(R * R + z1 * z1, 1.5));
+  const B2 = (mu0 * N * I * R * R) / (2 * Math.pow(R * R + z2 * z2, 1.5));
+  
+  return (B1 + B2) * 1000;
+}
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const r = 80;
+  
+  // 上方线圈
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 50, r, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  // 下方线圈
+  ctx.beginPath();
+  ctx.arc(cx, cy + 50, r, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  // 线圈截面
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(cx - 6, cy - 50 - 3, 12, 6);
+  ctx.fillRect(cx - 6, cy + 50 - 3, 12, 6);
+  
+  // 电流方向
+  ctx.fillStyle = '#fff';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('⊙', cx + r + 15, cy - 50);
+  ctx.fillText('⊗', cx + r + 15, cy + 50);
+  
+  // 轴线
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5,5]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r - 30);
+  ctx.lineTo(cx, cy + r + 30);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // 磁场线
+  if (showField) {
+    const steps = 30;
+    for (let i = -steps/2; i <= steps/2; i++) {
+      const angle = (i / steps) * Math.PI;
+      const z = i * (r * 1.5) / (steps/2);
+      const Bz = calculateBz(z / 100);
+      const fieldRadius = Math.min(Bz * 8, 60);
+      
+      ctx.strokeStyle = `rgba(88,166,255,${0.3 + Math.abs(Bz) / 10})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy + (z / (r * 1.5)) * (r * 1.2), fieldRadius * Math.cos(angle), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else {
+    // 磁场箭头
+    const arrowSpacing = 20;
+    for (let y = cy - 100; y <= cy + 100; y += arrowSpacing) {
+      const z = (y - cy) / 100;
+      const Bz = calculateBz(z);
+      const arrowLength = Math.min(Math.abs(Bz) * 5, 15);
+      
+      ctx.strokeStyle = Bz > 0 ? '#3fb950' : '#f78166';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - arrowLength, y);
+      ctx.lineTo(cx + arrowLength, y);
+      ctx.stroke();
+      
+      const dir = Bz > 0 ? 1 : -1;
+      ctx.beginPath();
+      ctx.moveTo(cx + dir * arrowLength, y);
+      ctx.lineTo(cx + dir * (arrowLength - 5), y - 3);
+      ctx.moveTo(cx + dir * arrowLength, y);
+      ctx.lineTo(cx + dir * (arrowLength - 5), y + 3);
+      ctx.stroke();
+    }
+  }
+  
+  // 中心标记
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 标注
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('z 轴', cx + 30, cy + 110);
+  ctx.fillText('线圈间距 = 线圈半径', cx - 60, cy + 130);
+  
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText('N = ' + N, cx - r - 30, cy - 60);
+  ctx.fillText('R = ' + (R * 100).toFixed(0) + ' cm', cx - r - 30, cy - 45);
+  
+  ctx.textAlign = 'left';
+}
+
+function updateInfo() {
+  const B0 = calculateBz(0);
+  const B_max = calculateBz(R/2);
+  const uniform_range = 2 * (R * 50);
+  
+  document.getElementById('bCenter').textContent = B0.toFixed(2) + ' mT';
+  document.getElementById('bMax').textContent = B_max.toFixed(2) + ' mT';
+  document.getElementById('uniformRange').textContent = uniform_range.toFixed(0) + ' cm';
+}
+
+document.getElementById('current').addEventListener('input', (e) => {
+  I = parseFloat(e.target.value);
+  document.getElementById('currentVal').textContent = I;
+  updateInfo();
+  draw();
+});
+
+document.getElementById('turns').addEventListener('input', (e) => {
+  N = parseInt(e.target.value);
+  document.getElementById('turnsVal').textContent = N;
+  updateInfo();
+  draw();
+});
+
+document.getElementById('radius').addEventListener('input', (e) => {
+  R = parseFloat(e.target.value) / 100;
+  document.getElementById('radiusVal').textContent = e.target.value;
+  updateInfo();
+  draw();
+});
+
+document.getElementById('showFieldBtn').addEventListener('click', () => {
+  showField = !showField;
+  document.getElementById('showFieldBtn').textContent = showField ? '📉 显示轴线磁场' : '📊 显示磁场剖面';
+  draw();
+});
+
+updateInfo();
+draw();
+</script>
+</body>
+</html>

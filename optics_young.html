@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>杨氏双缝干涉 - 波动光学仿真</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 40px;
+}
+
+/* 
+ * 主容器：最大宽度 1100px，居中显示
+ * 使用 flex 纵向排列标题、画布区、控制面板
+ */
+.container {
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* ===== 标题区域 ===== */
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 28px 20px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+}
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.header .subtitle {
+  font-size: 0.95rem;
+  color: #8b949e;
+  line-height: 1.6;
+}
+
+/* ===== 双画布面板 ===== */
+.canvas-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 860px) {
+  .canvas-row { flex-direction: column; }
+}
+
+.panel {
+  flex: 1;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.panel h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #8b949e;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.panel canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: #0d1117;
+}
+
+/* ===== 控制面板 ===== */
+.controls {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+@media (max-width: 640px) {
+  .controls { grid-template-columns: 1fr; }
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.control-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c9d1d9;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.control-group label .val {
+  font-size: 0.8rem;
+  color: #58a6ff;
+  font-weight: 700;
+  min-width: 80px;
+  text-align: right;
+}
+
+/*
+ * 自定义 range 滑块样式
+ * 在 Webkit 和 Firefox 下统一深色主题外观
+ */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #30363d;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #58a6ff;
+  border: 2px solid #161b22;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #58a6ff;
+  border: 2px solid #161b22;
+  cursor: pointer;
+}
+
+/* ===== 信息显示区 ===== */
+.info-bar {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 14px 24px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+.info-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.info-item .info-label {
+  color: #8b949e;
+}
+.info-item .info-value {
+  color: #58a6ff;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* ===== 按钮区 ===== */
+.btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.btn {
+  padding: 10px 28px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+.btn-start {
+  background: #238636;
+  color: #fff;
+  border-color: #2ea043;
+}
+.btn-start:hover { background: #2ea043; }
+.btn-pause {
+  background: #9e6a03;
+  color: #fff;
+  border-color: #bb8009;
+}
+.btn-pause:hover { background: #bb8009; }
+.btn-reset {
+  background: #21262d;
+  color: #c9d1d9;
+  border-color: #30363d;
+}
+.btn-reset:hover { background: #30363d; }
+
+/* ===== 图例提示 ===== */
+.legend-note {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #8b949e;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 标题 -->
+  <div class="header">
+    <h1>杨氏双缝干涉</h1>
+    <p class="subtitle">
+      托马斯·杨 (Thomas Young) 于 1801 年首次通过双缝实验证明了光的波动性。
+      <br>两列相干光波在空间相遇时产生稳定的干涉条纹——这是波动光学的重要基石。
+    </p>
+  </div>
+
+  <!-- 双画布：实验装置 & 干涉条纹 -->
+  <div class="canvas-row">
+    <div class="panel">
+      <h2>🔬 实验装置俯视图</h2>
+      <canvas id="canvasSetup" width="680" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h2>📊 屏幕上的干涉图样</h2>
+      <canvas id="canvasPattern" width="680" height="420"></canvas>
+    </div>
+  </div>
+
+  <!-- 控制面板：缝间距、波长、屏幕距离 -->
+  <div class="controls">
+    <!-- 
+      缝间距 d：0.1 mm ~ 2.0 mm（典型双缝实验参数）
+      越小的缝间距产生越宽的条纹间隔 Δy = λL/d
+    -->
+    <div class="control-group">
+      <label>缝间距 <em>d</em> <span class="val" id="valD">0.50 mm</span></label>
+      <input type="range" id="sliderD" min="0.1" max="2.0" step="0.01" value="0.50">
+    </div>
+
+    <!-- 
+      波长 λ：380 nm ~ 780 nm（可见光范围）
+      从紫光 (380nm) 到红光 (780nm)，颜色连续变化
+    -->
+    <div class="control-group">
+      <label>波长 <em>λ</em> <span class="val" id="valLambda">550 nm</span></label>
+      <input type="range" id="sliderLambda" min="380" max="780" step="1" value="550">
+    </div>
+
+    <!-- 
+      屏幕距离 L：0.5 m ~ 3.0 m
+      更大的距离使条纹更宽，但亮度降低
+    -->
+    <div class="control-group">
+      <label>屏幕距离 <em>L</em> <span class="val" id="valL">1.00 m</span></label>
+      <input type="range" id="sliderL" min="0.5" max="3.0" step="0.01" value="1.00">
+    </div>
+  </div>
+
+  <!-- 实时物理量显示 -->
+  <div class="info-bar">
+    <div class="info-item">
+      <span class="info-label">条纹间距 Δy = λL/d =</span>
+      <span class="info-value" id="infoDeltaY">1.10 mm</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">缝间距 d =</span>
+      <span class="info-value" id="infoD">0.50 mm</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">波长 λ =</span>
+      <span class="info-value" id="infoLambda">550 nm</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">频率 f = c/λ ≈</span>
+      <span class="info-value" id="infoFreq">545 THz</span>
+    </div>
+  </div>
+
+  <!-- 动画控制按钮 -->
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart" title="开始波动动画演示">▶ 开始</button>
+    <button class="btn btn-pause" id="btnPause" title="暂停动画">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset" title="重置到默认参数">↺ 重置</button>
+  </div>
+
+  <p class="legend-note">
+    💡 提示：拖动滑块改变物理参数，观察条纹间距如何变化。
+    <br>干涉强度公式：I(y) = I₀ · cos²(π d y / λ L)，亮纹位置满足 d·sinθ = mλ (m = 0, ±1, ±2, …)
+  </p>
+
+</div>
+
+<script>
+/*
+ * ============================================================
+ *  杨氏双缝干涉仿真 - 核心 JavaScript 代码
+ * ============================================================
+ *
+ * 【物理模型】
+ *   两列相干光分别通过缝 S₁ 和 S₂，在屏幕上叠加。
+ *   到达屏幕上某点 P 的两列光程差为：Δr = r₂ - r₁ ≈ d·sinθ ≈ d·y/L
+ *   相位差：δ = 2π·Δr/λ = 2π d y / (λ L)
+ *   合成光强：I(y) = I₁ + I₂ + 2√(I₁I₂) cos δ
+ *   当 I₁ = I₂ = I₀ 时：I(y) = 4I₀ cos²(δ/2) = 4I₀ cos²(π d y / λ L)
+ *   归一化到 I₀ = 1 后：I(y) = cos²(π d y / λ L)
+ *
+ * 【亮暗纹条件】
+ *   亮纹（相长干涉）：d·sinθ = mλ  →  y_m = m·λL/d  (m = 0, ±1, ±2, …)
+ *   暗纹（相消干涉）：d·sinθ = (m+½)λ  →  y_m = (m+½)·λL/d
+ *   条纹间距：Δy = λL/d
+ *
+ * 【单位约定】
+ *   缝间距 d：毫米 (mm)
+ *   波长 λ：纳米 (nm)，1 nm = 10⁻⁶ mm
+ *   屏幕距离 L：米 (m)，1 m = 1000 mm
+ *   条纹间距 Δy：毫米 (mm)
+ */
+
+// ============ DOM 元素引用 ============
+const canvasSetup   = document.getElementById('canvasSetup');
+const ctxSetup      = canvasSetup.getContext('2d');
+const canvasPattern = document.getElementById('canvasPattern');
+const ctxPattern    = canvasPattern.getContext('2d');
+
+const sliderD      = document.getElementById('sliderD');
+const sliderLambda = document.getElementById('sliderLambda');
+const sliderL      = document.getElementById('sliderL');
+
+const valD      = document.getElementById('valD');
+const valLambda = document.getElementById('valLambda');
+const valL      = document.getElementById('valL');
+
+const infoDeltaY  = document.getElementById('infoDeltaY');
+const infoD       = document.getElementById('infoD');
+const infoLambda  = document.getElementById('infoLambda');
+const infoFreq    = document.getElementById('infoFreq');
+
+const btnStart  = document.getElementById('btnStart');
+const btnPause  = document.getElementById('btnPause');
+const btnReset  = document.getElementById('btnReset');
+
+// ============ 物理参数状态 ============
+let d_mm     = parseFloat(sliderD.value);       // 缝间距 (mm)
+let lambdaNm = parseInt(sliderLambda.value);    // 波长 (nm)
+let L_m      = parseFloat(sliderL.value);       // 屏幕距离 (m)
+
+// ============ 动画状态 ============
+let running = true;         // 是否正在运行动画
+let animTime = 0;           // 动画时间累积 (秒)
+let lastFrameTime = null;   // 上一帧时间戳
+let animFrameId = null;     // requestAnimationFrame ID
+
+// ============ 预计算的干涉场 ImageData（供装置画布使用）============
+let interferenceField = null;   // ImageData，缓存计算好的干涉图样
+let fieldNeedsUpdate = true;    // 参数变化时标记需要重新计算
+
+/*
+ * ============================================================
+ *  波长 → RGB 颜色转换
+ * ============================================================
+ * 将可见光波长 (380nm ~ 780nm) 映射为对应的 RGB 颜色。
+ * 采用分段线性插值算法，模拟人眼对不同波长光的颜色感知。
+ * 紫光 (380-440nm)：蓝紫色过渡
+ * 蓝光 (440-490nm)：蓝色到青色
+ * 青光 (490-510nm)：青色到绿色
+ * 绿光 (510-580nm)：绿色到黄色
+ * 黄光 (580-645nm)：黄色到红色
+ * 红光 (645-780nm)：纯红色
+ * 在可见光谱两端加入强度衰减因子，模拟视觉灵敏度下降。
+ */
+function wavelengthToRGB(w) {
+  let r, g, b;
+  if      (w >= 380 && w < 440) { r = -(w - 440) / (440 - 380); g = 0;              b = 1; }
+  else if (w >= 440 && w < 490) { r = 0;                         g = (w - 440) / (490 - 440); b = 1; }
+  else if (w >= 490 && w < 510) { r = 0;                         g = 1;              b = -(w - 510) / (510 - 490); }
+  else if (w >= 510 && w < 580) { r = (w - 510) / (580 - 510);   g = 1;              b = 0; }
+  else if (w >= 580 && w < 645) { r = 1;                         g = -(w - 645) / (645 - 580); b = 0; }
+  else if (w >= 645 && w <= 780) { r = 1;                        g = 0;              b = 0; }
+  else                           { r = 0;                        g = 0;              b = 0; }
+
+  // 光谱两端强度衰减：人眼对极端波长敏感度降低
+  let factor = 1.0;
+  if      (w >= 380 && w < 420) factor = 0.3 + 0.7 * (w - 380) / (420 - 380);
+  else if (w > 700 && w <= 780) factor = 0.3 + 0.7 * (780 - w) / (780 - 700);
+
+  // gamma 校正使颜色过渡更自然
+  const gamma = 0.8;
+  r = Math.round(255 * Math.pow(r * factor, gamma));
+  g = Math.round(255 * Math.pow(g * factor, gamma));
+  b = Math.round(255 * Math.pow(b * factor, gamma));
+
+  return [r, g, b];
+}
+
+/*
+ * 将 RGB 数组格式化为 CSS 颜色字符串
+ */
+function rgbStr(rgb) {
+  return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+}
+
+/*
+ * ============================================================
+ *  物理计算函数
+ * ============================================================
+ */
+
+/*
+ * 计算条纹间距 Δy = λL/d (单位: mm)
+ * λ 从 nm 转换为 mm：λ_mm = λ_nm × 10⁻⁶
+ * L 从 m 转换为 mm：L_mm = L_m × 1000
+ */
+function calcDeltaY() {
+  const lambdaMm = lambdaNm * 1e-6;   // nm → mm
+  const Lmm = L_m * 1000;             // m → mm
+  return (lambdaMm * Lmm) / d_mm;     // mm
+}
+
+/*
+ * 计算光频率 f = c / λ (单位: THz)
+ * c = 3×10⁸ m/s，λ 单位 nm
+ * f = 3×10⁸ / (λ×10⁻⁹) / 10¹² = 3×10⁵ / λ_nm (THz)
+ */
+function calcFrequency() {
+  return (3e5 / lambdaNm);  // THz
+}
+
+/*
+ * 屏幕上某点 y (mm) 的归一化相对光强
+ * I(y) = cos²(π d y / λ L)
+ * 其中 d, y, λ, L 均使用统一单位 (mm)
+ */
+function intensityAtY(yMm) {
+  const lambdaMm = lambdaNm * 1e-6;
+  const Lmm = L_m * 1000;
+  const phase = Math.PI * d_mm * yMm / (lambdaMm * Lmm);
+  const cosVal = Math.cos(phase);
+  return cosVal * cosVal;  // cos²(δ/2)
+}
+
+// ============ 更新所有 UI 显示 ============
+function updateUI() {
+  const deltaY = calcDeltaY();
+  const freq = calcFrequency();
+
+  valD.textContent      = d_mm.toFixed(2) + ' mm';
+  valLambda.textContent = lambdaNm + ' nm';
+  valL.textContent      = L_m.toFixed(2) + ' m';
+
+  infoDeltaY.textContent  = deltaY.toFixed(3) + ' mm';
+  infoD.textContent       = d_mm.toFixed(2) + ' mm';
+  infoLambda.textContent  = lambdaNm + ' nm';
+  infoFreq.textContent    = freq.toFixed(0) + ' THz';
+
+  // 滑块同步
+  sliderD.value      = d_mm;
+  sliderLambda.value = lambdaNm;
+  sliderL.value      = L_m;
+
+  // 显示波长的颜色圆点提示
+  const rgb = wavelengthToRGB(lambdaNm);
+  infoLambda.style.color = rgbStr(rgb);
+
+  // 参数变化后需要重新计算干涉场
+  fieldNeedsUpdate = true;
+}
+
+// ============ 事件监听 ============
+sliderD.addEventListener('input', () => {
+  d_mm = parseFloat(sliderD.value);
+  updateUI();
+});
+sliderLambda.addEventListener('input', () => {
+  lambdaNm = parseInt(sliderLambda.value);
+  updateUI();
+});
+sliderL.addEventListener('input', () => {
+  L_m = parseFloat(sliderL.value);
+  updateUI();
+});
+
+btnStart.addEventListener('click', () => {
+  running = true;
+  lastFrameTime = null;
+  if (!animFrameId) {
+    animFrameId = requestAnimationFrame(animate);
+  }
+});
+btnPause.addEventListener('click', () => {
+  running = false;
+});
+btnReset.addEventListener('click', () => {
+  // 恢复默认参数
+  d_mm = 0.50;
+  lambdaNm = 550;
+  L_m = 1.00;
+  animTime = 0;
+  lastFrameTime = null;
+  fieldNeedsUpdate = true;
+  updateUI();
+  if (!running) {
+    // 如果暂停中，手动绘制一帧静态画面
+    drawSetupCanvas(0);
+    drawPatternCanvas();
+  }
+});
+
+// ============ 响应式 Canvas 尺寸调整 ============
+function resizeCanvases() {
+  const rowW = document.querySelector('.canvas-row').clientWidth;
+  const containerWidth = Math.floor((rowW - 16) / 2) - 26;
+  if (containerWidth > 680) containerWidth = 680;
+  if (containerWidth < 200) containerWidth = 200;
+  // 保持宽高比
+  const setupW = containerWidth;
+  const setupH = Math.round(setupW * 420 / 680);
+  canvasSetup.width = setupW;
+  canvasSetup.height = setupH;
+  canvasSetup.style.width = setupW + 'px';
+  canvasSetup.style.height = setupH + 'px';
+
+  const patternW = containerWidth;
+  const patternH = Math.round(patternW * 420 / 680);
+  canvasPattern.width = patternW;
+  canvasPattern.height = patternH;
+  canvasPattern.style.width = patternW + 'px';
+  canvasPattern.style.height = patternH + 'px';
+
+  fieldNeedsUpdate = true;
+}
+
+window.addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+/*
+ * ============================================================
+ *  装置画布 (canvasSetup)：绘制实验装置俯视图 + 波动动画
+ * ============================================================
+ *
+ *  布局说明（俯视图坐标系）：
+ *    x=0 处为光源，向右依次为遮光板（带双缝）、屏幕
+ *    y 轴垂直于光轴，缝 S₁ 在上 (y>0)，S₂ 在下 (y<0)
+ *
+ *  绘制内容：
+ *    1. 干涉场背景（预计算的亮暗条纹）
+ *    2. 光源、遮光板、双缝、屏幕
+ *    3. 光线路径：光源 → S₁ → 屏幕点 P₁，光源 → S₂ → 屏幕点 P₂
+ *    4. 从 S₁、S₂ 发出的圆形波前（动画）
+ */
+
+/*
+ * 获取装置画布上的关键坐标
+ */
+function getSetupCoords() {
+  const W = canvasSetup.width;
+  const H = canvasSetup.height;
+
+  // 水平布局：光源区 | 遮光板 | 传播区(干涉场) | 屏幕
+  const marginL = W * 0.06;
+  const marginR = W * 0.06;
+  const sourceX = marginL;
+  const barrierX = W * 0.22;     // 遮光板 x 坐标
+  const screenX = W - marginR;   // 屏幕 x 坐标
+  const fieldLeft = barrierX + 4;   // 干涉场左边界（缝后）
+  const fieldRight = screenX - 4;   // 干涉场右边界（屏幕前）
+  const fieldWidth = fieldRight - fieldLeft;
+
+  // 垂直布局
+  const centerY = H * 0.5;
+  // 缝在画布上的像素间距（为可视化而放大，不代表真实比例）
+  const slitSepPx = Math.max(8, H * 0.12);
+  const slit1Y = centerY - slitSepPx / 2;  // 上缝 S₁
+  const slit2Y = centerY + slitSepPx / 2;  // 下缝 S₂
+
+  return { W, H, marginL, marginR, sourceX, barrierX, screenX,
+           fieldLeft, fieldRight, fieldWidth, centerY, slitSepPx, slit1Y, slit2Y };
+}
+
+/*
+ * 计算干涉场中某画布点的光强（归一化，0~1）
+ */
+function computeFieldIntensity(cx, cy, coords) {
+  const { fieldLeft, centerY, slit1Y, slit2Y, fieldWidth } = coords;
+
+  // 该点的真实等效 y 坐标 (mm)：按屏幕上的比例映射
+  // 获取画布上显示的屏幕 y 范围
+  const displayRangeMm = calcDeltaY() * 7;  // 显示 ±3.5 个条纹间距
+  const H = canvasSetup.height;
+  const yFrac = (cy - centerY) / (H * 0.44);  // -1 到 +1 范围
+  const yMm = yFrac * displayRangeMm;
+
+  // 该点的真实等效 x 坐标 (mm)：从缝平面到该点的水平距离
+  const xFrac = (cx - fieldLeft) / fieldWidth;
+  const Lmm = L_m * 1000;
+  const xMm = xFrac * Lmm;
+
+  // 如果太靠近缝平面或屏幕之外，返回 1（无干涉）
+  if (cx < fieldLeft || cx > coords.fieldRight) return 1.0;
+
+  const lambdaMm = lambdaNm * 1e-6;
+
+  /*
+   * 计算缝 S₁、S₂ 到点 (xMm, yMm) 的光程差
+   * 缝的真实位置：(0, +d/2) 和 (0, -d/2)
+   *
+   * r₁ = √[x² + (y - d/2)²]
+   * r₂ = √[x² + (y + d/2)²]
+   * Δr = r₂ - r₁
+   * δ = 2π·Δr/λ
+   *
+   * 使用小角度近似避免大数差值精度问题：
+   * 当 d ≪ L 时，Δr ≈ d·y / √(x² + y²) ≈ d·y/L
+   * 这里使用精确公式以保证普适性
+   */
+  const halfD = d_mm / 2;
+  const r1 = Math.sqrt(xMm * xMm + (yMm - halfD) * (yMm - halfD));
+  const r2 = Math.sqrt(xMm * xMm + (yMm + halfD) * (yMm + halfD));
+  const deltaR = r2 - r1;   // 光程差 (mm)
+  const phase = Math.PI * deltaR / lambdaMm;
+  const cosVal = Math.cos(phase);
+
+  return cosVal * cosVal;   // I/I₀ = cos²(δ/2)
+}
+
+/*
+ * 预计算干涉场 ImageData（仅在参数变化时重新计算）
+ * 计算整个场区的干涉强度分布
+ */
+function updateInterferenceField() {
+  if (!fieldNeedsUpdate) return;
+  fieldNeedsUpdate = false;
+
+  const W = canvasSetup.width;
+  const H = canvasSetup.height;
+  const coords = getSetupCoords();
+  const { fieldLeft, fieldRight } = coords;
+
+  // 只在干涉场区域计算（缝后到屏幕前）
+  const imgData = ctxSetup.createImageData(W, H);
+  const rgb = wavelengthToRGB(lambdaNm);
+
+  // 为提高性能，步进 2 像素采样
+  const step = 2;
+
+  for (let py = 0; py < H; py += step) {
+    for (let px = 0; px < W; px += step) {
+      const idx = (py * W + px) * 4;
+
+      let intensity = 1.0;
+      if (px >= fieldLeft && px <= fieldRight) {
+        intensity = computeFieldIntensity(px, py, coords);
+      }
+
+      // 背景暗色 + 干涉亮度
+      const bgR = 13, bgG = 17, bgB = 23;
+      const alpha = 0.55 * intensity;
+      const r = Math.round(bgR + (rgb[0] - bgR) * alpha);
+      const g = Math.round(bgG + (rgb[1] - bgG) * alpha);
+      const b = Math.round(bgB + (rgb[2] - bgB) * alpha);
+
+      // 填充 step×step 像素块
+      for (let dy = 0; dy < step && py + dy < H; dy++) {
+        for (let dx = 0; dx < step && px + dx < W; dx++) {
+          const i = ((py + dy) * W + (px + dx)) * 4;
+          imgData.data[i]     = r;
+          imgData.data[i + 1] = g;
+          imgData.data[i + 2] = b;
+          imgData.data[i + 3] = 255;
+        }
+      }
+    }
+  }
+
+  interferenceField = imgData;
+}
+
+/*
+ * 绘制光源（左侧）
+ */
+function drawSource(ctx, coords) {
+  const { sourceX, centerY, W, H } = coords;
+
+  // 光源主体
+  const sx = sourceX;
+  const sy = centerY;
+  const sw = W * 0.04;
+  const sh = H * 0.22;
+
+  // 发光光晕
+  const glowGrad = ctx.createRadialGradient(sx + sw/2, sy, sw*0.2, sx + sw/2, sy, sw*1.5);
+  const rgb = wavelengthToRGB(lambdaNm);
+  glowGrad.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.9)`);
+  glowGrad.addColorStop(0.4, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.3)`);
+  glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(sx - sw*0.5, sy - sh*0.4, sw*3, sh*0.8);
+
+  // 光源矩形
+  ctx.fillStyle = '#f0f0f0';
+  ctx.fillRect(sx, sy - sh/2, sw, sh);
+
+  // 边框
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(sx, sy - sh/2, sw, sh);
+
+  // 灯泡符号
+  ctx.fillStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.8)`;
+  ctx.beginPath();
+  ctx.arc(sx + sw/2, sy, sw*0.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 标签
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('光源', sx + sw/2, sy - sh/2 - 6);
+}
+
+/*
+ * 绘制遮光板和双缝
+ */
+function drawBarrier(ctx, coords) {
+  const { barrierX, centerY, slit1Y, slit2Y, slitSepPx, W, H } = coords;
+
+  const bw = W * 0.012;
+  const bh = H * 0.55;
+  const bx = barrierX;
+  const by = centerY - bh/2;
+
+  // 遮光板主体
+  ctx.fillStyle = '#30363d';
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = '#484f58';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(bx, by, bw, bh);
+
+  // 缝的开口（在遮光板上开两个小口）- 用背景色擦除
+  const slitH = Math.max(3, H * 0.025);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(bx - 1, slit1Y - slitH/2, bw + 2, slitH);
+  ctx.fillRect(bx - 1, slit2Y - slitH/2, bw + 2, slitH);
+
+  // 缝边缘高亮
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx - 1, slit1Y - slitH/2, bw + 2, slitH);
+  ctx.strokeRect(bx - 1, slit2Y - slitH/2, bw + 2, slitH);
+
+  // 缝标签
+  ctx.fillStyle = '#58a6ff';
+  ctx.font = `bold ${Math.round(W * 0.024)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('S₁', bx - 6, slit1Y + 4);
+  ctx.fillText('S₂', bx - 6, slit2Y + 4);
+
+  // 缝间距标注
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(bx - bw, slit1Y);
+  ctx.lineTo(bx - bw, slit2Y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 箭头
+  ctx.beginPath();
+  ctx.moveTo(bx - bw - 4, slit1Y + 3);
+  ctx.lineTo(bx - bw, slit1Y);
+  ctx.lineTo(bx - bw + 4, slit1Y + 3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bx - bw - 4, slit2Y - 3);
+  ctx.lineTo(bx - bw, slit2Y);
+  ctx.lineTo(bx - bw + 4, slit2Y - 3);
+  ctx.stroke();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${Math.round(W * 0.019)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('d', bx - bw - 8, centerY + 4);
+}
+
+/*
+ * 绘制屏幕
+ */
+function drawScreen(ctx, coords) {
+  const { screenX, centerY, W, H } = coords;
+
+  const sw = W * 0.012;
+  const sh = H * 0.62;
+  const sx = screenX - sw/2;
+  const sy = centerY - sh/2;
+
+  // 屏幕主体
+  ctx.fillStyle = '#21262d';
+  ctx.fillRect(sx, sy, sw, sh);
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(sx, sy, sw, sh);
+
+  // 屏幕纹理（细横线表示散射面）
+  ctx.strokeStyle = '#484f58';
+  ctx.lineWidth = 0.5;
+  for (let y = sy + 6; y < sy + sh - 6; y += 8) {
+    ctx.beginPath();
+    ctx.moveTo(sx, y);
+    ctx.lineTo(sx + sw, y);
+    ctx.stroke();
+  }
+
+  // 标签
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('屏幕', sx + sw/2, sy - 10);
+}
+
+/*
+ * 绘制从光源经双缝到屏幕的光线
+ * 从光源发出一束光，同时照亮两个缝，然后分别到达屏幕上的点
+ */
+function drawRays(ctx, coords) {
+  const { sourceX, barrierX, screenX, centerY, slit1Y, slit2Y, W } = coords;
+
+  const sourceCX = sourceX + W * 0.02;  // 光源中心 x
+
+  // 从光源到两个缝的光线（入射光）
+  ctx.strokeStyle = 'rgba(255,255,180,0.5)';
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(sourceCX, centerY);
+  ctx.lineTo(barrierX, slit1Y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(sourceCX, centerY);
+  ctx.lineTo(barrierX, slit2Y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 从缝 S₁ 到屏幕上多个点（展示光线发散）
+  const Lmm = L_m * 1000;
+  const lambdaMm = lambdaNm * 1e-6;
+  const deltaY = calcDeltaY();
+
+  /*
+   * 绘制多条从缝到屏幕的光线
+   * 每条光线到达屏幕上的不同位置
+   * 用不同亮度表示：亮纹位置光线更亮
+   */
+  const H = canvasSetup.height;
+  const centerY_coord = centerY;
+  const screenHalfH = H * 0.26;  // 屏幕可见范围的一半
+
+  // 对屏幕上的采样点绘制光线
+  const numRays = 21;
+  for (let i = 0; i < numRays; i++) {
+    const yFrac = (i - (numRays - 1) / 2) / ((numRays - 1) / 2);
+    const screenY = centerY_coord + yFrac * screenHalfH;
+
+    // 该点对应的真实物理 y 坐标
+    const displayRangeMm = deltaY * 7;
+    const yMm = yFrac * displayRangeMm;
+    const intensity = intensityAtY(yMm);
+
+    // 光线颜色根据干涉强度变化
+    const alpha = 0.2 + intensity * 0.55;
+    ctx.strokeStyle = `rgba(255,255,200,${alpha.toFixed(2)})`;
+    ctx.lineWidth = 0.8 + intensity * 1.0;
+
+    // 从 S₁ 到屏幕
+    ctx.beginPath();
+    ctx.moveTo(barrierX, slit1Y);
+    ctx.lineTo(screenX, screenY);
+    ctx.stroke();
+
+    // 从 S₂ 到屏幕
+    ctx.beginPath();
+    ctx.moveTo(barrierX, slit2Y);
+    ctx.lineTo(screenX, screenY);
+    ctx.stroke();
+  }
+
+  // 光轴虚线
+  ctx.strokeStyle = 'rgba(139,148,158,0.3)';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([6, 8]);
+  ctx.beginPath();
+  ctx.moveTo(sourceCX, centerY_coord);
+  ctx.lineTo(screenX, centerY_coord);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 距离标注 L
+  const midX = (barrierX + screenX) / 2;
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${Math.round(W * 0.02)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('L', midX, centerY_coord - H * 0.32);
+  ctx.beginPath();
+  ctx.moveTo(barrierX, centerY_coord - H * 0.30);
+  ctx.lineTo(screenX, centerY_coord - H * 0.30);
+  ctx.strokeStyle = '#8b949e';
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+}
+
+/*
+ * 绘制从两个缝发出的圆形波前（动画层）
+ * 波前以缝为圆心向外扩展，模拟惠更斯原理
+ *
+ * 波前半径随时间线性增长：r(t) = v * (t mod T)
+ * 每经过一个波长 λ 的距离，波前相位变化 2π
+ * 每隔一个波长画一个波前圆（代表波峰）
+ */
+function drawWavefronts(ctx, coords, time) {
+  const { barrierX, slit1Y, slit2Y, screenX, centerY, H } = coords;
+
+  const rgb = wavelengthToRGB(lambdaNm);
+  const waveColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},`;
+
+  /*
+   * 波前绘制参数
+   * waveSpeed：波前扩展速度（画布像素/秒）
+   * 波前间距对应一个波长（画布像素），随波长参数变化
+   */
+  const waveSpeed = 200;  // 像素/秒
+  const maxRadius = screenX - barrierX + 30;  // 最大半径
+
+  /*
+   * 波长对应的画布像素间距
+   * 短波长 → 密集波前，长波长 → 稀疏波前
+   * λ=380nm → spacing≈10px, λ=780nm → spacing≈22px
+   */
+  const waveSpacing = 10 + (lambdaNm - 380) / (780 - 380) * 12;
+
+  // 从每个缝发出多圈波前
+  [slit1Y, slit2Y].forEach(slitY => {
+    // 波前圈数：确保覆盖从缝到屏幕的整个范围
+    const numCircles = Math.ceil(maxRadius / waveSpacing) + 2;
+
+    for (let n = 0; n < numCircles; n++) {
+      // 每个波前圆的半径 = n*waveSpacing + 时间偏移
+      const r = (n * waveSpacing + (time * waveSpeed) % waveSpacing);
+      if (r < 0 || r > maxRadius) continue;
+
+      // 波前亮度：离缝越远越暗（球面波扩散，振幅 ∝ 1/√r）
+      const amplitude = Math.min(1, 3 / Math.max(1, Math.sqrt(r)));
+      const alpha = 0.08 + amplitude * 0.22;
+
+      ctx.strokeStyle = waveColor + alpha.toFixed(2) + ')';
+      ctx.lineWidth = 1.0 + amplitude * 0.6;
+      ctx.beginPath();
+      ctx.arc(barrierX, slitY, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+}
+
+/*
+ * 在装置画布上绘制干涉场背景 + 所有静态和动态元素
+ */
+function drawSetupCanvas(time) {
+  const W = canvasSetup.width;
+  const H = canvasSetup.height;
+  const ctx = ctxSetup;
+
+  // 清空画布
+  ctx.clearRect(0, 0, W, H);
+
+  // 填充背景色
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // 1. 绘制预计算的干涉场背景
+  updateInterferenceField();
+  if (interferenceField) {
+    ctx.putImageData(interferenceField, 0, 0);
+  }
+
+  // 2. 获取坐标
+  const coords = getSetupCoords();
+
+  // 3. 绘制波动波前（动画）
+  drawWavefronts(ctx, coords, time);
+
+  // 4. 绘制光线路径
+  drawRays(ctx, coords);
+
+  // 5. 绘制光源
+  drawSource(ctx, coords);
+
+  // 6. 绘制遮光板和双缝
+  drawBarrier(ctx, coords);
+
+  // 7. 绘制屏幕
+  drawScreen(ctx, coords);
+}
+
+/*
+ * ============================================================
+ *  条纹图样画布 (canvasPattern)：绘制屏幕上的干涉强度分布
+ * ============================================================
+ *
+ *  显示内容：
+ *    1. 屏幕上的干涉条纹（纵向排列的明暗相间条纹）
+ *    2. 光强分布曲线 I(y) = cos²(π d y / λ L)
+ *    3. 坐标标注：条纹间距 Δy、亮纹级次 m
+ *
+ *  布局：
+ *    左侧：屏幕条纹（按波长着色）
+ *    右侧：光强分布曲线图
+ */
+
+function drawPatternCanvas() {
+  const W = canvasPattern.width;
+  const H = canvasPattern.height;
+  const ctx = ctxPattern;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  const rgb = wavelengthToRGB(lambdaNm);
+  const deltaY = calcDeltaY();  // mm
+
+  /*
+   * 屏幕条纹显示区域（左侧 40%）
+   * 纵向条纹：y 方向对应屏幕上的位置
+   * 亮纹处用波长颜色，暗纹处保持背景色
+   */
+  const stripeLeft = W * 0.04;
+  const stripeRight = W * 0.34;
+  const stripeWidth = stripeRight - stripeLeft;
+  const stripeTop = H * 0.08;
+  const stripeBottom = H * 0.92;
+  const stripeHeight = stripeBottom - stripeTop;
+  const stripeCenterY = (stripeTop + stripeBottom) / 2;
+
+  // 显示 ±4 个条纹间距范围
+  const displayRangeMm = deltaY * 8;
+  const yMinMm = -displayRangeMm / 2;
+  const yMaxMm = displayRangeMm / 2;
+
+  // 遍历屏幕条纹区域的每一行，计算光强并着色
+  const step = 2;  // 像素步进
+  for (let py = stripeTop; py < stripeBottom; py += step) {
+    // y 坐标映射到物理位置 (mm)
+    const yFrac = (py - stripeCenterY) / (stripeHeight / 2);
+    const yMm = yFrac * (displayRangeMm / 2);
+    const intensity = intensityAtY(yMm);
+
+    // 背景色和条纹色混合
+    const bgR = 13, bgG = 17, bgB = 23;
+    const alpha = 0.15 + intensity * 0.85;  // 暗纹处也有微弱亮度
+    const r = Math.round(bgR + (rgb[0] - bgR) * alpha);
+    const g = Math.round(bgG + (rgb[1] - bgG) * alpha);
+    const b = Math.round(bgB + (rgb[2] - bgB) * alpha);
+
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(stripeLeft, py, stripeWidth, step);
+  }
+
+  // 条纹区域边框
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(stripeLeft, stripeTop, stripeWidth, stripeHeight);
+
+  // 标注亮纹级次
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'right';
+
+  // 中心亮纹 m=0
+  ctx.fillStyle = '#58a6ff';
+  ctx.font = `bold ${Math.round(W * 0.021)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'right';
+  const maxM = Math.floor((displayRangeMm / 2) / deltaY);
+  for (let m = -maxM; m <= maxM; m++) {
+    const yMm_bright = m * deltaY;  // 亮纹物理位置
+    const yFrac_bright = yMm_bright / (displayRangeMm / 2);
+    const yPx = stripeCenterY + yFrac_bright * (stripeHeight / 2);
+
+    if (yPx >= stripeTop && yPx <= stripeBottom) {
+      // 亮纹标记线
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath();
+      ctx.moveTo(stripeLeft, yPx);
+      ctx.lineTo(stripeRight, yPx);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 级次标签
+      ctx.fillStyle = '#c9d1d9';
+      ctx.fillText(`m=${m}`, stripeLeft - 8, yPx + 4);
+    }
+  }
+
+  // 条纹区域标签
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = `${Math.round(W * 0.023)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('干涉条纹', stripeLeft + stripeWidth/2, stripeTop - 14);
+
+  /*
+   * 光强分布曲线图（右侧 55%）
+   * 横轴：屏幕位置 y (mm)
+   * 纵轴：归一化光强 I/I₀
+   */
+  const graphLeft = W * 0.40;
+  const graphRight = W * 0.94;
+  const graphTop = stripeTop;
+  const graphBottom = stripeBottom;
+  const graphWidth = graphRight - graphLeft;
+  const graphHeight = graphBottom - graphTop;
+  const graphCenterY = (graphTop + graphBottom) / 2;
+
+  // 绘制坐标轴
+  ctx.strokeStyle = '#484f58';
+  ctx.lineWidth = 1;
+  // 横轴 (y 轴——屏幕上位置)
+  ctx.beginPath();
+  ctx.moveTo(graphLeft, graphCenterY);
+  ctx.lineTo(graphRight, graphCenterY);
+  ctx.stroke();
+  // 纵轴 (I/I₀)
+  ctx.beginPath();
+  ctx.moveTo(graphLeft + 3, graphTop);
+  ctx.lineTo(graphLeft + 3, graphBottom);
+  ctx.stroke();
+
+  // 纵轴刻度
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${Math.round(W * 0.017)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'right';
+  for (let v = 0; v <= 1; v += 0.25) {
+    const yPx = graphBottom - v * graphHeight;
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.moveTo(graphLeft, yPx);
+    ctx.lineTo(graphRight, yPx);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillText(v.toFixed(2), graphLeft - 6, yPx + 3);
+  }
+
+  // 绘制光强曲线 I(y) = cos²(π d y / λ L)
+  ctx.strokeStyle = rgbStr(rgb);
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = rgbStr(rgb);
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+
+  const numPoints = graphWidth;
+  let firstPoint = true;
+
+  for (let px = 0; px < numPoints; px++) {
+    const xFrac = (px / numPoints - 0.5) * 2;  // -1 到 +1
+    const yMm = xFrac * (displayRangeMm / 2);
+    const intensity = intensityAtY(yMm);
+
+    const graphX = graphLeft + (px / numPoints) * graphWidth;
+    const graphY = graphBottom - intensity * graphHeight;
+
+    if (firstPoint) {
+      ctx.moveTo(graphX, graphY);
+      firstPoint = false;
+    } else {
+      ctx.lineTo(graphX, graphY);
+    }
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // 在曲线上方绘制填充区域（半透明）
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = rgbStr(rgb);
+  ctx.lineTo(graphRight, graphBottom);
+  ctx.lineTo(graphLeft, graphBottom);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // 重新绘制曲线使其在填充上方
+  ctx.strokeStyle = rgbStr(rgb);
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = rgbStr(rgb);
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  firstPoint = true;
+  for (let px = 0; px < numPoints; px++) {
+    const xFrac = (px / numPoints - 0.5) * 2;
+    const yMm = xFrac * (displayRangeMm / 2);
+    const intensity = intensityAtY(yMm);
+    const graphX = graphLeft + (px / numPoints) * graphWidth;
+    const graphY = graphBottom - intensity * graphHeight;
+    if (firstPoint) { ctx.moveTo(graphX, graphY); firstPoint = false; }
+    else { ctx.lineTo(graphX, graphY); }
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // 横轴标注
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${Math.round(W * 0.018)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  const tickCount = 8;
+  for (let i = 0; i <= tickCount; i++) {
+    const xFrac = (i / tickCount - 0.5) * 2;
+    const yMm = xFrac * (displayRangeMm / 2);
+    const xPx = graphLeft + (i / tickCount) * graphWidth;
+    // 刻度线
+    ctx.strokeStyle = '#484f58';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(xPx, graphCenterY - 3);
+    ctx.lineTo(xPx, graphCenterY + 3);
+    ctx.stroke();
+    ctx.fillText(yMm.toFixed(2), xPx, graphCenterY + 16);
+  }
+
+  // Δy 标注
+  ctx.fillStyle = '#58a6ff';
+  ctx.font = `bold ${Math.round(W * 0.02)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(`Δy = ${deltaY.toFixed(3)} mm`, graphLeft + graphWidth/2, graphBottom + 28);
+
+  // 坐标轴标签
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('屏幕位置 y (mm)', graphLeft + graphWidth/2, graphBottom + 46);
+  ctx.save();
+  ctx.translate(graphLeft - 22, graphTop + graphHeight/2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('I / I₀', 0, 0);
+  ctx.restore();
+
+  // 图标题
+  ctx.fillStyle = '#c9d1d9';
+  ctx.font = `${Math.round(W * 0.023)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('光强分布 I(y)', graphLeft + graphWidth/2, graphTop - 14);
+
+  // 公式标注
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${Math.round(W * 0.019)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('I(y) = I₀·cos²(π d y / λ L)', graphLeft + graphWidth/2, graphTop - 36);
+}
+
+/*
+ * ============================================================
+ *  主动画循环
+ * ============================================================
+ * 使用 requestAnimationFrame 驱动动画
+ * 每帧更新动画时间，绘制装置画布和条纹画布
+ */
+function animate(timestamp) {
+  if (!running) {
+    animFrameId = null;
+    return;
+  }
+
+  // 计算时间增量
+  if (lastFrameTime === null) {
+    lastFrameTime = timestamp;
+  }
+  const dt = (timestamp - lastFrameTime) / 1000;  // 转换为秒
+  lastFrameTime = timestamp;
+
+  // 限制最大步长，避免切换标签页后时间跳跃
+  const clampedDt = Math.min(dt, 0.1);
+  animTime += clampedDt;
+
+  // 绘制装置画布（含波动画）
+  drawSetupCanvas(animTime);
+
+  // 绘制条纹图样画布
+  drawPatternCanvas();
+
+  // 继续下一帧
+  animFrameId = requestAnimationFrame(animate);
+}
+
+// ============ 初始化 ============
+function init() {
+  updateUI();
+  // 立即绘制初始帧
+  updateInterferenceField();
+  drawSetupCanvas(0);
+  drawPatternCanvas();
+  // 启动动画
+  lastFrameTime = null;
+  animFrameId = requestAnimationFrame(animate);
+}
+
+// 启动一切
+init();
+
+/*
+ * ============================================================
+ *  键盘快捷键
+ * ============================================================
+ *  空格键：开始/暂停动画
+ *  R 键：重置参数
+ */
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;  // 不在输入框中响应
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (running) {
+      btnPause.click();
+    } else {
+      btnStart.click();
+    }
+  } else if (e.code === 'KeyR') {
+    e.preventDefault();
+    btnReset.click();
+  }
+});
+</script>
+</body>
+</html>

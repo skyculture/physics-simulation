@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>带电粒子在电磁场中运动 - 洛伦兹力仿真</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --slider: #484f58;
+    --hover: #1f6feb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  header {
+    width: 100%; max-width: 1100px;
+    padding: 20px 24px 0;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 1.6em;
+    font-weight: 600;
+    color: #f0f6fc;
+    letter-spacing: 0.02em;
+  }
+  header .subtitle {
+    font-size: 0.88em;
+    color: #8b949e;
+    margin-top: 4px;
+  }
+  .main-container {
+    width: 100%; max-width: 1100px;
+    display: flex; gap: 16px;
+    padding: 16px 24px 24px;
+    flex-wrap: wrap;
+  }
+  .canvas-panel {
+    flex: 1 1 720px; min-width: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+  }
+  .info-bar {
+    position: absolute; top: 8px; left: 12px;
+    font-size: 0.78em; color: #8b949e;
+    pointer-events: none;
+    display: flex; gap: 18px; flex-wrap: wrap;
+    background: rgba(13,17,23,0.75);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .info-bar span { white-space: nowrap; }
+  .info-bar .val { color: var(--accent); font-weight: 600; }
+
+  .control-panel {
+    flex: 0 0 280px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    max-height: 600px;
+  }
+  .control-panel h3 {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #f0f6fc;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .param-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .param-group label {
+    font-size: 0.78em;
+    color: #8b949e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .param-group label .val {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  input[type="range"] {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    background: var(--slider);
+    border-radius: 3px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--panel);
+  }
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.82em;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  button:hover {
+    border-color: var(--accent);
+    background: #1f2937;
+  }
+  button.active-btn {
+    background: rgba(88,166,255,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  button.preset-btn {
+    background: rgba(63,185,80,0.08);
+    border-color: rgba(63,185,80,0.3);
+  }
+  button.preset-btn:hover {
+    background: rgba(63,185,80,0.18);
+    border-color: var(--accent2);
+  }
+  .display-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    font-size: 0.75em;
+  }
+  .display-grid .dlabel { color: #8b949e; }
+  .display-grid .dval { color: #f0f6fc; font-weight: 600; text-align: right; }
+  .back-link {
+    display: inline-block;
+    font-size: 0.78em;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 6px;
+  }
+  .back-link:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 700px) {
+    .main-container { flex-direction: column; }
+    .control-panel { flex: 0 0 auto; max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+
+
+<div class="main-container">
+
+  <div class="canvas-panel" id="canvasPanel">
+    <canvas id="simCanvas"></canvas>
+    <div class="info-bar">
+      <span>速率 |v| = <span class="val" id="infoSpeed">0.00</span></span>
+      <span>动能 K = <span class="val" id="infoKE">0.00</span></span>
+      <span>拉莫尔半径 r<sub>L</sub> = <span class="val" id="infoRL">—</span></span>
+      <span>回旋频率 ω<sub>c</sub> = <span class="val" id="infoWC">—</span></span>
+    </div>
+  </div>
+
+  <div class="control-panel" id="controlPanel">
+    <h3>📐 参数设置</h3>
+
+    <div class="param-group">
+      <label>电荷 q <span class="val" id="valQ">-1.00</span></label>
+      <input type="range" id="sliderQ" min="-5" max="5" step="0.1" value="-1">
+    </div>
+
+    <div class="param-group">
+      <label>质量 m <span class="val" id="valM">1.00</span></label>
+      <input type="range" id="sliderM" min="0.1" max="10" step="0.1" value="1">
+    </div>
+
+    <div class="param-group">
+      <label>电场 Ex <span class="val" id="valEx">0.00</span></label>
+      <input type="range" id="sliderEx" min="-2" max="2" step="0.1" value="0">
+    </div>
+
+    <div class="param-group">
+      <label>电场 Ey <span class="val" id="valEy">0.00</span></label>
+      <input type="range" id="sliderEy" min="-2" max="2" step="0.1" value="0">
+    </div>
+
+    <div class="param-group">
+      <label>磁场 Bz（垂直屏幕向外为正）<span class="val" id="valBz">1.00</span></label>
+      <input type="range" id="sliderBz" min="-3" max="3" step="0.1" value="1">
+    </div>
+
+    <div class="param-group">
+      <label>初速度 vx <span class="val" id="valVx">2.00</span></label>
+      <input type="range" id="sliderVx" min="-5" max="5" step="0.1" value="2">
+    </div>
+
+    <div class="param-group">
+      <label>初速度 vy <span class="val" id="valVy">0.00</span></label>
+      <input type="range" id="sliderVy" min="-5" max="5" step="0.1" value="0">
+    </div>
+
+    <h3>🎯 预设场景</h3>
+    <div class="btn-row">
+      <button class="preset-btn" id="btnCyclotron">回旋运动</button>
+      <button class="preset-btn" id="btnExB">E×B 漂移</button>
+      <button class="preset-btn" id="btnHelix">螺旋运动</button>
+    </div>
+
+    <h3>▶️ 控制</h3>
+    <div class="btn-row">
+      <button id="btnStart" class="active-btn">▶ 开始</button>
+      <button id="btnPause">⏸ 暂停</button>
+      <button id="btnReset">↺ 重置</button>
+    </div>
+
+    <h3>📊 实时数据</h3>
+    <div class="display-grid">
+      <span class="dlabel">速率 |v|</span>
+      <span class="dval" id="dispSpeed">0.00</span>
+      <span class="dlabel">动能 K</span>
+      <span class="dval" id="dispKE">0.00</span>
+      <span class="dlabel">拉莫尔半径 r<sub>L</sub></span>
+      <span class="dval" id="dispRL">—</span>
+      <span class="dlabel">回旋频率 ω<sub>c</sub></span>
+      <span class="dval" id="dispWC">—</span>
+    </div>
+
+    <a href="index.html" class="back-link">← 返回首页</a>
+  </div>
+
+</div>
+
+<script>
+  /*
+   * 洛伦兹力带电粒子运动仿真
+   *
+   * 物理原理:
+   * 洛伦兹力: F = q(E + v × B)
+   * 在二维平面 (x-y) 中，磁场 B = (0, 0, Bz) 垂直于平面（沿 z 轴）:
+   *
+   * 叉乘计算（右手系）:
+   * v × B = | i   j   k  |
+   *         | vx  vy  0  | = (vy*Bz, -vx*Bz, 0)
+   *         | 0   0   Bz |
+   *
+   * 因此:
+   * Fx = q(Ex + vy*Bz)
+   * Fy = q(Ey - vx*Bz)
+   * ax = Fx / m, ay = Fy / m
+   *
+   * 数值积分: 四阶 Runge-Kutta (RK4) 方法
+   *
+   * 状态向量 Y = [x, y, vx, vy]
+   * 导数函数: dY/dt = [vx, vy, ax, ay]
+   *
+   * RK4 公式:
+   * k1 = dt * f(t, Y)
+   * k2 = dt * f(t + dt/2, Y + k1/2)
+   * k3 = dt * f(t + dt/2, Y + k2/2)
+   * k4 = dt * f(t + dt,  Y + k3)
+   * Y(t+dt) = Y(t) + (k1 + 2*k2 + 2*k3 + k4) / 6
+   *
+   * 拉莫尔半径: r_L = m * v_perp / (|q| * |Bz|)
+   * 回旋频率:   ω_c = |q| * |Bz| / m
+   */
+
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const SLIDER_IDS = ['sliderQ','sliderM','sliderEx','sliderEy','sliderBz','sliderVx','sliderVy'];
+  const VAL_IDS    = ['valQ','valM','valEx','valEy','valBz','valVx','valVy'];
+  const PARAM_KEYS = ['q','m','Ex','Ey','Bz','vx0','vy0'];
+
+  let params = { q: -1, m: 1, Ex: 0, Ey: 0, Bz: 1, vx0: 2, vy0: 0 };
+
+  let x, y, vx, vy;
+  let trajectory = [];
+  const MAX_TRAIL = 800;
+
+  let running = true;
+  let simTime = 0;
+  const DT = 0.02;
+  let animId = null;
+
+  let worldScale = 60;
+  let worldOriginX, worldOriginY;
+
+  /* -------------------- 状态导数（供 RK4 调用） --------------------
+   * 计算洛伦兹力下状态向量 Y=[x,y,vx,vy] 的时间导数 dY/dt
+   * 返回 [vx, vy, ax, ay]
+   */
+  function derivatives(x, y, vx, vy) {
+    const ax = (params.q / params.m) * (params.Ex + vy * params.Bz);
+    const ay = (params.q / params.m) * (params.Ey - vx * params.Bz);
+    return [vx, vy, ax, ay];
+  }
+
+  /* -------------------- RK4 单步积分 --------------------
+   * 使用四阶 Runge-Kutta 方法推进状态向量一个时间步 dt
+   * 返回 [x_new, y_new, vx_new, vy_new]
+   */
+  function rk4Step(x, y, vx, vy, dt) {
+    const [k1vx, k1vy, k1ax, k1ay] = derivatives(x, y, vx, vy);
+
+    const x2  = x  + 0.5 * dt * k1vx;
+    const y2  = y  + 0.5 * dt * k1vy;
+    const vx2 = vx + 0.5 * dt * k1ax;
+    const vy2 = vy + 0.5 * dt * k1ay;
+    const [k2vx, k2vy, k2ax, k2ay] = derivatives(x2, y2, vx2, vy2);
+
+    const x3  = x  + 0.5 * dt * k2vx;
+    const y3  = y  + 0.5 * dt * k2vy;
+    const vx3 = vx + 0.5 * dt * k2ax;
+    const vy3 = vy + 0.5 * dt * k2ay;
+    const [k3vx, k3vy, k3ax, k3ay] = derivatives(x3, y3, vx3, vy3);
+
+    const x4  = x  + dt * k3vx;
+    const y4  = y  + dt * k3vy;
+    const vx4 = vx + dt * k3ax;
+    const vy4 = vy + dt * k3ay;
+    const [k4vx, k4vy, k4ax, k4ay] = derivatives(x4, y4, vx4, vy4);
+
+    const xNew  = x  + (dt / 6) * (k1vx + 2*k2vx + 2*k3vx + k4vx);
+    const yNew  = y  + (dt / 6) * (k1vy + 2*k2vy + 2*k3vy + k4vy);
+    const vxNew = vx + (dt / 6) * (k1ax + 2*k2ax + 2*k3ax + k4ax);
+    const vyNew = vy + (dt / 6) * (k1ay + 2*k2ay + 2*k3ay + k4ay);
+
+    return [xNew, yNew, vxNew, vyNew];
+  }
+
+  /* -------------------- 重置模拟状态 -------------------- */
+  function resetState() {
+    x = 0;
+    y = 0;
+    vx = params.vx0;
+    vy = params.vy0;
+    trajectory = [];
+    simTime = 0;
+  }
+
+  /* -------------------- 响应画布大小 -------------------- */
+  function resize() {
+    const panel = document.getElementById('canvasPanel');
+    const w = panel.clientWidth;
+    const h = Math.max(400, w * 0.6);
+    canvas.width = w * (window.devicePixelRatio || 1);
+    canvas.height = h * (window.devicePixelRatio || 1);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    worldOriginX = canvas.width / 2;
+    worldOriginY = canvas.height / 2;
+    worldScale = Math.min(canvas.width, canvas.height) / 12;
+  }
+
+  /* -------------------- 世界坐标 → 画布坐标 -------------------- */
+  function toScreenX(wx) { return worldOriginX + wx * worldScale; }
+  function toScreenY(wy) { return worldOriginY - wy * worldScale; }
+
+  /* -------------------- 绘制 -------------------- */
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.save();
+
+    /* 网格 */
+    ctx.strokeStyle = 'rgba(48,54,61,0.5)';
+    ctx.lineWidth = 1;
+    const gridStep = worldScale;
+    const startX = worldOriginX % gridStep;
+    const startY = worldOriginY % gridStep;
+    ctx.beginPath();
+    for (let gx = startX; gx < W; gx += gridStep) {
+      ctx.moveTo(gx, 0);
+      ctx.lineTo(gx, H);
+    }
+    for (let gy = startY; gy < H; gy += gridStep) {
+      ctx.moveTo(0, gy);
+      ctx.lineTo(W, gy);
+    }
+    ctx.stroke();
+
+    /* 坐标轴 */
+    ctx.strokeStyle = 'rgba(139,148,158,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, worldOriginY);
+    ctx.lineTo(W, worldOriginY);
+    ctx.moveTo(worldOriginX, 0);
+    ctx.lineTo(worldOriginX, H);
+    ctx.stroke();
+
+    /* 电场方向指示箭头 */
+    const ex = params.Ex, ey = params.Ey;
+    if (Math.abs(ex) > 0.01 || Math.abs(ey) > 0.01) {
+      const arrowSX = toScreenX(0);
+      const arrowSY = toScreenY(0);
+      const emag = Math.sqrt(ex*ex + ey*ey);
+      const eNormX = ex / emag;
+      const eNormY = ey / emag;
+      const arrowLen = 40;
+      const arrowTipX = arrowSX + eNormX * arrowLen;
+      const arrowTipY = arrowSY - eNormY * arrowLen;
+
+      ctx.strokeStyle = '#f78166';
+      ctx.fillStyle = '#f78166';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(arrowSX, arrowSY);
+      ctx.lineTo(arrowTipX, arrowTipY);
+      ctx.stroke();
+
+      const angle = Math.atan2(-eNormY, eNormX);
+      const tipSize = 10;
+      ctx.beginPath();
+      ctx.moveTo(arrowTipX, arrowTipY);
+      ctx.lineTo(
+        arrowTipX - tipSize * Math.cos(angle - Math.PI/6),
+        arrowTipY - tipSize * Math.sin(angle - Math.PI/6)
+      );
+      ctx.lineTo(
+        arrowTipX - tipSize * Math.cos(angle + Math.PI/6),
+        arrowTipY - tipSize * Math.sin(angle + Math.PI/6)
+      );
+      ctx.closePath();
+      ctx.fill();
+
+      /* E 标签 */
+      ctx.font = '12px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillText('E', arrowTipX + 6, arrowTipY - 4);
+    }
+
+    /* 磁场方向指示器（原点附近） */
+    if (Math.abs(params.Bz) > 0.01) {
+      const bSX = toScreenX(0) + 45;
+      const bSY = toScreenY(0) + 35;
+      const bR = 14;
+
+      ctx.strokeStyle = '#d2a8ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(bSX, bSY, bR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (params.Bz > 0) {
+        /* B 垂直屏幕向外: ⊙ (圆圈加点) */
+        ctx.fillStyle = '#d2a8ff';
+        ctx.beginPath();
+        ctx.arc(bSX, bSY, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        /* B 垂直屏幕向内: ⊗ (圆圈加叉) */
+        ctx.strokeStyle = '#d2a8ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bSX - 5, bSY - 5);
+        ctx.lineTo(bSX + 5, bSY + 5);
+        ctx.moveTo(bSX + 5, bSY - 5);
+        ctx.lineTo(bSX - 5, bSY + 5);
+        ctx.stroke();
+      }
+
+      ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = '#d2a8ff';
+      ctx.fillText('B', bSX + bR + 6, bSY + 4);
+    }
+
+    /* 轨迹尾部（渐隐效果） */
+    if (trajectory.length > 1) {
+      for (let i = 1; i < trajectory.length; i++) {
+        const alpha = i / trajectory.length;
+        ctx.strokeStyle = `rgba(88,166,255,${alpha * 0.6})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(trajectory[i-1][0]), toScreenY(trajectory[i-1][1]));
+        ctx.lineTo(toScreenX(trajectory[i][0]), toScreenY(trajectory[i][1]));
+        ctx.stroke();
+      }
+    }
+
+    /* 粒子 */
+    const px = toScreenX(x);
+    const py = toScreenY(y);
+    const pr = 8;
+
+    /* 发光 */
+    const glow = ctx.createRadialGradient(px, py, pr*0.3, px, py, pr*2.5);
+    glow.addColorStop(0, 'rgba(88,166,255,0.6)');
+    glow.addColorStop(0.5, 'rgba(88,166,255,0.15)');
+    glow.addColorStop(1, 'rgba(88,166,255,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(px, py, pr*2.5, 0, Math.PI*2);
+    ctx.fill();
+
+    /* 粒子主体 */
+    const particleColor = params.q >= 0 ? '#f78166' : '#58a6ff';
+    ctx.fillStyle = particleColor;
+    ctx.beginPath();
+    ctx.arc(px, py, pr, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#f0f6fc';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    /* 电荷符号 */
+    ctx.fillStyle = '#0d1117';
+    ctx.font = 'bold 10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(params.q > 0 ? '+' : (params.q < 0 ? '−' : '0'), px, py);
+
+    /* 速度矢量 */
+    const speed = Math.sqrt(vx*vx + vy*vy);
+    if (speed > 0.001) {
+      const vNormX = vx / speed;
+      const vNormY = vy / speed;
+      const vecLen = Math.min(speed * worldScale * 0.4, 50);
+      const tipX = px + vNormX * vecLen;
+      const tipY = py - vNormY * vecLen;
+
+      ctx.strokeStyle = '#3fb950';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+
+      const vAngle = Math.atan2(-vNormY, vNormX);
+      const tipSz = 8;
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(
+        tipX - tipSz * Math.cos(vAngle - Math.PI/6),
+        tipY - tipSz * Math.sin(vAngle - Math.PI/6)
+      );
+      ctx.lineTo(
+        tipX - tipSz * Math.cos(vAngle + Math.PI/6),
+        tipY - tipSz * Math.sin(vAngle + Math.PI/6)
+      );
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  /* -------------------- 更新显示数据 -------------------- */
+  function updateDisplay() {
+    const speed = Math.sqrt(vx*vx + vy*vy);
+    const ke = 0.5 * params.m * speed * speed;
+    const absQB = Math.abs(params.q * params.Bz);
+    let rL = '—';
+    let wc = '—';
+    if (absQB > 1e-9) {
+      rL = (params.m * speed / absQB).toFixed(2);
+      wc = (absQB / params.m).toFixed(2);
+    }
+
+    const fmt = (v) => v.toFixed(2);
+    const ids = {
+      infoSpeed: fmt(speed), infoKE: fmt(ke),
+      infoRL: rL, infoWC: wc,
+      dispSpeed: fmt(speed), dispKE: fmt(ke),
+      dispRL: rL, dispWC: wc
+    };
+    Object.entries(ids).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    });
+  }
+
+  /* -------------------- 主循环 -------------------- */
+  function step() {
+    if (!running) return;
+
+    [x, y, vx, vy] = rk4Step(x, y, vx, vy, DT);
+    simTime += DT;
+
+    trajectory.push([x, y]);
+    if (trajectory.length > MAX_TRAIL) trajectory.shift();
+
+    draw();
+    updateDisplay();
+  }
+
+  function loop() {
+    step();
+    animId = requestAnimationFrame(loop);
+  }
+
+  /* -------------------- 控制按钮 -------------------- */
+  function startLoop() {
+    if (animId) return;
+    running = true;
+    document.getElementById('btnStart').classList.add('active-btn');
+    document.getElementById('btnPause').classList.remove('active-btn');
+    document.getElementById('btnStart').textContent = '▶ 开始';
+    document.getElementById('btnPause').textContent = '⏸ 暂停';
+    animId = requestAnimationFrame(loop);
+  }
+
+  function pauseLoop() {
+    running = false;
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+    document.getElementById('btnStart').classList.remove('active-btn');
+    document.getElementById('btnPause').classList.add('active-btn');
+    document.getElementById('btnStart').textContent = '▶ 开始';
+    document.getElementById('btnPause').textContent = '⏸ 已暂停';
+  }
+
+  function resetLoop() {
+    pauseLoop();
+    resetState();
+    draw();
+    updateDisplay();
+  }
+
+  document.getElementById('btnStart').addEventListener('click', startLoop);
+  document.getElementById('btnPause').addEventListener('click', pauseLoop);
+  document.getElementById('btnReset').addEventListener('click', resetLoop);
+
+  /* -------------------- 预设场景 -------------------- */
+  /*
+   * 回旋运动 (Cyclotron motion):
+   * 仅有均匀磁场 Bz（垂直屏幕向外），带电粒子以垂直于 B 的初速度运动。
+   * 洛伦兹力始终垂直于速度方向，提供向心力 → 匀速圆周运动。
+   * 正电荷逆时针旋转，负电荷顺时针旋转。
+   */
+  document.getElementById('btnCyclotron').addEventListener('click', () => {
+    setParams({ q: -1, m: 1, Ex: 0, Ey: 0, Bz: 1, vx0: 3, vy0: 0 });
+    updateSliders();
+    resetLoop();
+    startLoop();
+  });
+
+  /*
+   * E×B 漂移 (ExB drift):
+   * 电场沿 x 方向，磁场沿 z 方向（垂直屏幕向外）。
+   * 粒子在 E×B 方向（y 方向）产生漂移运动，轨迹为摆线 (cycloid)。
+   * 漂移速度 v_drift = E×B / B² = (Ex/Bz) 沿 y 方向。
+   */
+  document.getElementById('btnExB').addEventListener('click', () => {
+    setParams({ q: -1, m: 1, Ex: 0.5, Ey: 0, Bz: 1, vx0: 0, vy0: 0 });
+    updateSliders();
+    resetLoop();
+    startLoop();
+  });
+
+  /*
+   * 螺旋运动 (Helical motion projected to 2D):
+   * 仅磁场 Bz，初速度同时有 x 和 y 分量。
+   * 在三维中是螺旋运动，投影到二维 xy 平面后仍是圆周运动
+   * （此处展示的是在 xy 平面内的圆周轨迹，相当于三维螺旋的投影）。
+   */
+  document.getElementById('btnHelix').addEventListener('click', () => {
+    setParams({ q: -1, m: 1, Ex: 0, Ey: 0, Bz: 1, vx0: 2, vy0: 1.5 });
+    updateSliders();
+    resetLoop();
+    startLoop();
+  });
+
+  /* -------------------- 滑块同步 -------------------- */
+  function setParams(p) { Object.assign(params, p); }
+  function updateSliders() {
+    document.getElementById('sliderQ').value  = params.q;
+    document.getElementById('sliderM').value  = params.m;
+    document.getElementById('sliderEx').value = params.Ex;
+    document.getElementById('sliderEy').value = params.Ey;
+    document.getElementById('sliderBz').value = params.Bz;
+    document.getElementById('sliderVx').value = params.vx0;
+    document.getElementById('sliderVy').value = params.vy0;
+    syncLabels();
+  }
+  function syncLabels() {
+    document.getElementById('valQ').textContent  = params.q.toFixed(2);
+    document.getElementById('valM').textContent  = params.m.toFixed(2);
+    document.getElementById('valEx').textContent = params.Ex.toFixed(2);
+    document.getElementById('valEy').textContent = params.Ey.toFixed(2);
+    document.getElementById('valBz').textContent = params.Bz.toFixed(2);
+    document.getElementById('valVx').textContent = params.vx0.toFixed(2);
+    document.getElementById('valVy').textContent = params.vy0.toFixed(2);
+  }
+
+  SLIDER_IDS.forEach((sid, i) => {
+    const slider = document.getElementById(sid);
+    slider.addEventListener('input', () => {
+      const val = parseFloat(slider.value);
+      params[PARAM_KEYS[i]] = val;
+      syncLabels();
+    });
+    slider.addEventListener('change', () => {
+      resetLoop();
+      updateDisplay();
+      if (!running) {
+        draw();
+        updateDisplay();
+      }
+    });
+  });
+
+  /* -------------------- 键盘快捷键 -------------------- */
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (running) pauseLoop(); else startLoop();
+    } else if (e.code === 'KeyR') {
+      resetLoop();
+      startLoop();
+    }
+  });
+
+  /* -------------------- 初始化 -------------------- */
+  function init() {
+    resize();
+    syncLabels();
+    resetState();
+    draw();
+    updateDisplay();
+    startLoop();
+  }
+
+  window.addEventListener('resize', () => {
+    resize();
+    draw();
+  });
+
+  init();
+</script>
+
+</body>
+</html>

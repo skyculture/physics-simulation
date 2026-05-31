@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>结合多普勒效应与自由落体运动 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>释放高度:</label><input type="range" id="height" min="10" max="50" step="5" value="30"><span id="heightVal">30</span> m</div>
+    <div class="ctrl-group"><label>声源频率:</label><input type="range" id="freq" min="200" max="2000" step="100" value="1000"><span id="freqVal">1000</span> Hz</div>
+    <div class="ctrl-group"><label>声速:</label><input type="range" id="soundSpeed" min="300" max="400" step="10" value="343"><span id="soundSpeedVal">343</span> m/s</div>
+    <div class="ctrl-group"><button id="dropBtn">释放</button><button id="resetBtn">重置</button></div>
+  </div>
+  <div id="info">下落声源的多普勒效应：声源自由下落时，由于重力加速度不断加速，地面观察者接收到的频率会随时间变化。开始时声源静止，频率不变；随着速度增加，频率逐渐升高。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let isFalling = false;
+let physY = 0, physV = 0;
+let waves = [];
+let lastWaveTime = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  isFalling = false;
+  t = 0;
+  waves = [];
+  lastWaveTime = 0;
+  physY = 0;
+  physV = 0;
+}
+
+function drop() {
+  if (isFalling) return;
+  isFalling = true;
+  physY = 0;
+  physV = 0;
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2;
+  const height = parseFloat(document.getElementById('height').value);
+  const freq = parseFloat(document.getElementById('freq').value);
+  const c = parseFloat(document.getElementById('soundSpeed').value);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  const topY = S * 0.1;
+  const bottomY = S * 0.85;
+  const fallRange = bottomY - topY;
+  const pxPerM = fallRange / height;
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - S * 0.3, bottomY);
+  ctx.lineTo(cx + S * 0.3, bottomY);
+  ctx.stroke();
+
+  ctx.fillStyle = '#3fb950';
+  ctx.beginPath();
+  ctx.arc(cx, bottomY, S * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+
+  const fs = S * 0.032;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'center';
+  ctx.fillText('观察者', cx, bottomY + S * 0.05);
+  ctx.textAlign = 'left';
+
+  const waveInterval = 1 / (freq / 80);
+
+  if (isFalling) {
+    const dt = 0.016;
+    physV += 9.8 * dt;
+    physY += physV * dt;
+
+    const screenY = topY + physY * pxPerM;
+
+    if (t - lastWaveTime >= waveInterval) {
+      waves.push({ screenY: screenY, birthTime: t });
+      lastWaveTime = t;
+    }
+
+    ctx.fillStyle = '#f78166';
+    ctx.beginPath();
+    ctx.arc(cx, screenY, S * 0.02, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffa657';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, screenY);
+    ctx.lineTo(cx, screenY + S * 0.04);
+    ctx.stroke();
+
+    if (physY >= height) {
+      isFalling = false;
+    }
+  } else {
+    ctx.fillStyle = '#f78166';
+    ctx.beginPath();
+    ctx.arc(cx, topY, S * 0.02, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (let i = waves.length - 1; i >= 0; i--) {
+    const wave = waves[i];
+    const age = t - wave.birthTime;
+    const radius = age * c * pxPerM / 80;
+    const alpha = Math.max(0, 1 - age * 2.5);
+
+    if (radius > S * 1.5 || alpha <= 0) {
+      waves.splice(i, 1);
+      continue;
+    }
+
+    ctx.strokeStyle = `rgba(210,168,255,${alpha * 0.6})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, wave.screenY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  const obsFreq = isFalling ? freq * c / (c - physV) : freq;
+  const freqRatio = obsFreq / freq;
+
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText(`高度 = ${physY.toFixed(1)} m`, w * 0.02, fs + 5);
+  ctx.fillText(`速度 = ${physV.toFixed(2)} m/s`, w * 0.02, fs * 2 + 5);
+  ctx.fillText(`f₀ = ${freq} Hz`, w * 0.02, fs * 3 + 5);
+
+  if (freqRatio > 1.001) {
+    ctx.fillStyle = '#58a6ff';
+    ctx.fillText(`f' = ${obsFreq.toFixed(0)} Hz (↑${((freqRatio - 1) * 100).toFixed(1)}%)`, w * 0.02, fs * 4 + 5);
+  } else {
+    ctx.fillStyle = '#f78166';
+    ctx.fillText(`f' = ${obsFreq.toFixed(0)} Hz`, w * 0.02, fs * 4 + 5);
+  }
+
+  t += 0.016;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('height').addEventListener('input', e => {
+  document.getElementById('heightVal').textContent = e.target.value;
+});
+document.getElementById('freq').addEventListener('input', e => {
+  document.getElementById('freqVal').textContent = e.target.value;
+});
+document.getElementById('soundSpeed').addEventListener('input', e => {
+  document.getElementById('soundSpeedVal').textContent = e.target.value;
+});
+document.getElementById('dropBtn').addEventListener('click', drop);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+draw();
+</script>
+</body>
+</html>

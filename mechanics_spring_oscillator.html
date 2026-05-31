@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹簧振子 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>劲度系数k:</label><input type="range" id="k" min="1" max="20" step="1" value="5"><input type="number" id="kVal" value="5"></div>
+      <div class="ctrl-group"><label>质量m:</label><input type="range" id="m" min="0.5" max="4" step="0.5" value="1"><input type="number" id="mVal" value="1"></div>
+      <div class="ctrl-group"><label>阻尼系数b:</label><input type="range" id="b" min="0" max="5" step="0.1" value="0.5"><input type="number" id="bVal" value="0.5"></div>
+      <div class="ctrl-group"><button id="startBtn">▶ 开始</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">弹簧振子：F = -kx，简谐振动周期 T = 2π√(m/k)。阻尼振动时振幅随时间衰减，当b < 2√(mk)时为欠阻尼，b = 2√(mk)时为临界阻尼。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let x = 0, v = 0;
+let isRunning = false;
+let trail = [];
+const MAX_TRAIL = 500;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  x = 50;
+  v = 0;
+  isRunning = false;
+  trail = [];
+  if(animationId) cancelAnimationFrame(animationId);
+  draw();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const k = parseFloat(document.getElementById('k').value);
+  const m = parseFloat(document.getElementById('m').value);
+  const b = parseFloat(document.getElementById('b').value);
+
+  if(isRunning) {
+    const a = (-k * x - b * v) / m;
+    v += a * 0.02;
+    x += v * 0.02;
+    trail.push({x: x, y: 0});
+    if(trail.length > MAX_TRAIL) trail.shift();
+  }
+
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const scale = canvas.width * 0.008;
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(canvas.width * 0.15, cy);
+  ctx.lineTo(cx - 30, cy);
+  ctx.stroke();
+
+  const ballX = cx + x * scale;
+  const springX1 = cx - 30;
+  const springX2 = ballX - 15;
+  const springWidth = springX2 - springX1;
+
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(springX1, cy);
+  const loops = Math.max(3, Math.floor(springWidth / 15));
+  for(let i = 0; i <= loops; i++) {
+    const px = springX1 + (springWidth / loops) * i;
+    const py = cy + (i % 2 === 0 ? -10 : 10);
+    ctx.lineTo(px, py);
+  }
+  ctx.lineTo(springX2, cy);
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(ballX, cy, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  const graphY = canvas.height * 0.25;
+  if(trail.length > 1) {
+    ctx.strokeStyle = 'rgba(247,129,102,0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let i = 0; i < trail.length; i++) {
+      const px = canvas.width * 0.1 + (i / trail.length) * canvas.width * 0.8;
+      const py = graphY - trail[i].x * 2;
+      if(i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  const omega = Math.sqrt(k / m);
+  const T = 2 * Math.PI / omega;
+  const gamma = b / (2 * m);
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`劲度系数 k = ${k} N/m`, 10, 20);
+  ctx.fillText(`质量 m = ${m} kg`, 10, 40);
+  ctx.fillText(`阻尼系数 b = ${b.toFixed(1)}`, 10, 60);
+  ctx.fillText(`角频率 ω = ${omega.toFixed(2)} rad/s`, 10, 80);
+  ctx.fillText(`周期 T = ${T.toFixed(2)} s`, 10, 100);
+
+  const dampingType = b < 2 * Math.sqrt(m * k) ? '欠阻尼' : b > 2 * Math.sqrt(m * k) ? '过阻尼' : '临界阻尼';
+  ctx.fillStyle = '#3fb950';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`振动类型: ${dampingType}`, cx - 80, canvas.height - 20);
+
+  if(isRunning) animationId = requestAnimationFrame(draw);
+}
+
+function start() {
+  isRunning = true;
+  draw();
+}
+
+document.getElementById('k').addEventListener('input', e => { document.getElementById('kVal').value = e.target.value; });
+document.getElementById('m').addEventListener('input', e => { document.getElementById('mVal').value = e.target.value; });
+document.getElementById('b').addEventListener('input', e => { document.getElementById('bVal').value = e.target.value; });
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+</script>
+</body>
+</html>

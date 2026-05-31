@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三体运动 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>质量m₁:</label><input type="range" id="m1" min="0.5" max="5" step="0.1" value="1"><input type="number" id="m1Val" value="1"></div>
+      <div class="ctrl-group"><label>质量m₂:</label><input type="range" id="m2" min="0.5" max="5" step="0.1" value="1"><input type="number" id="m2Val" value="1"></div>
+      <div class="ctrl-group"><label>质量m₃:</label><input type="range" id="m3" min="0.5" max="5" step="0.1" value="1"><input type="number" id="m3Val" value="1"></div>
+      <div class="ctrl-group"><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">三体运动：三个天体在万有引力作用下的运动，是典型的混沌系统。使用Velocity-Verlet积分保证能量守恒，轨迹线展示混沌特性。微小的初始条件差异会导致运动轨迹的巨大变化。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let bodies = [];
+let trails = [[], [], []];
+const MAX_TRAIL = 500;
+const G = 500;
+const SOFTENING = 15;
+const DT = 0.02;
+const SUB_STEPS = 4;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; init(); }
+}
+
+function init() {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const scale = Math.min(canvas.width, canvas.height) * 0.15;
+  const m1 = parseFloat(document.getElementById('m1').value);
+  const m2 = parseFloat(document.getElementById('m2').value);
+  const m3 = parseFloat(document.getElementById('m3').value);
+  const totalM = m1 + m2 + m3;
+
+  const r1 = scale * 0.8;
+  const r2 = scale * 1.0;
+  const r3 = scale * 0.6;
+  const angle1 = -Math.PI / 2;
+  const angle2 = -Math.PI / 2 + 2.094;
+  const angle3 = -Math.PI / 2 + 4.189;
+
+  const x1 = cx + r1 * Math.cos(angle1);
+  const y1 = cy + r1 * Math.sin(angle1);
+  const x2 = cx + r2 * Math.cos(angle2);
+  const y2 = cy + r2 * Math.sin(angle2);
+  const x3 = cx + r3 * Math.cos(angle3);
+  const y3 = cy + r3 * Math.sin(angle3);
+
+  const v1 = Math.sqrt(G * (m2 + m3) / (r1 + SOFTENING)) * 0.6;
+  const v2 = Math.sqrt(G * (m1 + m3) / (r2 + SOFTENING)) * 0.6;
+  const v3 = Math.sqrt(G * (m1 + m2) / (r3 + SOFTENING)) * 0.6;
+
+  bodies = [
+    { x: x1, y: y1, vx: v1 * Math.cos(angle1 + Math.PI / 2), vy: v1 * Math.sin(angle1 + Math.PI / 2), ax: 0, ay: 0, m: m1, color: '#ffa657', trailColor: 'rgba(255,166,87,' },
+    { x: x2, y: y2, vx: v2 * Math.cos(angle2 + Math.PI / 2), vy: v2 * Math.sin(angle2 + Math.PI / 2), ax: 0, ay: 0, m: m2, color: '#f78166', trailColor: 'rgba(247,129,102,' },
+    { x: x3, y: y3, vx: v3 * Math.cos(angle3 + Math.PI / 2), vy: v3 * Math.sin(angle3 + Math.PI / 2), ax: 0, ay: 0, m: m3, color: '#3fb950', trailColor: 'rgba(63,185,80,' }
+  ];
+
+  computeAccelerations();
+  trails = [[], [], []];
+}
+
+function computeAccelerations() {
+  for (let i = 0; i < bodies.length; i++) {
+    bodies[i].ax = 0;
+    bodies[i].ay = 0;
+  }
+  for (let i = 0; i < bodies.length; i++) {
+    for (let j = i + 1; j < bodies.length; j++) {
+      const dx = bodies[j].x - bodies[i].x;
+      const dy = bodies[j].y - bodies[i].y;
+      const r2 = dx * dx + dy * dy + SOFTENING * SOFTENING;
+      const r = Math.sqrt(r2);
+      const r3 = r2 * r;
+      const fij = G / r3;
+      bodies[i].ax += fij * bodies[j].m * dx;
+      bodies[i].ay += fij * bodies[j].m * dy;
+      bodies[j].ax -= fij * bodies[i].m * dx;
+      bodies[j].ay -= fij * bodies[i].m * dy;
+    }
+  }
+}
+
+function step() {
+  for (let i = 0; i < bodies.length; i++) {
+    bodies[i].x += bodies[i].vx * DT + 0.5 * bodies[i].ax * DT * DT;
+    bodies[i].y += bodies[i].vy * DT + 0.5 * bodies[i].ay * DT * DT;
+  }
+  const oldAx = bodies.map(b => b.ax);
+  const oldAy = bodies.map(b => b.ay);
+  computeAccelerations();
+  for (let i = 0; i < bodies.length; i++) {
+    bodies[i].vx += 0.5 * (oldAx[i] + bodies[i].ax) * DT;
+    bodies[i].vy += 0.5 * (oldAy[i] + bodies[i].ay) * DT;
+  }
+}
+
+function computeEnergy() {
+  let KE = 0, PE = 0;
+  for (let i = 0; i < bodies.length; i++) {
+    KE += 0.5 * bodies[i].m * (bodies[i].vx * bodies[i].vx + bodies[i].vy * bodies[i].vy);
+    for (let j = i + 1; j < bodies.length; j++) {
+      const dx = bodies[j].x - bodies[i].x;
+      const dy = bodies[j].y - bodies[i].y;
+      const r = Math.sqrt(dx * dx + dy * dy + SOFTENING * SOFTENING);
+      PE -= G * bodies[i].m * bodies[j].m / r;
+    }
+  }
+  return KE + PE;
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  bodies[0].m = parseFloat(document.getElementById('m1').value);
+  bodies[1].m = parseFloat(document.getElementById('m2').value);
+  bodies[2].m = parseFloat(document.getElementById('m3').value);
+
+  for (let s = 0; s < SUB_STEPS; s++) {
+    step();
+  }
+
+  for (let i = 0; i < bodies.length; i++) {
+    trails[i].push({ x: bodies[i].x, y: bodies[i].y });
+    if (trails[i].length > MAX_TRAIL) trails[i].shift();
+  }
+
+  for (let i = 0; i < trails.length; i++) {
+    const t = trails[i];
+    if (t.length < 2) continue;
+    for (let j = 1; j < t.length; j++) {
+      const alpha = (j / t.length) * 0.7;
+      ctx.strokeStyle = bodies[i].trailColor + alpha.toFixed(2) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(t[j - 1].x, t[j - 1].y);
+      ctx.lineTo(t[j].x, t[j].y);
+      ctx.stroke();
+    }
+  }
+
+  for (let i = 0; i < bodies.length; i++) {
+    const b = bodies[i];
+    const r = Math.max(4, Math.sqrt(b.m) * 6);
+
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, r + 4, 0, Math.PI * 2);
+    ctx.fillStyle = b.trailColor + '0.15)';
+    ctx.fill();
+
+    ctx.fillStyle = b.color;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const E = computeEnergy();
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`质量: m₁=${bodies[0].m.toFixed(1)}  m₂=${bodies[1].m.toFixed(1)}  m₃=${bodies[2].m.toFixed(1)}`, canvas.width * 0.05, canvas.height * 0.06);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText(`总能量 E = ${E.toFixed(1)} (守恒量)`, canvas.width * 0.05, canvas.height * 0.06 + 20);
+
+  animationId = requestAnimationFrame(draw);
+}
+
+function reset() {
+  if (animationId) cancelAnimationFrame(animationId);
+  init();
+  draw();
+}
+
+document.getElementById('m1').addEventListener('input', e => { document.getElementById('m1Val').value = e.target.value; });
+document.getElementById('m2').addEventListener('input', e => { document.getElementById('m2Val').value = e.target.value; });
+document.getElementById('m3').addEventListener('input', e => { document.getElementById('m3Val').value = e.target.value; });
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+</script>
+</body>
+</html>

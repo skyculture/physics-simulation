@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>磁镜 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>镜比R=Bmax/Bmin:</label><input type="range" id="mirrorRatio" min="1.5" max="10" step="0.5" value="3"><input type="number" id="mirrorRatioVal" value="3"></div>
+      <div class="ctrl-group"><label>初始俯仰角α(°):</label><input type="range" id="pitchAngle" min="5" max="85" step="1" value="45"><input type="number" id="pitchAngleVal" value="45"></div>
+      <div class="ctrl-group"><label>粒子数:</label><input type="range" id="nParticles" min="1" max="8" step="1" value="3"><input type="number" id="nParticlesVal" value="3"></div>
+      <div class="ctrl-group"><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">磁镜：非均匀磁场中带电粒子的约束。磁矩μ=mv⊥²/(2B)是绝热不变量，当粒子向强磁场区域运动时，v⊥增大而v∥减小。若初始俯仰角α满足sin²α > 1/R（R为镜比），粒子被反射；否则粒子逃逸。临界角αc = arcsin(1/√R)。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let particles = [];
+let time = 0;
+const DT = 0.03;
+const SUB_STEPS = 5;
+
+function Bfield(z, R) {
+  const L = 200;
+  const Bmin = 1;
+  const Bmax = R * Bmin;
+  return Bmin + (Bmax - Bmin) * (z * z) / (L * L);
+}
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; reset(); }
+}
+
+function reset() {
+  if(animationId) cancelAnimationFrame(animationId);
+  const R = parseFloat(document.getElementById('mirrorRatio').value);
+  const alpha0 = parseFloat(document.getElementById('pitchAngle').value) * Math.PI / 180;
+  const n = parseInt(document.getElementById('nParticles').value);
+  const colors = ['#58a6ff','#f78166','#3fb950','#ffa657','#d2a8ff','#3fb950','#f78166','#58a6ff'];
+
+  particles = [];
+  for(let i = 0; i < n; i++) {
+    const a = alpha0 + (i - n/2) * 0.08;
+    const v0 = 3;
+    const z0 = (i - n/2) * 15;
+    const B0 = Bfield(z0, R);
+    const vPerp = v0 * Math.sin(a);
+    const vPar = v0 * Math.cos(a);
+    const mu = vPerp * vPerp / (2 * B0);
+    particles.push({
+      z: z0, vz: vPar,
+      phase: Math.random() * Math.PI * 2,
+      mu: mu,
+      v0: v0,
+      color: colors[i % colors.length],
+      trail: [{z: z0, x: 0}],
+      escaped: false
+    });
+  }
+  time = 0;
+  draw();
+}
+
+function step() {
+  const R = parseFloat(document.getElementById('mirrorRatio').value);
+
+  particles.forEach(p => {
+    if(p.escaped) return;
+
+    const B = Bfield(p.z, R);
+    const vPerp2 = 2 * p.mu * B;
+    const vPerp = Math.sqrt(Math.max(0, vPerp2));
+    const vTotal2 = p.v0 * p.v0;
+
+    if(vPerp2 >= vTotal2) {
+      p.vz = -p.vz * 0.99;
+    } else {
+      const vPar = Math.sqrt(vTotal2 - vPerp2);
+      const sign = p.vz >= 0 ? 1 : -1;
+      p.vz = sign * vPar;
+    }
+
+    p.z += p.vz * DT;
+    p.phase += vPerp * DT * 2;
+
+    const x = vPerp / (Bfield(0, R)) * 15 * Math.cos(p.phase);
+    p.trail.push({z: p.z, x: x});
+    if(p.trail.length > 800) p.trail.shift();
+
+    if(Math.abs(p.z) > 250) {
+      p.escaped = true;
+    }
+  });
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const R = parseFloat(document.getElementById('mirrorRatio').value);
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const scaleX = canvas.width * 0.25;
+  const scaleZ = canvas.height * 0.0015;
+
+  ctx.strokeStyle = 'rgba(88,166,255,0.15)';
+  ctx.lineWidth = 1;
+  for(let z = -200; z <= 200; z += 20) {
+    const B = Bfield(z, R);
+    const r = scaleX * Math.sqrt(1 / B) * 3;
+    const sy = cy + z * scaleZ * 100;
+    ctx.beginPath();
+    ctx.moveTo(cx - r, sy);
+    ctx.lineTo(cx + r, sy);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  for(let side = -1; side <= 1; side += 2) {
+    ctx.beginPath();
+    for(let z = -200; z <= 200; z += 2) {
+      const B = Bfield(z, R);
+      const r = scaleX * Math.sqrt(1 / B) * 3;
+      const sy = cy + z * scaleZ * 100;
+      if(z === -200) ctx.moveTo(cx + side * r, sy);
+      else ctx.lineTo(cx + side * r, sy);
+    }
+    ctx.stroke();
+  }
+
+  for(let s = 0; s < SUB_STEPS; s++) step();
+
+  particles.forEach(p => {
+    if(p.trail.length > 1) {
+      ctx.strokeStyle = p.color + '60';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for(let i = 0; i < p.trail.length; i++) {
+        const t = p.trail[i];
+        const sx = cx + t.x * 3;
+        const sy = cy + t.z * scaleZ * 100;
+        if(i === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+    }
+
+    if(!p.escaped) {
+      const B = Bfield(p.z, R);
+      const vPerp2 = 2 * p.mu * B;
+      const vPerp = Math.sqrt(Math.max(0, vPerp2));
+      const x = vPerp / Bfield(0, R) * 15 * Math.cos(p.phase);
+      const sx = cx + x * 3;
+      const sy = cy + p.z * scaleZ * 100;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  const alphaC = Math.asin(1 / Math.sqrt(R)) * 180 / Math.PI;
+  const alpha0 = parseFloat(document.getElementById('pitchAngle').value);
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`镜比 R = ${R.toFixed(1)}`, 10, 20);
+  ctx.fillText(`临界角 αc = ${alphaC.toFixed(1)}°`, 10, 40);
+  ctx.fillText(`初始俯仰角 α = ${alpha0}°`, 10, 60);
+
+  const trapped = alpha0 > alphaC;
+  ctx.fillStyle = trapped ? '#3fb950' : '#f78166';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(trapped ? `α > αc → 粒子被约束 (磁镜反射)` : `α < αc → 粒子逃逸 (损失锥)`, 10, 85);
+
+  const escaped = particles.filter(p => p.escaped).length;
+  const total = particles.length;
+  if(escaped > 0) {
+    ctx.fillStyle = '#f78166';
+    ctx.fillText(`逃逸粒子: ${escaped}/${total}`, 10, 105);
+  }
+
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('mirrorRatio').addEventListener('input', e => { document.getElementById('mirrorRatioVal').value = e.target.value; });
+document.getElementById('pitchAngle').addEventListener('input', e => { document.getElementById('pitchAngleVal').value = e.target.value; });
+document.getElementById('nParticles').addEventListener('input', e => { document.getElementById('nParticlesVal').value = e.target.value; });
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+</script>
+</body>
+</html>

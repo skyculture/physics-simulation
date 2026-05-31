@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📐 RLC振荡电路</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📐 RLC振荡电路</h1>
+  <p>RLC串联电路的自由振荡和受迫振荡演示</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>电阻 R (Ω): <span id="rVal">5</span></label>
+      <input type="range" id="resistor" min="0" max="100" step="1" value="5">
+    </div>
+    <div class="control-group">
+      <label>电感 L (mH): <span id="lVal">50</span></label>
+      <input type="range" id="inductor" min="10" max="200" step="10" value="50">
+    </div>
+    <div class="control-group">
+      <label>电容 C (μF): <span id="cVal">10</span></label>
+      <input type="range" id="capacitor" min="1" max="100" step="1" value="10">
+    </div>
+    <div class="control-group">
+      <label>激励电压 V (V): <span id="vVal">10</span></label>
+      <input type="range" id="voltage" min="0" max="50" step="1" value="10">
+    </div>
+    <div class="control-group">
+      <button id="startBtn">▶️ 开始振荡</button>
+      <button id="resetBtn">🔄 重置</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">固有角频率:</span><span class="value" id="omega">0 rad/s</span></div>
+      <div class="item"><span class="label">固有频率:</span><span class="value" id="freq">0 Hz</span></div>
+      <div class="item"><span class="label">阻尼系数:</span><span class="value" id="damping">0 s⁻¹</span></div>
+      <div class="item"><span class="label">品质因子 Q:</span><span class="value" id="qFactor">0</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let R = 5;
+let L = 0.05;
+let C = 10e-6;
+let V0 = 10;
+
+let Q = C * V0;
+let I = 0;
+let time = 0;
+let history = [];
+let running = false;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = 120;
+  const scale = 60;
+
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 150, cy);
+  ctx.lineTo(cx + 150, cy);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 40);
+  ctx.lineTo(cx, cy - 80);
+  ctx.stroke();
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(cx - 20, cy - 45 - i * 8);
+    ctx.lineTo(cx + 20, cy - 45 - i * 8);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#f78166';
+  ctx.beginPath();
+  ctx.moveTo(cx + 40, cy - 40);
+  ctx.lineTo(cx + 80, cy - 40);
+  ctx.lineTo(cx + 80, cy + 40);
+  ctx.lineTo(cx + 40, cy + 40);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx + 80, cy - 20);
+  ctx.lineTo(cx + 120, cy - 20);
+  ctx.lineTo(cx + 120, cy + 20);
+  ctx.lineTo(cx + 80, cy + 20);
+  ctx.stroke();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('C', cx - 5, cy + 55);
+  ctx.fillText('L', cx + 45, cy - 90);
+  ctx.fillText('R', cx + 130, cy + 5);
+
+  const graphY = 220;
+  const graphHeight = 160;
+  const graphWidth = canvas.width - 40;
+
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(20, graphY, graphWidth, graphHeight);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = graphY + (graphHeight / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(20, y);
+    ctx.lineTo(canvas.width - 20, y);
+    ctx.stroke();
+  }
+
+  if (history.length > 1) {
+    ctx.strokeStyle = '#3fb950';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < history.length; i++) {
+      const x = 20 + (i / (history.length - 1)) * graphWidth;
+      const y = graphY + graphHeight / 2 + history[i] * scale * 0.5;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#3fb950';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('电容电压 Vc(t)', 25, graphY + 15);
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText('时间 t', canvas.width - 50, graphY + graphHeight - 5);
+}
+
+function update() {
+  if (!running) return;
+
+  const dt = 0.0005;
+  const steps = 5;
+
+  for (let s = 0; s < steps; s++) {
+    const dI_dt = (Q / C - I * R) / L;
+    const dQ_dt = -I;
+
+    I += dI_dt * dt;
+    Q += dQ_dt * dt;
+    time += dt;
+  }
+
+  history.push(Q / C);
+  if (history.length > 500) history.shift();
+}
+
+function animate() {
+  update();
+  draw();
+  requestAnimationFrame(animate);
+}
+
+function calcParams() {
+  const omega0 = 1 / Math.sqrt(L * C);
+  const freq = omega0 / (2 * Math.PI);
+  const alpha = R / (2 * L);
+  const Q = (1 / R) * Math.sqrt(L / C);
+
+  document.getElementById('omega').textContent = omega0.toFixed(0) + ' rad/s';
+  document.getElementById('freq').textContent = freq.toFixed(1) + ' Hz';
+  document.getElementById('damping').textContent = alpha.toFixed(0) + ' s⁻¹';
+  document.getElementById('qFactor').textContent = Q.toFixed(1);
+}
+
+document.getElementById('resistor').addEventListener('input', (e) => {
+  R = parseFloat(e.target.value);
+  document.getElementById('rVal').textContent = R;
+  calcParams();
+});
+
+document.getElementById('inductor').addEventListener('input', (e) => {
+  L = parseFloat(e.target.value) / 1000;
+  document.getElementById('lVal').textContent = e.target.value;
+  calcParams();
+});
+
+document.getElementById('capacitor').addEventListener('input', (e) => {
+  C = parseFloat(e.target.value) * 1e-6;
+  document.getElementById('cVal').textContent = e.target.value;
+  calcParams();
+});
+
+document.getElementById('voltage').addEventListener('input', (e) => {
+  V0 = parseFloat(e.target.value);
+  document.getElementById('vVal').textContent = V0;
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  Q = C * V0;
+  I = 0;
+  time = 0;
+  history = [];
+  running = !running;
+  document.getElementById('startBtn').textContent = running ? '⏸️ 暂停' : '▶️ 开始振荡';
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  Q = C * V0;
+  I = 0;
+  time = 0;
+  history = [];
+  running = false;
+  document.getElementById('startBtn').textContent = '▶️ 开始振荡';
+});
+
+calcParams();
+draw();
+animate();
+</script>
+</body>
+</html>

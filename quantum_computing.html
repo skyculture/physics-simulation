@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量子计算 - 量子与核物理</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
+  .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
+  .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
+  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
+  .back-link:hover { background:#1f2937; }
+  .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
+  .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
+  canvas { display:block; border-radius:4px; background:#0d1117; }
+  .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
+  .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; }
+  .control-row label { font-size:0.82rem; color:var(--text); white-space:nowrap; }
+  .control-row input[type="range"] { flex:1; accent-color:var(--accent4); }
+  .control-row .val { font-size:0.78rem; color:var(--accent4); min-width:36px; text-align:right; font-weight:600; }
+  .gate-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:8px; }
+  .gate-btn { padding:8px 4px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.8rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; text-align:center; }
+  .gate-btn:hover { background:#30363d; border-color:var(--accent4); }
+  .gate-btn.applied { background:#1f6feb33; border-color:var(--accent4); color:var(--accent4); }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
+  .btn:hover { background:#30363d; }
+  .btn.primary { border-color:var(--accent4); color:var(--accent4); }
+  .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
+  .stat-item:last-child { border-bottom:none; }
+  .stat-label { color:#8b949e; }
+  .stat-value { color:var(--accent4); font-weight:600; }
+  @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>💻 量子计算 — 量子比特与量子门</h1>
+    <div class="subtitle">量子力学 — 单量子比特操作、Bloch球表示与量子电路</div>
+  </div>
+
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>🎛️ 量子门操作</h3>
+      <div class="gate-grid">
+        <button class="gate-btn" data-gate="H">H (Hadamard)</button>
+        <button class="gate-btn" data-gate="X">X (NOT)</button>
+        <button class="gate-btn" data-gate="Y">Y</button>
+        <button class="gate-btn" data-gate="Z">Z</button>
+        <button class="gate-btn" data-gate="S">S (Phase)</button>
+        <button class="gate-btn" data-gate="T">T (π/8)</button>
+      </div>
+      <div class="control-row">
+        <label>旋转角度 θ</label>
+        <input type="range" id="thetaSlider" min="0" max="360" step="1" value="45">
+        <span class="val" id="thetaVal">45°</span>
+      </div>
+      <div class="control-row">
+        <label>旋转角度 φ</label>
+        <input type="range" id="phiSlider" min="0" max="360" step="1" value="0">
+        <span class="val" id="phiVal">0°</span>
+      </div>
+      <button class="btn primary" id="btnCustomGate" style="width:100%;margin-top:4px;">🎯 应用任意旋转门 R(θ,φ)</button>
+      <button class="btn" id="btnReset" style="width:100%;margin-top:4px;">↺ 重置为 |0⟩</button>
+    </div>
+    <div class="panel-box">
+      <h3>📊 量子态信息</h3>
+      <div class="stat-item"><span class="stat-label">状态 |ψ⟩</span><span class="stat-value" id="statState">|0⟩</span></div>
+      <div class="stat-item"><span class="stat-label">α (|0⟩ 振幅)</span><span class="stat-value" id="statAlpha">1.00</span></div>
+      <div class="stat-item"><span class="stat-label">β (|1⟩ 振幅)</span><span class="stat-value" id="statBeta">0.00</span></div>
+      <div class="stat-item"><span class="stat-label">P(|0⟩)</span><span class="stat-value" id="statP0">100.0%</span></div>
+      <div class="stat-item"><span class="stat-label">P(|1⟩)</span><span class="stat-value" id="statP1">0.0%</span></div>
+      <div class="stat-item"><span class="stat-label">Bloch θ</span><span class="stat-value" id="statBlochTheta">0°</span></div>
+      <div class="stat-item"><span class="stat-label">Bloch φ</span><span class="stat-value" id="statBlochPhi">0°</span></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const canvas=document.getElementById('simCanvas');
+  const ctx=canvas.getContext('2d');
+  let W=700,H=500;
+  function resize(){const dpr=window.devicePixelRatio||1;canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+
+  let alpha=1,beta=0;
+  let gateHistory=[];
+
+  function applyGate(gate){
+    let a=alpha,b=beta;
+    const sqrt2=Math.sqrt(2);
+    switch(gate){
+      case'H':{const na=(a+b)/sqrt2,nb=(a-b)/sqrt2;a=na;b=nb;break;}
+      case'X':{const na=b,nb=a;a=na;b=nb;break;}
+      case'Y':{const na=-b,nb=a;a={re:0,im:-b.re?1:0};break;}
+      case'Z':b={re:-b.re,im:-b.im};break;
+      case'S':b={re:-b.im||0,im:b.re||0};break;
+      case'T':{const c=Math.cos(Math.PI/4),s=Math.sin(Math.PI/4);b={re:b.re*c-b.im*s,im:b.re*s+b.im*c};break;}
+    }
+    if(typeof a==='object'){let ar=a.re||0,ai=a.im||0;a={re:ar,im:ai};}
+    if(typeof b==='object'){let br=b.re||0,bi=b.im||0;b={re:br,im:bi};}
+    normalize();
+  }
+
+  function applyRotation(thetaDeg,phiDeg){
+    const th=thetaDeg*Math.PI/180,ph=phiDeg*Math.PI/180;
+    const a={re:alpha.re||alpha,im:alpha.im||0};
+    const b={re:beta.re||beta,im:beta.im||0};
+    const na={re:a.re*Math.cos(th/2)-a.im*Math.sin(th/2),im:a.re*Math.sin(th/2)+a.im*Math.cos(th/2)};
+    const nb={re:-Math.sin(th/2)*(Math.cos(ph)*b.re+Math.sin(ph)*b.im),im:Math.sin(th/2)*(Math.sin(ph)*b.re-Math.cos(ph)*b.im)};
+    alpha={re:na.re-nb.im,im:na.im+nb.re};
+    beta={re:Math.sin(th/2)*(Math.cos(ph)*a.re-Math.sin(ph)*a.im)+Math.cos(th/2)*b.re,
+          im:Math.sin(th/2)*(Math.sin(ph)*a.re+Math.cos(ph)*a.im)+Math.cos(th/2)*b.im};
+    normalize();
+  }
+
+  function normalize(){
+    let ar=typeof alpha==='object'?(alpha.re||0):alpha;
+    let ai=typeof alpha==='object'?(alpha.im||0):0;
+    let br=typeof beta==='object'?(beta.re||0):beta;
+    let bi=typeof beta==='object'?(beta.im||0):0;
+    const norm=Math.sqrt(ar*ar+ai*ai+br*br+bi*bi);
+    if(norm>0){ar/=norm;ai/=norm;br/=norm;bi/=norm;}
+    alpha={re:ar,im:ai};beta={re:br,im:bi};
+  }
+
+  function resetState(){alpha={re:1,im:0};beta={re:0,im:0};gateHistory=[];document.querySelectorAll('.gate-btn').forEach(b=>b.classList.remove('applied'));}
+
+  function toComplex(v){if(typeof v==='object')return v;return{re:v,im:0};}
+
+  function drawBlochSphere(cx,cy,r){
+    ctx.strokeStyle='#30363d';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+
+    ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(cx,cy,r,r*0.35,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+
+    ctx.strokeStyle='#30363d';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke();
+
+    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('|0⟩',cx,cy-r-8);ctx.fillText('|1⟩',cx,cy+r+14);
+    ctx.fillText('|+⟩',cx+r+10,cy+4);ctx.fillText('|−⟩',cx-r-10,cy+4);
+
+    const alphaC=typeof alpha==='object'?alpha:{re:alpha,im:0};
+    const betaC=typeof beta==='object'?beta:{re:beta,im:0};
+    const a=alphaC,b=betaC;
+    const theta=2*Math.acos(Math.min(1,Math.max(-1,a.re)));
+    const phi=Math.atan2(b.im,b.re)-Math.atan2(a.im,a.re);
+
+    const x=Math.sin(theta)*Math.cos(phi);
+    const y=Math.sin(theta)*Math.sin(phi);
+    const z=Math.cos(theta);
+    const sx=cx+x*r,sy=cy-z*r;
+
+    ctx.fillStyle='rgba(247,129,102,0.3)';ctx.beginPath();ctx.arc(sx,sy,6,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f78166';ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#f78166';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(sx,sy);ctx.stroke();
+
+    document.getElementById('statBlochTheta').textContent=(theta*180/Math.PI).toFixed(1)+'°';
+    document.getElementById('statBlochPhi').textContent=(phi*180/Math.PI).toFixed(1)+'°';
+  }
+
+  function drawProbBars(cx,cy,w,h){
+    const alphaC=typeof alpha==='object'?alpha:{re:alpha,im:0};
+    const betaC=typeof beta==='object'?beta:{re:beta,im:0};
+    const p0=alphaC.re*alphaC.re+alphaC.im*alphaC.im;
+    const p1=betaC.re*betaC.re+betaC.im*betaC.im;
+    const barW=60,barMax=h*0.6,barY=cy+h*0.25;
+    const barX0=cx-w*0.3,barX1=cx+w*0.3-barW;
+
+    ctx.fillStyle='#30363d';ctx.fillRect(barX0,barY,barW,barMax);
+    ctx.fillStyle='rgba(88,166,255,0.7)';ctx.fillRect(barX0,barY+barMax*(1-p0),barW,barMax*p0);
+    ctx.strokeStyle='#30363d';ctx.strokeRect(barX0,barY,barW,barMax);
+
+    ctx.fillStyle='#30363d';ctx.fillRect(barX1,barY,barW,barMax);
+    ctx.fillStyle='rgba(63,185,80,0.7)';ctx.fillRect(barX1,barY+barMax*(1-p1),barW,barMax*p1);
+    ctx.strokeStyle='#30363d';ctx.strokeRect(barX1,barY,barW,barMax);
+
+    ctx.fillStyle='#c9d1d9';ctx.font='11px sans-serif';ctx.textAlign='center';
+    ctx.fillText('|0⟩',barX0+barW/2,barY+barMax+16);
+    ctx.fillText('|1⟩',barX1+barW/2,barY+barMax+16);
+    ctx.fillText((p0*100).toFixed(1)+'%',barX0+barW/2,barY-6);
+    ctx.fillText((p1*100).toFixed(1)+'%',barX1+barW/2,barY-6);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+
+    const blochCx=W*0.32,blochCy=H*0.45,blochR=140;
+    drawBlochSphere(blochCx,blochCy,blochR);
+
+    const probCx=W*0.72,probCy=H*0.45;
+    drawProbBars(probCx,probCy,W*0.3,H*0.7);
+
+    ctx.strokeStyle='#30363d';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(W*0.55,40);ctx.lineTo(W*0.55,H-40);ctx.stroke();
+
+    ctx.fillStyle='#8b949e';ctx.font='11px sans-serif';ctx.textAlign='center';
+    ctx.fillText('Bloch 球表示',blochCx,30);
+    ctx.fillText('测量概率',probCx,30);
+
+    const alphaC=typeof alpha==='object'?alpha:{re:alpha,im:0};
+    const betaC=typeof beta==='object'?beta:{re:beta,im:0};
+    const p0=alphaC.re*alphaC.re+alphaC.im*alphaC.im;
+    const p1=betaC.re*betaC.re+betaC.im*betaC.im;
+
+    document.getElementById('statAlpha').textContent=alphaC.re.toFixed(3)+(alphaC.im>=0?'+':'')+alphaC.im.toFixed(3)+'i';
+    document.getElementById('statBeta').textContent=betaC.re.toFixed(3)+(betaC.im>=0?'+':'')+betaC.im.toFixed(3)+'i';
+    document.getElementById('statP0').textContent=(p0*100).toFixed(1)+'%';
+    document.getElementById('statP1').textContent=(p1*100).toFixed(1)+'%';
+
+    if(p0>0.99)document.getElementById('statState').textContent='|0⟩';
+    else if(p1>0.99)document.getElementById('statState').textContent='|1⟩';
+    else if(Math.abs(p0-0.5)<0.01&&Math.abs(p1-0.5)<0.01)document.getElementById('statState').textContent='|+⟩';
+    else document.getElementById('statState').textContent='|ψ⟩';
+  }
+
+  document.querySelectorAll('.gate-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const gate=btn.dataset.gate;
+      applyGate(gate);
+      btn.classList.toggle('applied');
+      gateHistory.push(gate);
+      draw();
+    });
+  });
+
+  document.getElementById('thetaSlider').addEventListener('input',e=>{document.getElementById('thetaVal').textContent=e.target.value+'°';});
+  document.getElementById('phiSlider').addEventListener('input',e=>{document.getElementById('phiVal').textContent=e.target.value+'°';});
+
+  document.getElementById('btnCustomGate').addEventListener('click',()=>{
+    const theta=parseInt(document.getElementById('thetaSlider').value);
+    const phi=parseInt(document.getElementById('phiSlider').value);
+    applyRotation(theta,phi);
+    gateHistory.push('R('+theta+'°,'+phi+'°)');
+    draw();
+  });
+
+  document.getElementById('btnReset').addEventListener('click',()=>{resetState();draw();});
+
+  function init(){resize();resetState();draw();}
+  window.addEventListener('resize',()=>{resize();draw();});
+  init();
+})();
+</script>
+</body>
+</html>

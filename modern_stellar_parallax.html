@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星际测距 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div class="ctrl-group"><label>恒星距离:</label><input type="range" id="distance" min="1" max="20" step="1" value="5"><span id="distanceVal">5</span> 秒差距(pc)</div>
+    <div class="ctrl-group"><label>轨道半径:</label><input type="range" id="orbitRadius" min="1" max="3" step="0.5" value="1"><span id="orbitRadiusVal">1</span> AU</div>
+    <div class="ctrl-group"><button id="animateBtn">动画演示</button></div>
+  </div>
+  <div id="info">三角视差法：利用地球绕太阳公转产生的基线，通过测量恒星在天球上的位置变化来计算距离。距离 d = 1/θ（θ以角秒为单位），1秒差距 = 3.26光年。</div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId = null;
+let t = 0;
+let isAnimating = false;
+let bgStars = [];
+
+function initStars() {
+  bgStars = [];
+  for (let i = 0; i < 80; i++) {
+    bgStars.push({
+      x: Math.random(),
+      y: Math.random(),
+      r: Math.random() * 0.003 + 0.001,
+      a: Math.random() * 0.5 + 0.2
+    });
+  }
+}
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+  const distance = parseFloat(document.getElementById('distance').value);
+  const orbitRadius = parseFloat(document.getElementById('orbitRadius').value);
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, w, h);
+
+  for (const star of bgStars) {
+    ctx.fillStyle = `rgba(210,168,255,${star.a})`;
+    ctx.beginPath();
+    ctx.arc(star.x * w, star.y * h, star.r * S, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const baselineHalf = S * 0.3;
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = S * 0.004;
+  ctx.beginPath();
+  ctx.moveTo(cx - baselineHalf, cy);
+  ctx.lineTo(cx + baselineHalf, cy);
+  ctx.stroke();
+
+  ctx.fillStyle = '#8b949e';
+  const fs = S * 0.025;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('地球轨道基线', cx, cy + S * 0.04);
+
+  if (isAnimating) {
+    const earthAngle = t;
+    const earthX = cx + Math.sin(earthAngle) * baselineHalf;
+    const earthY = cy;
+
+    ctx.strokeStyle = 'rgba(88,166,255,0.2)';
+    ctx.lineWidth = S * 0.002;
+    ctx.beginPath();
+    ctx.arc(cx, cy, baselineHalf, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#58a6ff';
+    ctx.beginPath();
+    ctx.arc(earthX, earthY, S * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0d1117';
+    ctx.font = `${fs * 0.7}px sans-serif`;
+    ctx.fillText('地球', earthX, earthY + S * 0.005);
+  } else {
+    ctx.fillStyle = '#58a6ff';
+    ctx.beginPath();
+    ctx.arc(cx - baselineHalf, cy, S * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + baselineHalf, cy, S * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0d1117';
+    ctx.font = `${fs * 0.7}px sans-serif`;
+    ctx.fillText('E₁', cx - baselineHalf, cy + S * 0.005);
+    ctx.fillText('E₂', cx + baselineHalf, cy + S * 0.005);
+  }
+
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(cx, cy, S * 0.035, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0d1117';
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillText('☀', cx, cy + S * 0.01);
+
+  const starY = cy - S * 0.35;
+  ctx.strokeStyle = 'rgba(210,168,255,0.6)';
+  ctx.lineWidth = S * 0.003;
+  ctx.beginPath();
+  if (isAnimating) {
+    const earthX = cx + Math.sin(t) * baselineHalf;
+    ctx.moveTo(earthX, cy);
+    ctx.lineTo(cx, starY);
+  } else {
+    ctx.moveTo(cx - baselineHalf, cy);
+    ctx.lineTo(cx, starY);
+    ctx.lineTo(cx + baselineHalf, cy);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = '#d2a8ff';
+  ctx.beginPath();
+  ctx.arc(cx, starY, S * 0.025, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0d1117';
+  ctx.font = `${fs * 0.7}px sans-serif`;
+  ctx.fillText('★', cx, starY + S * 0.005);
+
+  const parallaxAngle = 1 / distance;
+  const angleVisual = parallaxAngle * S * 0.5;
+
+  if (!isAnimating) {
+    ctx.strokeStyle = 'rgba(255,166,87,0.5)';
+    ctx.lineWidth = S * 0.002;
+    ctx.beginPath();
+    ctx.moveTo(cx - baselineHalf, cy);
+    ctx.lineTo(cx - baselineHalf + Math.tan(angleVisual) * S * 0.35, starY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + baselineHalf, cy);
+    ctx.lineTo(cx + baselineHalf - Math.tan(angleVisual) * S * 0.35, starY);
+    ctx.stroke();
+  }
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#d2a8ff';
+  ctx.font = `${S * 0.028}px sans-serif`;
+  const infoX = S * 0.03, infoY = S * 0.05;
+  ctx.fillText(`距离 d = ${distance} pc`, infoX, infoY);
+  ctx.fillText(`基线 = ${orbitRadius * 2} AU`, infoX, infoY + fs * 1.5);
+  ctx.fillStyle = '#ffa657';
+  ctx.fillText(`视差角 θ = ${parallaxAngle.toFixed(3)} 角秒`, infoX, infoY + fs * 3);
+  ctx.fillText(`距离 = ${(distance * 3.26).toFixed(2)} 光年`, infoX, infoY + fs * 4.5);
+
+  if (isAnimating) t += 0.015;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('distance').addEventListener('input', e => {
+  document.getElementById('distanceVal').textContent = e.target.value;
+});
+document.getElementById('orbitRadius').addEventListener('input', e => {
+  document.getElementById('orbitRadiusVal').textContent = e.target.value;
+});
+document.getElementById('animateBtn').addEventListener('click', () => {
+  isAnimating = !isAnimating;
+  document.getElementById('animateBtn').textContent = isAnimating ? '停止动画' : '动画演示';
+});
+
+resize();
+window.addEventListener('resize', resize);
+initStars();
+draw();
+</script>
+</body>
+</html>

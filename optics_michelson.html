@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>迈克尔逊干涉仪 - 物理数值仿真平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+.container{width:100%;max-width:1100px}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.canvas-row{display:flex;gap:16px;margin-bottom:20px}
+@media(max-width:860px){.canvas-row{flex-direction:column}}
+.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
+.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
+.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+.info-item{display:flex;align-items:baseline;gap:6px}
+.info-item .info-label{color:#8b949e}
+.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.btn-row{display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn-start{background:#238636;color:#fff;border-color:#2ea043}
+.btn-start:hover{background:#2ea043}
+.btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
+.btn-pause:hover{background:#bb8009}
+.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
+.btn-reset:hover{background:#30363d}
+.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>迈克尔逊干涉仪</h1>
+    <p class="subtitle">迈克尔逊干涉仪通过分束器将光分为两束，经反射后重新汇合产生干涉。移动反射镜可改变光程差，观察干涉条纹的变化。</p>
+  </div>
+  <div class="canvas-row">
+    <div class="panel">
+      <h2>🔬 干涉仪光路</h2>
+      <canvas id="canvasSetup" width="680" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h2>📊 干涉条纹</h2>
+      <canvas id="canvasFringe" width="680" height="420"></canvas>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>反射镜M1距离 d <span class="val" id="valD">5.00 μm</span></label>
+      <input type="range" id="sliderD" min="0" max="20" step="0.01" value="5">
+    </div>
+    <div class="control-group">
+      <label>波长 λ <span class="val" id="valLambda">632.8 nm</span></label>
+      <input type="range" id="sliderLambda" min="380" max="780" step="0.1" value="632.8">
+    </div>
+    <div class="control-group">
+      <label>M2倾角 α <span class="val" id="valAlpha">0.00°</span></label>
+      <input type="range" id="sliderAlpha" min="0" max="2" step="0.01" value="0">
+    </div>
+  </div>
+  <div class="info-bar">
+    <div class="info-item"><span class="info-label">光程差 Δ=</span><span class="info-value" id="infoDelta">10.00 μm</span></div>
+    <div class="info-item"><span class="info-label">干涉级次 m=</span><span class="info-value" id="infoM">15.8</span></div>
+    <div class="info-item"><span class="info-label">条纹类型=</span><span class="info-value" id="infoType">等倾干涉</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart">▶ 动画</button>
+    <button class="btn btn-pause" id="btnPause">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset">↺ 重置</button>
+  </div>
+  <p class="legend-note">💡 提示：移动M1反射镜改变光程差，条纹会移动。每移动λ/2距离，条纹移动一个级次。<br>当M2有微小倾角时，可观察到等厚干涉条纹（直条纹）。</p>
+</div>
+<script>
+var canvasSetup=document.getElementById('canvasSetup');
+var ctxS=canvasSetup.getContext('2d');
+var canvasFringe=document.getElementById('canvasFringe');
+var ctxF=canvasFringe.getContext('2d');
+var sliderD=document.getElementById('sliderD');
+var sliderLambda=document.getElementById('sliderLambda');
+var sliderAlpha=document.getElementById('sliderAlpha');
+var valD=document.getElementById('valD');
+var valLambda=document.getElementById('valLambda');
+var valAlpha=document.getElementById('valAlpha');
+var infoDelta=document.getElementById('infoDelta');
+var infoM=document.getElementById('infoM');
+var infoType=document.getElementById('infoType');
+var btnStart=document.getElementById('btnStart');
+var btnPause=document.getElementById('btnPause');
+var btnReset=document.getElementById('btnReset');
+
+var d=5e-6,lambda=632.8e-9,alpha=0;
+var running=false,animTime=0,lastFrameTime=null,animFrameId=null;
+
+function wavelengthToRGB(w){
+  var r,g,b;
+  if(w>=380&&w<440){r=-(w-440)/(440-380);g=0;b=1}
+  else if(w>=440&&w<490){r=0;g=(w-440)/(490-440);b=1}
+  else if(w>=490&&w<510){r=0;g=1;b=-(w-510)/(510-490)}
+  else if(w>=510&&w<580){r=(w-510)/(580-510);g=1;b=0}
+  else if(w>=580&&w<645){r=1;g=-(w-645)/(645-580);b=0}
+  else if(w>=645&&w<=780){r=1;g=0;b=0}
+  else{r=0;g=0;b=0}
+  var factor=1;
+  if(w>=380&&w<420)factor=0.3+0.7*(w-380)/(420-380);
+  else if(w>700&&w<=780)factor=0.3+0.7*(780-w)/(780-700);
+  var gamma=0.8;
+  r=Math.round(255*Math.pow(r*factor,gamma));
+  g=Math.round(255*Math.pow(g*factor,gamma));
+  b=Math.round(255*Math.pow(b*factor,gamma));
+  return[r,g,b];
+}
+
+function updateUI(){
+  valD.textContent=(d*1e6).toFixed(2)+' μm';
+  valLambda.textContent=(lambda*1e9).toFixed(1)+' nm';
+  valAlpha.textContent=alpha.toFixed(2)+'°';
+  var delta=2*d;
+  infoDelta.textContent=(delta*1e6).toFixed(2)+' μm';
+  infoM.textContent=(delta/lambda).toFixed(1);
+  infoType.textContent=alpha<0.05?'等倾干涉（圆环）':'等厚干涉（直条纹）';
+}
+
+sliderD.addEventListener('input',function(){d=+sliderD.value*1e-6;updateUI();if(!running)draw()});
+sliderLambda.addEventListener('input',function(){lambda=+sliderLambda.value*1e-9;updateUI();if(!running)draw()});
+sliderAlpha.addEventListener('input',function(){alpha=+sliderAlpha.value;updateUI();if(!running)draw()});
+
+btnStart.addEventListener('click',function(){
+  if(running){pause();return}
+  running=true;btnStart.classList.add('active');btnPause.classList.remove('active');
+  if(!animFrameId)animFrameId=requestAnimationFrame(animate);
+});
+btnPause.addEventListener('click',pause);
+function pause(){running=false;btnStart.classList.remove('active');btnPause.classList.add('active')}
+btnReset.addEventListener('click',function(){
+  d=5e-6;lambda=632.8e-9;alpha=0;animTime=0;lastFrameTime=null;
+  sliderD.value=5;sliderLambda.value=632.8;sliderAlpha.value=0;
+  updateUI();if(!running)draw();
+});
+
+function drawSetup(){
+  var W=canvasSetup.width,H=canvasSetup.height;
+  ctxS.clearRect(0,0,W,H);
+  ctxS.fillStyle='#0d1117';ctxS.fillRect(0,0,W,H);
+  var cx=W*0.45,cy=H*0.5;
+
+  ctxS.fillStyle='#ffa657';ctxS.beginPath();ctxS.arc(W*0.08,cy,8,0,Math.PI*2);ctxS.fill();
+  ctxS.strokeStyle='rgba(255,166,87,0.4)';ctxS.lineWidth=1;
+  for(var a=0;a<Math.PI*2;a+=0.8){ctxS.beginPath();ctxS.moveTo(W*0.08+Math.cos(a)*10,cy+Math.sin(a)*10);ctxS.lineTo(W*0.08+Math.cos(a)*18,cy+Math.sin(a)*18);ctxS.stroke()}
+  ctxS.fillStyle='#c9d1d9';ctxS.font='11px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('激光',W*0.08,cy+25);
+
+  ctxS.strokeStyle='#ffa657';ctxS.lineWidth=2;
+  ctxS.beginPath();ctxS.moveTo(W*0.08+10,cy);ctxS.lineTo(cx-8,cy);ctxS.stroke();
+
+  ctxS.strokeStyle='#8b949e';ctxS.lineWidth=2;ctxS.strokeRect(cx-6,cy-6,12,12);
+  ctxS.fillStyle='rgba(88,166,255,0.3)';ctxS.fillRect(cx-5,cy-5,10,10);
+  ctxS.fillStyle='#c9d1d9';ctxS.font='10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('BS',cx,cy+22);
+  ctxS.font='9px sans-serif';ctxS.fillText('分束器',cx,cy+34);
+
+  ctxS.strokeStyle='#58a6ff';ctxS.lineWidth=2;
+  ctxS.beginPath();ctxS.moveTo(cx,cy-8);ctxS.lineTo(cx,cy-H*0.32);ctxS.stroke();
+  ctxS.fillStyle='#79c0ff';ctxS.fillRect(cx-12,cy-H*0.35,24,8);
+  ctxS.strokeStyle='#58a6ff';ctxS.lineWidth=1.5;ctxS.strokeRect(cx-12,cy-H*0.35,24,8);
+  ctxS.fillStyle='#c9d1d9';ctxS.font='10px sans-serif';ctxS.fillText('M1',cx+20,cy-H*0.33);
+
+  ctxS.strokeStyle='#f85149';ctxS.lineWidth=2;
+  ctxS.beginPath();ctxS.moveTo(cx+8,cy);ctxS.lineTo(cx+W*0.32,cy);ctxS.stroke();
+  ctxS.fillStyle='#f85149';ctxS.fillRect(cx+W*0.32,cy-12,8,24);
+  ctxS.strokeStyle='#f85149';ctxS.lineWidth=1.5;ctxS.strokeRect(cx+W*0.32,cy-12,8,24);
+  ctxS.fillStyle='#c9d1d9';ctxS.font='10px sans-serif';ctxS.textAlign='left';
+  ctxS.fillText('M2',cx+W*0.32+12,cy+4);
+
+  ctxS.strokeStyle='#3fb950';ctxS.lineWidth=2;
+  ctxS.beginPath();ctxS.moveTo(cx-4,cy+4);ctxS.lineTo(W*0.15,H*0.85);ctxS.stroke();
+  ctxS.fillStyle='#3fb950';ctxS.beginPath();ctxS.arc(W*0.12,H*0.88,12,0,Math.PI*2);ctxS.fill();
+  ctxS.fillStyle='#0d1117';ctxS.beginPath();ctxS.arc(W*0.12,H*0.88,6,0,Math.PI*2);ctxS.fill();
+  ctxS.fillStyle='#c9d1d9';ctxS.font='10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('探测器',W*0.12,H*0.88+22);
+
+  ctxS.strokeStyle='rgba(88,166,255,0.3)';ctxS.lineWidth=1;ctxS.setLineDash([3,3]);
+  ctxS.beginPath();ctxS.moveTo(cx,cy-H*0.35);ctxS.lineTo(cx,cy);ctxS.stroke();
+  ctxS.setLineDash([]);
+  ctxS.strokeStyle='rgba(248,81,73,0.3)';ctxS.lineWidth=1;ctxS.setLineDash([3,3]);
+  ctxS.beginPath();ctxS.moveTo(cx+W*0.32,cy);ctxS.lineTo(cx,cy);ctxS.stroke();
+  ctxS.setLineDash([]);
+
+  ctxS.fillStyle='#ffa657';ctxS.font='bold 11px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('Δ = 2d',cx+W*0.16,cy+40);
+  ctxS.fillStyle='#8b949e';ctxS.font='10px sans-serif';
+  ctxS.fillText('d = '+(d*1e6).toFixed(2)+' μm',cx+W*0.16,cy+55);
+}
+
+function drawFringe(){
+  var W=canvasFringe.width,H=canvasFringe.height;
+  ctxF.clearRect(0,0,W,H);
+  ctxF.fillStyle='#0d1117';ctxF.fillRect(0,0,W,H);
+  var colors=wavelengthToRGB(lambda*1e9);
+  var cx=W/2,cy=H/2;
+  var maxR=Math.min(W,H)*0.45;
+  var delta=2*d;
+  var alphaRad=alpha*Math.PI/180;
+
+  if(alpha<0.05){
+    var imgData=ctxF.createImageData(W,H);
+    var data=imgData.data;
+    for(var y=0;y<H;y++){
+      for(var x=0;x<W;x++){
+        var rx=(x-cx)/maxR;
+        var ry=(y-cy)/maxR;
+        var r2=rx*rx+ry*ry;
+        if(r2>1)continue;
+        var sinTheta2=r2*0.01;
+        var phase=2*Math.PI*delta*Math.sqrt(1-sinTheta2)/lambda;
+        var I=0.5*(1+Math.cos(phase));
+        var idx=(y*W+x)*4;
+        data[idx]=Math.round(colors[0]*I);
+        data[idx+1]=Math.round(colors[1]*I);
+        data[idx+2]=Math.round(colors[2]*I);
+        data[idx+3]=255;
+      }
+    }
+    ctxF.putImageData(imgData,0,0);
+    ctxF.strokeStyle='#30363d';ctxF.lineWidth=1;
+    ctxF.beginPath();ctxF.arc(cx,cy,maxR,0,Math.PI*2);ctxF.stroke();
+  } else {
+    var imgData=ctxF.createImageData(W,H);
+    var data=imgData.data;
+    for(var y=0;y<H;y++){
+      for(var x=0;x<W;x++){
+        var rx=(x-cx)/maxR;
+        var ry=(y-cy)/maxR;
+        if(rx*rx+ry*ry>1)continue;
+        var xTilt=rx*Math.sin(alphaRad);
+        var phase=2*Math.PI*(2*d+2*xTilt*maxR*1e-6)/lambda;
+        var I=0.5*(1+Math.cos(phase));
+        var idx=(y*W+x)*4;
+        data[idx]=Math.round(colors[0]*I);
+        data[idx+1]=Math.round(colors[1]*I);
+        data[idx+2]=Math.round(colors[2]*I);
+        data[idx+3]=255;
+      }
+    }
+    ctxF.putImageData(imgData,0,0);
+    ctxF.strokeStyle='#30363d';ctxF.lineWidth=1;
+    ctxF.beginPath();ctxF.arc(cx,cy,maxR,0,Math.PI*2);ctxF.stroke();
+  }
+
+  ctxF.fillStyle='#c9d1d9';ctxF.font='11px sans-serif';ctxF.textAlign='center';
+  ctxF.fillText(alpha<0.05?'等倾干涉圆环':'等厚干涉直条纹',cx,H-10);
+}
+
+function draw(){drawSetup();drawFringe()}
+
+function animate(timestamp){
+  if(!running){animFrameId=null;return}
+  if(lastFrameTime===null)lastFrameTime=timestamp;
+  var dt=Math.min((timestamp-lastFrameTime)/1000,0.1);
+  lastFrameTime=timestamp;animTime+=dt;
+  d=(5+2*Math.sin(animTime*0.3))*1e-6;
+  if(d<0)d=0;
+  sliderD.value=d*1e6;
+  updateUI();draw();
+  if(running)animFrameId=requestAnimationFrame(animate);
+}
+
+function resizeCanvases(){
+  var rowW=document.querySelector('.canvas-row').clientWidth;var cw=Math.floor((rowW-16)/2)-26;if(cw>680)cw=680;if(cw<200)cw=200;
+  var sw=cw,sh=Math.round(sw*420/680);
+  canvasSetup.width=sw;canvasSetup.height=sh;
+  canvasSetup.style.width=sw+'px';canvasSetup.style.height=sh+'px';
+  var fw=cw,fh=Math.round(fw*420/680);
+  canvasFringe.width=fw;canvasFringe.height=fh;
+  canvasFringe.style.width=fw+'px';canvasFringe.style.height=fh+'px';
+}
+window.addEventListener('resize',resizeCanvases);resizeCanvases();
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(running)pause();else btnStart.click()}
+  else if(e.code==='KeyR'){e.preventDefault();btnReset.click()}
+});
+updateUI();draw();
+</script>
+</body>
+</html>

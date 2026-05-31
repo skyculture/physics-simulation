@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>太阳能光伏电池工作原理 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>光照强度:</label><input type="range" id="light" min="0.1" max="2" step="0.1" value="1"><input type="number" id="lightVal" value="1"></div>
+      <div class="ctrl-group"><label>温度:</label><input type="range" id="temp" min="0" max="100" step="5" value="25"><input type="number" id="tempVal" value="25"></div>
+      <div class="ctrl-group"><label>负载电阻:</label><input type="range" id="resistor" min="10" max="1000" step="10" value="100"><input type="number" id="resistorVal" value="100"></div>
+    </div>
+    <div id="info">太阳能光伏电池利用光生伏特效应将光能转换为电能。当光子照射到PN结时，产生电子-空穴对，在内建电场作用下分离，形成电流。光照强度、温度和负载电阻都会影响电池的输出特性。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let photons = [];
+let time = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; init(); }
+}
+
+function init() { photons = []; }
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  const light = parseFloat(document.getElementById('light').value);
+  const temp = parseFloat(document.getElementById('temp').value);
+  const resistor = parseFloat(document.getElementById('resistor').value);
+  
+  ctx.fillStyle = 'rgba(255,166,87,0.3)';
+  ctx.fillRect(canvas.width*0.15, canvas.height*0.3, canvas.width*0.7, canvas.height*0.4);
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1;
+  for(let i=0;i<6;i++) {
+    for(let j=0;j<9;j++) {
+      ctx.strokeRect(canvas.width*0.18+i*canvas.width*0.08, canvas.height*0.35+j*canvas.height*0.07, canvas.width*0.06, canvas.height*0.05);
+    }
+  }
+  
+  ctx.fillStyle = '#3fb950';
+  ctx.fillRect(canvas.width*0.7, canvas.height*0.65, canvas.width*0.15, canvas.height*0.1);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('+', canvas.width*0.76, canvas.height*0.73);
+  
+  ctx.fillStyle = '#f78166';
+  ctx.fillRect(canvas.width*0.15, canvas.height*0.75, canvas.width*0.1, canvas.height*0.08);
+  ctx.fillText('−', canvas.width*0.18, canvas.height*0.81);
+  
+  if(Math.random() < light*0.05) {
+    photons.push({ x: Math.random()*canvas.width*0.7 + canvas.width*0.15, y: canvas.height*0.3, vy: 2*light });
+  }
+  
+  photons = photons.filter(p => {
+    p.y += p.vy;
+    ctx.fillStyle = '#ffa657';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+    ctx.fill();
+    return p.y < canvas.height*0.7;
+  });
+  
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1;
+  for(let i=0;i<Math.floor(light*3);i++) {
+    const y = canvas.height*0.35 + (time+i*50)%(canvas.height*0.35);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width*0.18, y);
+    ctx.lineTo(canvas.width*0.7, y);
+    ctx.stroke();
+  }
+  
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px sans-serif';
+  const current = (light*100)/(resistor/100 + temp/50);
+  ctx.fillText(`电流: ${current.toFixed(1)} mA`, canvas.width*0.05, canvas.height*0.95);
+  
+  time++;
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('light').addEventListener('input', e => { document.getElementById('lightVal').value = e.target.value; });
+document.getElementById('temp').addEventListener('input', e => { document.getElementById('tempVal').value = e.target.value; });
+document.getElementById('resistor').addEventListener('input', e => { document.getElementById('resistorVal').value = e.target.value; });
+
+resize();
+window.addEventListener('resize', resize);
+draw();
+</script>
+</body>
+</html>

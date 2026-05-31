@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量子纠缠 - 物理数值仿真平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+.container{width:100%;max-width:1100px}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.canvas-row{display:flex;gap:16px;margin-bottom:20px}
+@media(max-width:860px){.canvas-row{flex-direction:column}}
+.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
+.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
+.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+.info-item{display:flex;align-items:baseline;gap:6px}
+.info-item .info-label{color:#8b949e}
+.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.btn-row{display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn-start{background:#238636;color:#fff;border-color:#2ea043}
+.btn-start:hover{background:#2ea043}
+.btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
+.btn-pause:hover{background:#bb8009}
+.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
+.btn-reset:hover{background:#30363d}
+.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>量子纠缠</h1>
+    <p class="subtitle">量子纠缠是两个粒子之间的非经典关联。测量一个粒子的状态会瞬间确定另一个粒子的状态，无论它们相距多远。贝尔不等式验证了这种关联无法用经典物理解释。</p>
+  </div>
+  <div class="canvas-row">
+    <div class="panel">
+      <h2>🔬 EPR纠缠对</h2>
+      <canvas id="canvasSetup" width="680" height="420"></canvas>
+    </div>
+    <div class="panel">
+      <h2>📊 贝尔不等式</h2>
+      <canvas id="canvasBell" width="680" height="420"></canvas>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>A测量角度 <span class="val" id="valA">0°</span></label>
+      <input type="range" id="sliderA" min="0" max="180" step="1" value="0">
+    </div>
+    <div class="control-group">
+      <label>B测量角度 <span class="val" id="valB">45°</span></label>
+      <input type="range" id="sliderB" min="0" max="180" step="1" value="45">
+    </div>
+    <div class="control-group">
+      <label>纠缠态 <span class="val" id="valState">|Φ⁺⟩</span></label>
+      <input type="range" id="sliderState" min="0" max="3" step="1" value="0">
+    </div>
+  </div>
+  <div class="info-bar">
+    <div class="info-item"><span class="info-label">量子关联 E(a,b)=</span><span class="info-value" id="infoE">0.71</span></div>
+    <div class="info-item"><span class="info-label">经典上限=</span><span class="info-value" id="infoClassic">0.50</span></div>
+    <div class="info-item"><span class="info-label">S值 (CHSH)=</span><span class="info-value" id="infoS">2.83</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart">▶ 动画</button>
+    <button class="btn btn-pause" id="btnPause">⏸ 暂停</button>
+    <button class="btn btn-reset" id="btnReset">↺ 重置</button>
+  </div>
+  <p class="legend-note">💡 提示：量子力学预测的关联 E(a,b)=-cos(a-b) 超出经典极限。<br>CHSH不等式：经典 |S|≤2，量子可达 2√2≈2.83，违反贝尔不等式。</p>
+</div>
+<script>
+var canvasSetup=document.getElementById('canvasSetup');
+var ctxS=canvasSetup.getContext('2d');
+var canvasBell=document.getElementById('canvasBell');
+var ctxB=canvasBell.getContext('2d');
+var sliderA=document.getElementById('sliderA');
+var sliderB=document.getElementById('sliderB');
+var sliderState=document.getElementById('sliderState');
+var valA=document.getElementById('valA');
+var valB=document.getElementById('valB');
+var valState=document.getElementById('valState');
+var infoE=document.getElementById('infoE');
+var infoClassic=document.getElementById('infoClassic');
+var infoS=document.getElementById('infoS');
+var btnStart=document.getElementById('btnStart');
+var btnPause=document.getElementById('btnPause');
+var btnReset=document.getElementById('btnReset');
+
+var angleA=0,angleB=45,stateType=0;
+var stateNames=['|Φ⁺⟩','|Φ⁻⟩','|Ψ⁺⟩','|Ψ⁻⟩'];
+var running=false,animTime=0,lastFrameTime=null,animFrameId=null;
+var particles=[];
+
+function updateUI(){
+  valA.textContent=angleA+'°';
+  valB.textContent=angleB+'°';
+  valState.textContent=stateNames[stateType];
+  var aRad=angleA*Math.PI/180;
+  var bRad=angleB*Math.PI/180;
+  var E=-Math.cos(aRad-bRad);
+  infoE.textContent=E.toFixed(2);
+  infoClassic.textContent='0.50';
+  var a1=0,a2=Math.PI/4,a3=Math.PI/2,a4=3*Math.PI/4;
+  var S=Math.abs(E_at(a1,a3)+E_at(a1,a4)+E_at(a2,a3)-E_at(a2,a4));
+  infoS.textContent=S.toFixed(2);
+}
+
+function E_at(a,b){return -Math.cos(a-b)}
+
+sliderA.addEventListener('input',function(){angleA=+sliderA.value;updateUI();if(!running)draw()});
+sliderB.addEventListener('input',function(){angleB=+sliderB.value;updateUI();if(!running)draw()});
+sliderState.addEventListener('input',function(){stateType=+sliderState.value;updateUI();if(!running)draw()});
+
+btnStart.addEventListener('click',function(){
+  if(running){pause();return}
+  running=true;btnStart.classList.add('active');btnPause.classList.remove('active');
+  if(!animFrameId)animFrameId=requestAnimationFrame(animate);
+});
+btnPause.addEventListener('click',pause);
+function pause(){running=false;btnStart.classList.remove('active');btnPause.classList.add('active')}
+btnReset.addEventListener('click',function(){
+  angleA=0;angleB=45;stateType=0;animTime=0;lastFrameTime=null;particles=[];
+  sliderA.value=0;sliderB.value=45;sliderState.value=0;
+  updateUI();if(!running)draw();
+});
+
+function drawSetup(){
+  var W=canvasSetup.width,H=canvasSetup.height;
+  ctxS.clearRect(0,0,W,H);
+  ctxS.fillStyle='#0d1117';ctxS.fillRect(0,0,W,H);
+  var cx=W/2,cy=H/2;
+
+  ctxS.fillStyle='rgba(210,168,255,0.15)';ctxS.beginPath();ctxS.arc(cx,cy,20,0,Math.PI*2);ctxS.fill();
+  ctxS.strokeStyle='#d2a8ff';ctxS.lineWidth=2;ctxS.beginPath();ctxS.arc(cx,cy,20,0,Math.PI*2);ctxS.stroke();
+  ctxS.fillStyle='#d2a8ff';ctxS.font='bold 11px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('EPR源',cx,cy+4);
+
+  ctxS.strokeStyle='#58a6ff';ctxS.lineWidth=2;
+  ctxS.beginPath();ctxS.moveTo(cx-20,cy);ctxS.lineTo(W*0.12,cy);ctxS.stroke();
+  ctxS.fillStyle='#58a6ff';ctxS.beginPath();ctxS.arc(W*0.08,cy,14,0,Math.PI*2);ctxS.fill();
+  ctxS.strokeStyle='rgba(88,166,255,0.3)';ctxS.lineWidth=1;
+  ctxS.beginPath();ctxS.arc(W*0.08,cy,20,0,Math.PI*2);ctxS.stroke();
+  ctxS.fillStyle='#0d1117';ctxS.font='bold 10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('A',W*0.08,cy+4);
+  ctxS.fillStyle='#c9d1d9';ctxS.font='10px sans-serif';
+  ctxS.fillText('测量角 '+angleA+'°',W*0.08,cy+35);
+
+  ctxS.strokeStyle='#f85149';ctxS.lineWidth=2;
+  ctxS.beginPath();ctxS.moveTo(cx+20,cy);ctxS.lineTo(W*0.88,cy);ctxS.stroke();
+  ctxS.fillStyle='#f85149';ctxS.beginPath();ctxS.arc(W*0.92,cy,14,0,Math.PI*2);ctxS.fill();
+  ctxS.strokeStyle='rgba(248,81,73,0.3)';ctxS.lineWidth=1;
+  ctxS.beginPath();ctxS.arc(W*0.92,cy,20,0,Math.PI*2);ctxS.stroke();
+  ctxS.fillStyle='#0d1117';ctxS.font='bold 10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('B',W*0.92,cy+4);
+  ctxS.fillStyle='#c9d1d9';ctxS.font='10px sans-serif';
+  ctxS.fillText('测量角 '+angleB+'°',W*0.92,cy+35);
+
+  ctxS.strokeStyle='rgba(210,168,255,0.3)';ctxS.lineWidth=1;ctxS.setLineDash([4,3]);
+  ctxS.beginPath();ctxS.moveTo(cx-20,cy);ctxS.lineTo(cx+20,cy);ctxS.stroke();
+  ctxS.setLineDash([]);
+
+  ctxS.fillStyle='#d2a8ff';ctxS.font='bold 12px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText(stateNames[stateType],cx,cy-30);
+
+  for(var i=0;i<particles.length;i++){
+    var p=particles[i];
+    var alpha=1-p.progress;
+    if(alpha<=0)continue;
+    var xA=cx-20-p.progress*(cx-20-W*0.08);
+    var xB=cx+20+p.progress*(W*0.92-cx-20);
+    ctxS.fillStyle='rgba(88,166,255,'+alpha+')';ctxS.beginPath();ctxS.arc(xA,cy,4,0,Math.PI*2);ctxS.fill();
+    ctxS.fillStyle='rgba(248,81,73,'+alpha+')';ctxS.beginPath();ctxS.arc(xB,cy,4,0,Math.PI*2);ctxS.fill();
+  }
+
+  var aRad=angleA*Math.PI/180;
+  var bRad=angleB*Math.PI/180;
+  var E=-Math.cos(aRad-bRad);
+  ctxS.fillStyle='#3fb950';ctxS.font='bold 12px sans-serif';ctxS.textAlign='center';
+  ctxS.fillText('E(a,b) = '+E.toFixed(3),cx,H-15);
+}
+
+function drawBell(){
+  var W=canvasBell.width,H=canvasBell.height;
+  ctxB.clearRect(0,0,W,H);
+  ctxB.fillStyle='#0d1117';ctxB.fillRect(0,0,W,H);
+  var ml=60,mt=30,mr=30,mb=50;
+  var pw=W-ml-mr,ph=H-mt-mb;
+
+  ctxB.strokeStyle='#484f58';ctxB.lineWidth=1.5;
+  ctxB.beginPath();ctxB.moveTo(ml,mt+ph);ctxB.lineTo(ml,mt);ctxB.stroke();
+  ctxB.beginPath();ctxB.moveTo(ml,mt+ph);ctxB.lineTo(ml+pw,mt+ph);ctxB.stroke();
+
+  ctxB.strokeStyle='#30363d';ctxB.lineWidth=0.8;ctxB.setLineDash([4,4]);
+  for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxB.beginPath();ctxB.moveTo(ml,y);ctxB.lineTo(ml+pw,y);ctxB.stroke()}
+  ctxB.setLineDash([]);
+
+  ctxB.fillStyle='#8b949e';ctxB.font='11px sans-serif';ctxB.textAlign='right';
+  for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxB.fillText((i/4*2-1).toFixed(1),ml-6,y+4)}
+  ctxB.textAlign='center';
+  for(var i=0;i<=6;i++){
+    var x=ml+i*pw/6;
+    ctxB.fillText((i*30)+'°',x,mt+ph+18);
+  }
+  ctxB.fillText('角度差 (a-b)',ml+pw/2,mt+ph+38);
+
+  ctxB.strokeStyle='#f85149';ctxB.lineWidth=2.5;ctxB.shadowColor='#f85149';ctxB.shadowBlur=6;
+  ctxB.beginPath();
+  for(var i=0;i<=200;i++){
+    var theta=i/200*180;
+    var E=-Math.cos(theta*Math.PI/180);
+    var px=ml+i/200*pw;
+    var py=mt+ph/2-E*ph/2;
+    if(i===0)ctxB.moveTo(px,py);else ctxB.lineTo(px,py);
+  }
+  ctxB.stroke();ctxB.shadowBlur=0;
+
+  ctxB.strokeStyle='#58a6ff';ctxB.lineWidth=2;ctxB.setLineDash([5,3]);
+  ctxB.beginPath();
+  for(var i=0;i<=200;i++){
+    var theta=i/200*180;
+    var E_class=-1+2*Math.abs(theta)/180;
+    if(theta>90)E_class=1-2*(theta-90)/180;
+    var px=ml+i/200*pw;
+    var py=mt+ph/2-E_class*ph/2;
+    if(i===0)ctxB.moveTo(px,py);else ctxB.lineTo(px,py);
+  }
+  ctxB.stroke();ctxB.setLineDash([]);
+
+  var diffAngle=Math.abs(angleA-angleB);
+  var currentE=-Math.cos(diffAngle*Math.PI/180);
+  var pxMark=ml+diffAngle/180*pw;
+  var pyMark=mt+ph/2-currentE*ph/2;
+  ctxB.fillStyle='#3fb950';ctxB.beginPath();ctxB.arc(pxMark,pyMark,7,0,Math.PI*2);ctxB.fill();
+  ctxB.strokeStyle='#ffa657';ctxB.lineWidth=2;ctxB.setLineDash([3,3]);
+  ctxB.beginPath();ctxB.moveTo(pxMark,mt);ctxB.lineTo(pxMark,mt+ph);ctxB.stroke();
+  ctxB.setLineDash([]);
+
+  ctxB.strokeStyle='#ffa657';ctxB.lineWidth=2;ctxB.strokeRect(ml,mt,pw,ph);
+  ctxB.fillStyle='#f85149';ctxB.font='10px sans-serif';ctxB.textAlign='left';
+  ctxB.fillText('量子: E=-cos(a-b)',ml+5,mt+12);
+  ctxB.fillStyle='#58a6ff';ctxB.fillText('经典上限',ml+5,mt+26);
+  ctxB.fillStyle='#3fb950';ctxB.fillText('当前: '+currentE.toFixed(3),ml+5,mt+40);
+}
+
+function draw(){drawSetup();drawBell()}
+
+function animate(timestamp){
+  if(!running){animFrameId=null;return}
+  if(lastFrameTime===null)lastFrameTime=timestamp;
+  var dt=Math.min((timestamp-lastFrameTime)/1000,0.1);
+  lastFrameTime=timestamp;animTime+=dt;
+
+  if(Math.random()<dt*3){
+    particles.push({progress:0});
+  }
+  for(var i=particles.length-1;i>=0;i--){
+    particles[i].progress+=dt*0.8;
+    if(particles[i].progress>1)particles.splice(i,1);
+  }
+
+  angleB=(angleB+dt*15)%180;
+  sliderB.value=Math.round(angleB);
+  updateUI();draw();
+  if(running)animFrameId=requestAnimationFrame(animate);
+}
+
+function resizeCanvases(){
+  var rowW=document.querySelector('.canvas-row').clientWidth;var cw=Math.floor((rowW-16)/2)-26;if(cw>680)cw=680;if(cw<200)cw=200;
+  var sw=cw,sh=Math.round(sw*420/680);
+  canvasSetup.width=sw;canvasSetup.height=sh;
+  canvasSetup.style.width=sw+'px';canvasSetup.style.height=sh+'px';
+  var bw=cw,bh=Math.round(bw*420/680);
+  canvasBell.width=bw;canvasBell.height=bh;
+  canvasBell.style.width=bw+'px';canvasBell.style.height=bh+'px';
+}
+window.addEventListener('resize',resizeCanvases);resizeCanvases();
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(running)pause();else btnStart.click()}
+  else if(e.code==='KeyR'){e.preventDefault();btnReset.click()}
+});
+updateUI();draw();
+</script>
+</body>
+</html>

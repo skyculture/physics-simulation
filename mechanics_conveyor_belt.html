@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>传送带与摩擦力 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>传送带速度v_b:</label><input type="range" id="vBelt" min="0" max="10" step="0.5" value="5"><input type="number" id="vBeltVal" value="5"></div>
+      <div class="ctrl-group"><label>动摩擦因数μ:</label><input type="range" id="mu" min="0.1" max="0.8" step="0.05" value="0.3"><input type="number" id="muVal" value="0.3"></div>
+      <div class="ctrl-group"><label>物体质量m:</label><input type="range" id="m" min="1" max="10" step="1" value="2"><input type="number" id="mVal" value="2"></div>
+      <div class="ctrl-group"><button id="startBtn">▶ 开始</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">传送带与摩擦力：物体刚放上传送带时相对传送带滑动，受滑动摩擦力加速，直到与传送带速度相同进入静摩擦状态。f = μN = μmg。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let vObj = 0;
+let isRunning = false;
+let timeOnBelt = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  vObj = 0;
+  isRunning = false;
+  timeOnBelt = 0;
+  if(animationId) cancelAnimationFrame(animationId);
+  draw();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const vBelt = parseFloat(document.getElementById('vBelt').value);
+  const mu = parseFloat(document.getElementById('mu').value);
+  const m = parseFloat(document.getElementById('m').value);
+  const g = 9.8;
+
+  if(isRunning) {
+    timeOnBelt += 0.02;
+    if(vObj < vBelt) {
+      const a = mu * g;
+      vObj = Math.min(vBelt, vObj + a * 0.02);
+    }
+  }
+
+  const W = canvas.width, H = canvas.height;
+  const S = Math.min(W, H);
+  const cx = W / 2, cy = H / 2;
+  const beltH = S * 0.06;
+  const beltW = W * 0.8;
+  const beltX = W * 0.1;
+  const beltY = cy;
+
+  ctx.fillStyle = '#3fb950';
+  ctx.fillRect(beltX, beltY - beltH / 2, beltW, beltH);
+
+  ctx.fillStyle = '#216e39';
+  const stripeW = beltW / 32;
+  for(let i = 0; i < 16; i++) {
+    const x = beltX + i * (beltW / 16);
+    ctx.fillRect(x, beltY - beltH / 2, stripeW, beltH);
+  }
+
+  const objW = S * 0.08, objH = S * 0.05;
+  const objX = beltX + beltW * 0.3 + (vObj * 2 + timeOnBelt * vBelt * 0.5) % (beltW * 0.6);
+  const objY = beltY - beltH / 2 - objH;
+
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillRect(objX - objW / 2, objY, objW, objH);
+
+  ctx.fillStyle = '#ffa657';
+  ctx.font = `${S * 0.025}px sans-serif`;
+  ctx.fillText(`v=${vObj.toFixed(1)}`, objX - objW / 2 + S * 0.01, objY + objH * 0.65);
+
+  const frictForce = mu * m * g;
+  const a = mu * g;
+  const t_sync = vBelt / a;
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = `${S * 0.03}px sans-serif`;
+  const fs = S * 0.03;
+  ctx.fillText(`传送带速度 v_b = ${vBelt} m/s`, 10, fs + 5);
+  ctx.fillText(`动摩擦因数 μ = ${mu}`, 10, fs * 2 + 5);
+  ctx.fillText(`物体质量 m = ${m} kg`, 10, fs * 3 + 5);
+  ctx.fillText(`摩擦力 f = ${frictForce.toFixed(1)} N`, 10, fs * 4 + 5);
+  ctx.fillText(`加速度 a = ${a.toFixed(2)} m/s²`, 10, fs * 5 + 5);
+  ctx.fillText(`物体速度 v = ${vObj.toFixed(2)} m/s`, 10, fs * 6 + 5);
+
+  ctx.fillStyle = '#3fb950';
+  ctx.font = `bold ${S * 0.035}px sans-serif`;
+  if(vObj >= vBelt) {
+    ctx.fillText(`已同步! 同步时间: ${t_sync.toFixed(2)} s`, cx - S * 0.2, H - S * 0.05);
+  } else {
+    ctx.fillText(`加速中... 预计同步时间: ${t_sync.toFixed(2)} s`, cx - S * 0.22, H - S * 0.05);
+  }
+
+  if(isRunning) animationId = requestAnimationFrame(draw);
+}
+
+function start() {
+  isRunning = true;
+  draw();
+}
+
+document.getElementById('vBelt').addEventListener('input', e => { document.getElementById('vBeltVal').value = e.target.value; });
+document.getElementById('mu').addEventListener('input', e => { document.getElementById('muVal').value = e.target.value; });
+document.getElementById('m').addEventListener('input', e => { document.getElementById('mVal').value = e.target.value; });
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+</script>
+</body>
+</html>

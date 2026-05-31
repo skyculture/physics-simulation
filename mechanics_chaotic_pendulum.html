@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>混沌摆 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  button { background:var(--accent); color:#0d1117; border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-weight:600; font-size:0.9em; }
+  button:hover { opacity:0.85; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>初始角度θ₁(°):</label><input type="range" id="angle1" min="0" max="180" step="5" value="120"><input type="number" id="angle1Val" value="120"></div>
+      <div class="ctrl-group"><label>初始角度θ₂(°):</label><input type="range" id="angle2" min="0" max="180" step="5" value="60"><input type="number" id="angle2Val" value="60"></div>
+      <div class="ctrl-group"><button id="startBtn">▶ 开始</button><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">混沌摆（双摆）：由两个摆组成的系统，具有混沌特性。微小的初始条件差异会导致运动轨迹的显著不同。使用RK4积分保证能量守恒精度。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const G = 9.8;
+const L1 = 1.0;
+const L2 = 1.0;
+const M1 = 1.0;
+const M2 = 1.0;
+const DT = 0.001;
+const SUBSTEPS = 20;
+
+let theta1, theta2, omega1, omega2;
+let isRunning = false;
+let animationId;
+let trail = [];
+const MAX_TRAIL = 800;
+let initialEnergy = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function derivatives(s) {
+  const t1 = s[0], w1 = s[1], t2 = s[2], w2 = s[3];
+  const delta = t1 - t2;
+  const sinD = Math.sin(delta);
+  const cosD = Math.cos(delta);
+  const den = 2 * M1 + M2 - M2 * Math.cos(2 * delta);
+
+  const a1 = (-G * (2 * M1 + M2) * Math.sin(t1)
+    - M2 * G * Math.sin(t1 - 2 * t2)
+    - 2 * sinD * M2 * (w2 * w2 * L2 + w1 * w1 * L1 * cosD))
+    / (L1 * den);
+
+  const a2 = (2 * sinD * (w1 * w1 * L1 * (M1 + M2)
+    + G * (M1 + M2) * Math.cos(t1)
+    + w2 * w2 * L2 * M2 * cosD))
+    / (L2 * den);
+
+  return [w1, a1, w2, a2];
+}
+
+function rk4Step(s, dt) {
+  const k1 = derivatives(s);
+  const s2 = s.map((v, i) => v + 0.5 * dt * k1[i]);
+  const k2 = derivatives(s2);
+  const s3 = s.map((v, i) => v + 0.5 * dt * k2[i]);
+  const k3 = derivatives(s3);
+  const s4 = s.map((v, i) => v + dt * k3[i]);
+  const k4 = derivatives(s4);
+  return s.map((v, i) => v + (dt / 6) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+}
+
+function computeEnergy(t1, w1, t2, w2) {
+  const KE = 0.5 * M1 * L1 * L1 * w1 * w1
+    + 0.5 * M2 * (L1 * L1 * w1 * w1 + L2 * L2 * w2 * w2
+    + 2 * L1 * L2 * w1 * w2 * Math.cos(t1 - t2));
+  const PE = -(M1 + M2) * G * L1 * Math.cos(t1) - M2 * G * L2 * Math.cos(t2);
+  return { KE, PE, total: KE + PE };
+}
+
+function reset() {
+  theta1 = parseFloat(document.getElementById('angle1').value) * Math.PI / 180;
+  theta2 = parseFloat(document.getElementById('angle2').value) * Math.PI / 180;
+  omega1 = 0;
+  omega2 = 0;
+  isRunning = false;
+  trail = [];
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = null;
+  initialEnergy = computeEnergy(theta1, omega1, theta2, omega2).total;
+  draw();
+}
+
+function draw() {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const scale = canvas.height * 0.22;
+  const L1px = L1 * scale;
+  const L2px = L2 * scale;
+  const cx = canvas.width / 2;
+  const cy = canvas.height * 0.3;
+
+  if (isRunning) {
+    let state = [theta1, omega1, theta2, omega2];
+    for (let i = 0; i < SUBSTEPS; i++) {
+      state = rk4Step(state, DT);
+    }
+    theta1 = state[0];
+    omega1 = state[1];
+    theta2 = state[2];
+    omega2 = state[3];
+
+    const x2 = cx + L1px * Math.sin(theta1) + L2px * Math.sin(theta2);
+    const y2 = cy + L1px * Math.cos(theta1) + L2px * Math.cos(theta2);
+    trail.push({ x: x2, y: y2 });
+    if (trail.length > MAX_TRAIL) trail.shift();
+  }
+
+  if (trail.length > 1) {
+    for (let i = 1; i < trail.length; i++) {
+      const alpha = i / trail.length;
+      ctx.strokeStyle = `rgba(255,166,87,${alpha * 0.7})`;
+      ctx.lineWidth = 1.5 * alpha + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
+      ctx.lineTo(trail[i].x, trail[i].y);
+      ctx.stroke();
+    }
+  }
+
+  const x1 = cx + L1px * Math.sin(theta1);
+  const y1 = cy + L1px * Math.cos(theta1);
+  const x2 = x1 + L2px * Math.sin(theta2);
+  const y2 = y1 + L2px * Math.cos(theta2);
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+
+  ctx.fillStyle = '#58a6ff';
+  ctx.beginPath();
+  ctx.arc(x1, y1, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#d2a8ff';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(x2, y2, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '13px sans-serif';
+  const tx = canvas.width * 0.03;
+  const ty = canvas.height * 0.08;
+  const lh = 20;
+  ctx.fillText(`θ₁ = ${(theta1 * 180 / Math.PI).toFixed(1)}°`, tx, ty);
+  ctx.fillText(`θ₂ = ${(theta2 * 180 / Math.PI).toFixed(1)}°`, tx, ty + lh);
+  ctx.fillText(`ω₁ = ${omega1.toFixed(3)} rad/s`, tx, ty + lh * 2);
+  ctx.fillText(`ω₂ = ${omega2.toFixed(3)} rad/s`, tx, ty + lh * 3);
+
+  const energy = computeEnergy(theta1, omega1, theta2, omega2);
+  const ex = canvas.width * 0.03;
+  const ey = ty + lh * 5;
+  ctx.fillStyle = '#3fb950';
+  ctx.fillText(`动能 KE = ${energy.KE.toFixed(4)} J`, ex, ey);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillText(`势能 PE = ${energy.PE.toFixed(4)} J`, ex, ey + lh);
+  ctx.fillStyle = '#ffa657';
+  ctx.fillText(`总能量 E = ${energy.total.toFixed(4)} J`, ex, ey + lh * 2);
+  const drift = Math.abs(energy.total - initialEnergy);
+  ctx.fillStyle = drift < 0.01 ? '#3fb950' : '#f85149';
+  ctx.fillText(`能量漂移 ΔE = ${drift.toExponential(3)} J`, ex, ey + lh * 3);
+
+  if (isRunning) animationId = requestAnimationFrame(draw);
+}
+
+function start() {
+  if (isRunning) return;
+  isRunning = true;
+  draw();
+}
+
+document.getElementById('angle1').addEventListener('input', e => {
+  document.getElementById('angle1Val').value = e.target.value;
+  if (!isRunning) reset();
+});
+document.getElementById('angle2').addEventListener('input', e => {
+  document.getElementById('angle2Val').value = e.target.value;
+  if (!isRunning) reset();
+});
+document.getElementById('angle1Val').addEventListener('change', e => {
+  let v = Math.max(0, Math.min(180, parseFloat(e.target.value) || 0));
+  e.target.value = v;
+  document.getElementById('angle1').value = v;
+  if (!isRunning) reset();
+});
+document.getElementById('angle2Val').addEventListener('change', e => {
+  let v = Math.max(0, Math.min(180, parseFloat(e.target.value) || 0));
+  e.target.value = v;
+  document.getElementById('angle2').value = v;
+  if (!isRunning) reset();
+});
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', () => { resize(); if (!isRunning) draw(); });
+reset();
+</script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>核磁共振K空间成像 - 量子与核物理</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
+  .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
+  .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
+  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
+  .back-link:hover { background:#1f2937; }
+  .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
+  .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:20px; flex:1; }
+  canvas { display:block; border-radius:4px; background:#0d1117; }
+  .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
+  .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
+  .btn { padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; width:100%; margin-top:4px; text-align:center; }
+  .btn:hover { background:#30363d; }
+  .btn.primary { border-color:var(--accent4); color:var(--accent4); }
+  .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
+  .stat-item:last-child { border-bottom:none; }
+  .stat-label { color:#8b949e; }
+  .stat-value { color:var(--accent4); font-weight:600; }
+  @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>🧲 核磁共振K空间成像 (MRI)</h1>
+    <div class="subtitle">核物理 — K空间采样、傅里叶变换与医学图像重建</div>
+  </div>
+
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="canvasK" width="220" height="220" style="background:#0d1117;border:1px solid var(--border);border-radius:4px;"></canvas>
+    <canvas id="canvasImg" width="220" height="220" style="background:#0d1117;border:1px solid var(--border);border-radius:4px;"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>🎛️ 扫描控制</h3>
+      <button class="btn primary" id="btnScan">🔍 开始K空间扫描</button>
+      <button class="btn" id="btnReset">↺ 重置</button>
+      <button class="btn" id="btnPreset1">🧠 预设: 脑截面</button>
+      <button class="btn" id="btnPreset2">🫁 预设: 幻影模型</button>
+    </div>
+    <div class="panel-box">
+      <h3>📊 成像信息</h3>
+      <div class="stat-item"><span class="stat-label">扫描进度</span><span class="stat-value" id="statProgress">0%</span></div>
+      <div class="stat-item"><span class="stat-label">K空间线</span><span class="stat-value" id="statLines">0/64</span></div>
+      <div class="stat-item"><span class="stat-label">重建算法</span><span class="stat-value">2D IFFT</span></div>
+    </div>
+    <div class="panel-box" style="font-size:0.75rem;color:#8b949e;line-height:1.6;">
+      <strong style="color:var(--accent4);">MRI原理：</strong><br>
+      梯度磁场编码空间位置<br>
+      → K空间数据采集<br>
+      → 2D傅里叶逆变换 → 图像
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const N=64;
+  const canvasK=document.getElementById('canvasK');
+  const ctxK=canvasK.getContext('2d');
+  const canvasImg=document.getElementById('canvasImg');
+  const ctxImg=canvasImg.getContext('2d');
+
+  let phantom=null,kspaceData=null,reconstructed=null;
+  let scanLine=0,scanning=false,timer=null;
+
+  function createBrainPhantom(){
+    const ph=new Float64Array(N*N);
+    for(let y=0;y<N;y++){for(let x=0;x<N;x++){
+      const dx=(x-N/2)/(N*0.28),dy=(y-N/2)/(N*0.28);
+      const r2=dx*dx+dy*dy;ph[y*N+x]=0.9*Math.exp(-r2);
+      const dx2=(x-N*0.38)/(N*0.13),dy2=(y-N*0.42)/(N*0.11);
+      ph[y*N+x]+=0.55*Math.exp(-dx2*dx2-dy2*dy2);
+      const dx3=(x-N*0.62)/(N*0.13),dy3=(y-N*0.52)/(N*0.11);
+      ph[y*N+x]+=0.55*Math.exp(-dx3*dx3-dy3*dy3);
+      const dx4=(x-N*0.5)/(N*0.32),dy4=(y-N*0.58)/(N*0.07);
+      ph[y*N+x]+=0.4*Math.exp(-dx4*dx4-dy4*dy4);
+      const dx5=(x-N*0.5)/(N*0.07),dy5=(y-N*0.68)/(N*0.04);
+      ph[y*N+x]+=0.3*Math.exp(-dx5*dx5-dy5*dy5);
+    }}
+    return ph;
+  }
+
+  function createSheppLogan(){
+    const ph=new Float64Array(N*N);
+    const ellipses=[
+      [0,0,0.69,0.92,0,1],
+      [0,-0.018,0.662,0.874,0,-0.8],
+      [0.22,0,0.11,0.31,-18,-0.2],
+      [-0.22,0,0.16,0.41,18,-0.2],
+      [0,0.35,0.21,0.25,0,0.1],
+      [0,0.1,0.046,0.046,0,0.1],
+      [0,-0.1,0.046,0.046,0,0.1],
+      [-0.08,-0.605,0.046,0.023,0,0.1],
+      [0,-0.606,0.023,0.023,0,0.1],
+      [0.06,-0.605,0.023,0.046,0,0.1],
+    ];
+    for(let y=0;y<N;y++){for(let x=0;x<N;x++){
+      const dx=(x-N/2)/N,dy=(y-N/2)/N;
+      let val=0;
+      ellipses.forEach(([cx,cy,rx,ry,rot,v])=>{
+        const rr=rot*Math.PI/180;
+        const xr=(dx-cx)*Math.cos(rr)+(dy-cy)*Math.sin(rr);
+        const yr=-(dx-cx)*Math.sin(rr)+(dy-cy)*Math.cos(rr);
+        if(xr*xr/(rx*rx)+yr*yr/(ry*ry)<=1)val+=v;
+      });
+      ph[y*N+x]=val;
+    }}
+    return ph;
+  }
+
+  function compute2DFFT(data){
+    const re=new Float64Array(N*N),im=new Float64Array(N*N);
+    for(let i=0;i<N*N;i++)re[i]=data[i];
+    for(let row=0;row<N;row++){
+      const tr=new Float64Array(N),ti=new Float64Array(N);
+      for(let c=0;c<N;c++)tr[c]=re[row*N+c];
+      dft1D(tr,ti);
+      for(let c=0;c<N;c++){re[row*N+c]=tr[c];im[row*N+c]=ti[c];}
+    }
+    for(let col=0;col<N;col++){
+      const tr=new Float64Array(N),ti=new Float64Array(N);
+      for(let r=0;r<N;r++){tr[r]=re[r*N+col];ti[r]=im[r*N+col];}
+      dft1D(tr,ti);
+      for(let r=0;r<N;r++){re[r*N+col]=tr[r];im[r*N+col]=ti[r];}
+    }
+    const mag=new Float64Array(N*N);
+    for(let i=0;i<N*N;i++)mag[i]=Math.sqrt(re[i]*re[i]+im[i]*im[i]);
+    return mag;
+  }
+
+  function dft1D(re,im){
+    const n=re.length;
+    const or=new Float64Array(n),oi=new Float64Array(n);
+    for(let k=0;k<n;k++){
+      let sr=0,si=0;
+      for(let j=0;j<n;j++){
+        const a=-2*Math.PI*k*j/n;
+        sr+=re[j]*Math.cos(a)-im[j]*Math.sin(a);
+        si+=re[j]*Math.sin(a)+im[j]*Math.cos(a);
+      }
+      or[k]=sr;oi[k]=si;
+    }
+    for(let i=0;i<n;i++){re[i]=or[i];im[i]=oi[i];}
+  }
+
+  function idft1D(re,im){
+    const n=re.length;
+    const or=new Float64Array(n),oi=new Float64Array(n);
+    for(let k=0;k<n;k++){
+      let sr=0,si=0;
+      for(let j=0;j<n;j++){
+        const a=2*Math.PI*k*j/n;
+        sr+=re[j]*Math.cos(a)-im[j]*Math.sin(a);
+        si+=re[j]*Math.sin(a)+im[j]*Math.cos(a);
+      }
+      or[k]=sr/n;oi[k]=si/n;
+    }
+    for(let i=0;i<n;i++){re[i]=or[i];im[i]=oi[i];}
+  }
+
+  function reconstruct2DIFFT(ksp){
+    const re=new Float64Array(ksp),im=new Float64Array(N*N);
+    for(let row=0;row<N;row++){
+      const tr=new Float64Array(N),ti=new Float64Array(N);
+      for(let c=0;c<N;c++)tr[c]=re[row*N+c];
+      idft1D(tr,ti);
+      for(let c=0;c<N;c++){re[row*N+c]=tr[c];im[row*N+c]=ti[c];}
+    }
+    for(let col=0;col<N;col++){
+      const tr=new Float64Array(N),ti=new Float64Array(N);
+      for(let r=0;r<N;r++){tr[r]=re[r*N+col];ti[r]=im[r*N+col];}
+      idft1D(tr,ti);
+      for(let r=0;r<N;r++){re[r*N+col]=tr[r];im[r*N+col]=ti[r];}
+    }
+    const img=new Float64Array(N*N);
+    for(let i=0;i<N*N;i++)img[i]=Math.sqrt(re[i]*re[i]+im[i]*im[i]);
+    return img;
+  }
+
+  function drawArray(canvas,ctx,data,title){
+    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,canvas.width,canvas.height);
+    const cs=canvas.width/N;
+    let maxV=0;for(let i=0;i<N*N;i++)if(data[i]>maxV)maxV=data[i];
+    if(maxV<0.001)maxV=1;
+    for(let y=0;y<N;y++){for(let x=0;x<N;x++){
+      const v=Math.min(1,data[y*N+x]/maxV);
+      const c=Math.floor(v*255);
+      ctx.fillStyle=`rgb(${c},${c},${c})`;
+      ctx.fillRect(x*cs,y*cs,cs+0.5,cs+0.5);
+    }}
+    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText(title,canvas.width/2,canvas.height-4);
+  }
+
+  function drawKspaceLog(data){
+    ctxK.fillStyle='#0d1117';ctxK.fillRect(0,0,canvasK.width,canvasK.height);
+    const cs=canvasK.width/N;
+    const logData=new Float64Array(N*N);
+    let maxL=0;
+    for(let i=0;i<N*N;i++){logData[i]=Math.log(data[i]+1);if(logData[i]>maxL)maxL=logData[i];}
+    if(maxL<0.001)maxL=1;
+    for(let y=0;y<N;y++){for(let x=0;x<N;x++){
+      const v=Math.min(1,logData[y*N+x]/maxL);
+      const c=Math.floor(v*255);
+      ctxK.fillStyle=`rgb(${c},${Math.floor(c*0.6)},${Math.floor(c*1.5>255?255:c*1.5)})`;
+      ctxK.fillRect(x*cs,y*cs,cs+0.5,cs+0.5);
+    }}
+    ctxK.fillStyle='#8b949e';ctxK.font='10px sans-serif';ctxK.textAlign='center';
+    ctxK.fillText('K空间 (log|F|)',canvasK.width/2,canvasK.height-4);
+  }
+
+  function startScan(){
+    if(scanning)return;
+    if(!phantom)phantom=createBrainPhantom();
+    kspaceData=compute2DFFT(phantom);
+    reconstructed=null;
+    scanLine=0;scanning=true;
+    document.getElementById('statProgress').textContent='0%';
+    document.getElementById('statLines').textContent='0/'+N;
+
+    drawArray(canvasImg,ctxImg,phantom,'原始图像 (模拟)');
+    ctxK.fillStyle='#0d1117';ctxK.fillRect(0,0,canvasK.width,canvasK.height);
+
+    timer=setInterval(()=>{
+      if(scanLine<N){
+        drawKspacePartial();
+        scanLine++;
+        const pct=Math.round(scanLine/N*100);
+        document.getElementById('statProgress').textContent=pct+'%';
+        document.getElementById('statLines').textContent=scanLine+'/'+N;
+        if(scanLine>=N){
+          clearInterval(timer);scanning=false;
+          reconstructed=reconstruct2DIFFT(kspaceData);
+          drawArray(canvasImg,ctxImg,reconstructed,'IFFT 重建图像');
+          drawKspaceLog(kspaceData);
+        }
+      }
+    },30);
+  }
+
+  function drawKspacePartial(){
+    ctxK.fillStyle='#0d1117';ctxK.fillRect(0,0,canvasK.width,canvasK.height);
+    const cs=canvasK.width/N;
+    for(let y=0;y<=scanLine;y++){for(let x=0;x<N;x++){
+      ctxK.fillStyle='rgba(88,166,255,0.5)';
+      ctxK.fillRect(x*cs,y*cs,cs*0.8,cs*0.8);
+    }}
+    ctxK.fillStyle='#8b949e';ctxK.font='10px sans-serif';ctxK.textAlign='center';
+    ctxK.fillText('K空间采样中... ('+(scanLine+1)+'/'+N+')',canvasK.width/2,canvasK.height-4);
+  }
+
+  function resetAll(){
+    if(timer)clearInterval(timer);
+    scanning=false;scanLine=0;phantom=null;kspaceData=null;reconstructed=null;
+    document.getElementById('statProgress').textContent='0%';
+    document.getElementById('statLines').textContent='0/'+N;
+    ctxK.fillStyle='#0d1117';ctxK.fillRect(0,0,canvasK.width,canvasK.height);
+    ctxImg.fillStyle='#0d1117';ctxImg.fillRect(0,0,canvasImg.width,canvasImg.height);
+    ctxK.fillStyle='#8b949e';ctxK.font='11px sans-serif';ctxK.textAlign='center';
+    ctxK.fillText('点击"开始扫描"',canvasK.width/2,canvasK.height/2);
+    ctxImg.fillStyle='#8b949e';ctxImg.font='11px sans-serif';ctxImg.textAlign='center';
+    ctxImg.fillText('点击"开始扫描"',canvasImg.width/2,canvasImg.height/2);
+  }
+
+  document.getElementById('btnScan').addEventListener('click',startScan);
+  document.getElementById('btnReset').addEventListener('click',resetAll);
+  document.getElementById('btnPreset1').addEventListener('click',()=>{resetAll();phantom=createBrainPhantom();drawArray(canvasImg,ctxImg,phantom,'原始图像 (脑截面)');});
+  document.getElementById('btnPreset2').addEventListener('click',()=>{resetAll();phantom=createSheppLogan();drawArray(canvasImg,ctxImg,phantom,'原始图像 (幻影)');});
+
+  resetAll();
+})();
+</script>
+</body>
+</html>

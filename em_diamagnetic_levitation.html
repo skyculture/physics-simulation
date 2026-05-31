@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>抗磁悬浮 - 物理数值仿真平台</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
+#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#30363d}
+header h1{margin:0;font-size:18px;font-weight:600}
+#info{margin-left:auto;color:#8b949e;font-size:13px}
+main{flex:1;display:flex;overflow:hidden}
+#canvasWrap{flex:1;position:relative}
+canvas{display:block;width:100%;height:100%}
+#sidebar{width:280px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0}
+.row label{flex:0 0 120px;font-size:13px}
+.row input[type=range]{flex:1}
+.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<main>
+<div id="canvasWrap"><canvas id="c"></canvas></div>
+<div id="sidebar">
+<div class="sec">
+<h3>参数设置</h3>
+<div class="row"><label>磁化率</label><input id="p1" type="range" min="-0.5" max="-0.01" step="0.01" value="-0.1"><input id="p1n" type="number" value="-0.1"></div>
+<div class="row"><label>磁体强度</label><input id="p2" type="range" min="0.5" max="3" step="0.1" value="1.5"><input id="p2n" type="number" value="1.5"></div>
+<div class="row"><label>重力</label><input id="p3" type="range" min="0.2" max="2" step="0.1" value="1"><input id="p3n" type="number" value="1"></div>
+</div>
+<div class="sec">
+<h3>显示</h3>
+<div class="row"><label>磁力线数</label><input id="p4" type="range" min="4" max="20" value="12"><input id="p4n" type="number" value="12"></div>
+</div>
+</div>
+</main>
+</div>
+<script>
+const canvas=document.getElementById('c');const ctx=canvas.getContext('2d');
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+window.addEventListener('resize',resize);
+let inited=false;
+const p1=document.getElementById('p1'),p1n=document.getElementById('p1n');
+const p2=document.getElementById('p2'),p2n=document.getElementById('p2n');
+const p3=document.getElementById('p3'),p3n=document.getElementById('p3n');
+const p4=document.getElementById('p4'),p4n=document.getElementById('p4n');
+function link(a,b){a.oninput=()=>{b.value=a.value;draw()};b.oninput=()=>{a.value=b.value;draw()}}
+link(p1,p1n);link(p2,p2n);link(p3,p3n);link(p4,p4n);
+let obj={y:0.3,vy:0};
+let t=0;
+function draw(){
+if(!inited){resize();inited=true;}
+const W=canvas.clientWidth,H=canvas.clientHeight;
+ctx.clearRect(0,0,W,H);
+const chi=+p1.value,B0=+p2.value,g=+p3.value,NL=+p4.value;
+t+=0.016;
+const margin=60,top=margin,bottom=H-margin,left=margin,right=W-margin;
+const cx=(left+right)/2,cy=(top+bottom)/2;
+const scale=Math.min(right-left,bottom-top)/2.2;
+ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+// magnets
+ctx.fillStyle='#30363d';ctx.fillRect(cx-scale*0.7,cy+scale*0.2,scale*1.4,scale*0.3);
+ctx.fillStyle='#58a6ff';ctx.fillRect(cx-scale*0.7,cy-scale*0.5,scale*1.4,scale*0.3);
+ctx.strokeStyle='#21262d';ctx.lineWidth=2;ctx.strokeRect(cx-scale*0.7,cy+scale*0.2,scale*1.4,scale*0.3);ctx.strokeRect(cx-scale*0.7,cy-scale*0.5,scale*1.4,scale*0.3);
+// B field lines
+ctx.strokeStyle='#3fb950';ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
+for(let i=0;i<NL;i++){
+const sx=cx-scale*0.6+i/NL*scale*1.2, sy=cy-scale*0.2;
+ctx.beginPath();
+for(let s=0;s<=1;s+=0.005){
+const x=sx+(s-0.5)*0.1;
+const by=Math.max(-1,Math.min(1,(sy-cy+(sx-cx)*(sx-cx)*0.01)/scale));
+const B=B0*(1-3*by*by/2);
+const y=sy+ (s-0.5)*scale*0.3 + B*scale*0.1*Math.sin(s*8+t);
+if(s===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+}
+ctx.stroke();
+}
+ctx.globalAlpha=1;
+// physics
+const y=obj.y;
+const d=y-(-0.1);
+const B=B0*Math.max(0.01,1-3*d*d*0.5);
+const dBdy=-3*B0*d;
+const Fm=chi*dBdy;
+const F=Fm - g*0.01;
+obj.vy+=F*0.5;
+obj.vy*=0.99;
+obj.y+=obj.vy;
+if(obj.y<-0.4){obj.y=-0.4; obj.vy=0;}
+if(obj.y>0.1){obj.y=0.1; obj.vy=-obj.vy*0.5;}
+// draw object
+const oy=cy+(0.3-obj.y)*scale*0.7;
+ctx.fillStyle='#f78166';
+ctx.beginPath();ctx.moveTo(cx-25,oy-15);ctx.lineTo(cx+25,oy-15);ctx.lineTo(cx+20,oy+10);ctx.lineTo(cx-20,oy+10);ctx.closePath();ctx.fill();
+ctx.fillStyle='#21262d';
+ctx.beginPath();ctx.ellipse(cx,oy-15,20,8,0,0,Math.PI);ctx.fill();
+ctx.strokeStyle='#30363d';ctx.lineWidth=2;
+ctx.beginPath();ctx.moveTo(cx-25,oy-15);ctx.lineTo(cx+25,oy-15);ctx.lineTo(cx+20,oy+10);ctx.lineTo(cx-20,oy+10);ctx.closePath();ctx.stroke();
+}
+function loop(){draw();requestAnimationFrame(loop)}
+loop();
+</script>
+</body>
+</html>

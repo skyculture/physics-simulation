@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌀 涡流阻尼管</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
+  .header { text-align:center; margin-bottom:16px; }
+  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#8b949e; }
+  .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
+  .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
+  .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .control-group { display:flex; flex-direction:column; gap:4px; }
+  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group input[type="range"] { width:100%; }
+  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
+  .info-panel { background:rgba(247,129,102,0.1); border:1px solid rgba(247,129,102,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  canvas { width:100%; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🌀 涡流阻尼管</h1>
+  <p>金属圆盘在磁场中下落时产生涡流，受到阻尼力</p>
+</div>
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="600" height="400"></canvas>
+  </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>磁场强度 B (T): <span id="bVal">1</span></label>
+      <input type="range" id="bField" min="0.1" max="3" step="0.1" value="1">
+    </div>
+    <div class="control-group">
+      <label>圆盘电阻率 ρ (μΩ·m): <span id="rhoVal">1.7</span></label>
+      <input type="range" id="resistivity" min="0.5" max="10" step="0.1" value="1.7">
+    </div>
+    <div class="control-group">
+      <label>圆盘厚度 d (mm): <span id="thicknessVal">2</span></label>
+      <input type="range" id="thickness" min="0.5" max="5" step="0.5" value="2">
+    </div>
+    <div class="control-group">
+      <button id="dropBtn">⬇️ 释放圆盘</button>
+      <button id="resetBtn">🔄 重置</button>
+    </div>
+    <div class="info-panel">
+      <div class="item"><span class="label">下落速度:</span><span class="value" id="speed">0 m/s</span></div>
+      <div class="item"><span class="label">加速度:</span><span class="value" id="accel">0 m/s²</span></div>
+      <div class="item"><span class="label">阻尼力:</span><span class="value" id="force">0 N</span></div>
+      <div class="item"><span class="label">稳态速度:</span><span class="value" id="terminal">0 m/s</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+
+let B = 1;
+let rho = 1.7e-8;
+let d = 0.002;
+let discY = 50;
+let discVy = 0;
+let isDropped = false;
+let eddyCurrents = [];
+
+const discRadius = 30;
+const tubeWidth = 80;
+const tubeHeight = 350;
+const tubeX = canvas.width / 2 - tubeWidth / 2;
+const magnetStart = 120;
+const magnetHeight = 100;
+
+function draw() {
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // 玻璃管
+  ctx.strokeStyle = '#6e7681';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(tubeX, 20);
+  ctx.lineTo(tubeX, 20 + tubeHeight);
+  ctx.moveTo(tubeX + tubeWidth, 20);
+  ctx.lineTo(tubeX + tubeWidth, 20 + tubeHeight);
+  ctx.stroke();
+  
+  // 磁铁区域
+  ctx.fillStyle = '#2d1b4e';
+  ctx.fillRect(tubeX + 5, magnetStart, tubeWidth - 10, magnetHeight);
+  
+  // 磁场方向
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 1;
+  for (let x = tubeX + 15; x < tubeX + tubeWidth - 15; x += 15) {
+    for (let y = magnetStart + 15; y < magnetStart + magnetHeight - 15; y += 15) {
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y);
+      ctx.lineTo(x + 5, y);
+      ctx.moveTo(x, y - 5);
+      ctx.lineTo(x, y + 5);
+      ctx.stroke();
+    }
+  }
+  
+  // 涡流示意
+  eddyCurrents.forEach((ec, i) => {
+    const alpha = Math.max(0.1, 1 - i / eddyCurrents.length);
+    ctx.strokeStyle = `rgba(247,129,102,${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ec.x, ec.y, ec.r, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // 电流方向
+    ctx.fillStyle = `rgba(247,129,102,${alpha})`;
+    ctx.font = '8px sans-serif';
+    ctx.fillText(discVy > 0 ? '↻' : '↺', ec.x, ec.y + 3);
+  });
+  
+  // 金属圆盘
+  const discX = canvas.width / 2;
+  const gradient = ctx.createRadialGradient(discX, discY, 0, discX, discY, discRadius);
+  gradient.addColorStop(0, '#718096');
+  gradient.addColorStop(1, '#4a5568');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(discX, discY, discRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#a0aec0';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // 速度箭头
+  if (discVy !== 0) {
+    const arrowLen = Math.min(Math.abs(discVy) * 10, 30);
+    ctx.strokeStyle = discVy > 0 ? '#3fb950' : '#f78166';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(discX, discY + discRadius);
+    ctx.lineTo(discX, discY + discRadius + arrowLen);
+    ctx.stroke();
+    
+    const dir = discVy > 0 ? 1 : -1;
+    ctx.beginPath();
+    ctx.moveTo(discX - 5, discY + discRadius + arrowLen);
+    ctx.lineTo(discX, discY + discRadius + arrowLen + dir * 8);
+    ctx.lineTo(discX + 5, discY + discRadius + arrowLen);
+    ctx.stroke();
+  }
+  
+  // 标注
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('玻璃管', tubeX - 50, 100);
+  ctx.fillText('NdFeB 磁铁', tubeX - 60, 170);
+  ctx.fillText('金属圆盘', tubeX + tubeWidth + 10, discY);
+}
+
+function update() {
+  if (!isDropped) return;
+  
+  const g = 9.8;
+  const m = 0.1;
+  const r = discRadius / 100;
+  
+  const dampingCoeff = (Math.PI * B * B * r * r * r * r) / (2 * rho * d);
+  const dampingForce = dampingCoeff * discVy;
+  
+  const netForce = m * g - dampingForce;
+  const a = netForce / m;
+  
+  discVy += a * 0.05;
+  discVy = Math.max(0, discVy);
+  discY += discVy * 5;
+  
+  eddyCurrents.push({ x: canvas.width / 2, y: discY, r: discRadius - 5 });
+  if (eddyCurrents.length > 5) eddyCurrents.shift();
+  
+  if (discY > canvas.height - 80) {
+    discY = canvas.height - 80;
+    discVy = 0;
+    isDropped = false;
+  }
+  
+  document.getElementById('speed').textContent = discVy.toFixed(2) + ' m/s';
+  document.getElementById('accel').textContent = a.toFixed(2) + ' m/s²';
+  document.getElementById('force').textContent = dampingForce.toFixed(4) + ' N';
+  document.getElementById('terminal').textContent = ((m * g) / dampingCoeff).toFixed(2) + ' m/s';
+}
+
+function animate() {
+  update();
+  draw();
+  animationId = requestAnimationFrame(animate);
+}
+
+document.getElementById('bField').addEventListener('input', (e) => {
+  B = parseFloat(e.target.value);
+  document.getElementById('bVal').textContent = B;
+});
+
+document.getElementById('resistivity').addEventListener('input', (e) => {
+  rho = parseFloat(e.target.value) * 1e-8;
+  document.getElementById('rhoVal').textContent = e.target.value;
+});
+
+document.getElementById('thickness').addEventListener('input', (e) => {
+  d = parseFloat(e.target.value) / 1000;
+  document.getElementById('thicknessVal').textContent = e.target.value;
+});
+
+document.getElementById('dropBtn').addEventListener('click', () => {
+  if (!isDropped) {
+    isDropped = true;
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  discY = 50;
+  discVy = 0;
+  isDropped = false;
+  eddyCurrents = [];
+  document.getElementById('speed').textContent = '0 m/s';
+  document.getElementById('accel').textContent = '0 m/s²';
+  document.getElementById('force').textContent = '0 N';
+});
+
+draw();
+animate();
+</script>
+</body>
+</html>

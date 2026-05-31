@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轨道卫星 - 物理数值仿真平台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
+  #container { display:flex; flex-direction:column; height:100%; }
+  #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
+  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
+  .ctrl-group label { color:#8b949e; }
+  .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
+  .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="content">
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+      <div class="ctrl-group"><label>初始高度(km):</label><input type="range" id="height" min="200" max="36000" step="100" value="400"><input type="number" id="heightVal" value="400"></div>
+      <div class="ctrl-group"><label>初速度(v/v圆):</label><input type="range" id="vRatio" min="0.5" max="1.5" step="0.01" value="0.8"><input type="number" id="vRatioVal" value="0.8"></div>
+      <div class="ctrl-group"><label>发射角度(°):</label><input type="range" id="launchAngle" min="0" max="90" step="5" value="90"><span id="launchAngleVal">90</span>°</div>
+      <div class="ctrl-group"><button id="resetBtn">↺ 重置</button></div>
+    </div>
+    <div id="info">轨道卫星：卫星在地球引力场中运动，遵循开普勒定律。v/v圆=1时为圆轨道，小于1为椭圆（近地点在发射点对面），大于1为椭圆（远地点在发射点对面），≥√2为逃逸轨道。发射角度90°=切向发射，0°=径向发射。</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let animationId;
+let sat = {};
+let trail = [];
+const MAX_TRAIL = 3000;
+const GM = 3.986e14;
+const R_EARTH = 6.371e6;
+const SUB_STEPS = 8;
+const DT = 50;
+let maxTrailR = 0;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w && h) { canvas.width = w; canvas.height = h; }
+}
+
+function reset() {
+  if(animationId) cancelAnimationFrame(animationId);
+  const h0 = parseFloat(document.getElementById('height').value) * 1000;
+  const vr = parseFloat(document.getElementById('vRatio').value);
+  const launchAngle = parseFloat(document.getElementById('launchAngle').value) * Math.PI / 180;
+  const r0 = R_EARTH + h0;
+  const vCircular = Math.sqrt(GM / r0);
+  const v0 = vr * vCircular;
+
+  sat = {
+    x: r0, y: 0,
+    vx: v0 * Math.cos(launchAngle), vy: v0 * Math.sin(launchAngle),
+    ax: 0, ay: 0
+  };
+  computeAccel();
+  trail = [{ x: sat.x, y: sat.y }];
+  maxTrailR = r0;
+  draw();
+}
+
+function computeAccel() {
+  const r2 = sat.x * sat.x + sat.y * sat.y;
+  const r = Math.sqrt(r2);
+  const r3 = r2 * r;
+  sat.ax = -GM * sat.x / r3;
+  sat.ay = -GM * sat.y / r3;
+}
+
+function step() {
+  sat.x += sat.vx * DT + 0.5 * sat.ax * DT * DT;
+  sat.y += sat.vy * DT + 0.5 * sat.ay * DT * DT;
+  const oldAx = sat.ax, oldAy = sat.ay;
+  computeAccel();
+  sat.vx += 0.5 * (oldAx + sat.ax) * DT;
+  sat.vy += 0.5 * (oldAy + sat.ay) * DT;
+}
+
+function worldToScreen(wx, wy, cx, cy, scale) {
+  return { x: cx + wx * scale, y: cy - wy * scale };
+}
+
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  if(!w || !h) return;
+  const S = Math.min(w, h);
+  const cx = w / 2, cy = h / 2;
+
+  for(let s = 0; s < SUB_STEPS; s++) {
+    step();
+    const r = Math.sqrt(sat.x * sat.x + sat.y * sat.y);
+    if(r < R_EARTH) {
+      sat.x = sat.x / r * R_EARTH;
+      sat.y = sat.y / r * R_EARTH;
+      sat.vx = 0; sat.vy = 0;
+      break;
+    }
+    trail.push({ x: sat.x, y: sat.y });
+    if(trail.length > MAX_TRAIL) trail.shift();
+    if(r > maxTrailR) maxTrailR = r;
+  }
+
+  const maxR = maxTrailR * 1.2;
+  const scale = S * 0.4 / maxR;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = '#3fb950';
+  const earthScreen = worldToScreen(0, 0, cx, cy, scale);
+  const earthR = Math.max(R_EARTH * scale, S * 0.04);
+  ctx.beginPath();
+  ctx.arc(earthScreen.x, earthScreen.y, earthR, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#2ea043';
+  ctx.beginPath();
+  ctx.arc(earthScreen.x - earthR * 0.2, earthScreen.y - earthR * 0.2, earthR * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  if(trail.length > 1) {
+    ctx.strokeStyle = 'rgba(88,166,255,0.6)';
+    ctx.lineWidth = S * 0.003;
+    ctx.beginPath();
+    const p0 = worldToScreen(trail[0].x, trail[0].y, cx, cy, scale);
+    ctx.moveTo(p0.x, p0.y);
+    for(let i = 1; i < trail.length; i++) {
+      const p = worldToScreen(trail[i].x, trail[i].y, cx, cy, scale);
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+
+  const satScreen = worldToScreen(sat.x, sat.y, cx, cy, scale);
+  ctx.fillStyle = '#ffa657';
+  ctx.beginPath();
+  ctx.arc(satScreen.x, satScreen.y, S * 0.01, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = S * 0.002;
+  ctx.beginPath();
+  const satR = S * 0.015;
+  ctx.moveTo(satScreen.x - satR, satScreen.y);
+  ctx.lineTo(satScreen.x + satR, satScreen.y);
+  ctx.moveTo(satScreen.x, satScreen.y - satR);
+  ctx.lineTo(satScreen.x, satScreen.y + satR);
+  ctx.stroke();
+
+  const r = Math.sqrt(sat.x * sat.x + sat.y * sat.y);
+  const speed = Math.sqrt(sat.vx * sat.vx + sat.vy * sat.vy);
+  const vCirc = Math.sqrt(GM / r);
+  const altitude = (r - R_EARTH) / 1000;
+  const E = 0.5 * speed * speed - GM / r;
+  const L = sat.x * sat.vy - sat.y * sat.vx;
+
+  const fs = S * 0.028;
+  ctx.font = `${fs}px sans-serif`;
+  ctx.fillStyle = '#8b949e';
+  ctx.textAlign = 'left';
+  ctx.fillText(`高度: ${altitude.toFixed(0)} km`, S * 0.03, fs + 5);
+  ctx.fillText(`速度: ${(speed/1000).toFixed(2)} km/s`, S * 0.03, fs * 2 + 5);
+  ctx.fillText(`圆轨道速度: ${(vCirc/1000).toFixed(2)} km/s`, S * 0.03, fs * 3 + 5);
+
+  if(E < 0) {
+    const a = -GM / (2 * E);
+    const ecc = Math.sqrt(Math.max(0, 1 + 2 * E * L * L / (GM * GM)));
+    const period = 2 * Math.PI * Math.sqrt(a * a * a / GM) / 60;
+    ctx.fillText(`半长轴: ${(a/1000).toFixed(0)} km`, S * 0.03, fs * 4 + 5);
+    ctx.fillText(`偏心率: ${ecc.toFixed(3)}`, S * 0.03, fs * 5 + 5);
+    ctx.fillText(`周期: ${period.toFixed(1)} 分钟`, S * 0.03, fs * 6 + 5);
+
+    const orbitType = ecc < 0.01 ? '近圆轨道' : '椭圆轨道';
+    ctx.fillStyle = '#3fb950';
+    ctx.font = `bold ${fs * 1.1}px sans-serif`;
+    ctx.fillText(orbitType, S * 0.03, fs * 7.5 + 5);
+  } else {
+    ctx.fillStyle = '#f78166';
+    ctx.font = `bold ${fs * 1.1}px sans-serif`;
+    ctx.fillText('逃逸轨道(双曲线)', S * 0.03, fs * 4 + 5);
+  }
+
+  ctx.fillStyle = '#58a6ff';
+  ctx.font = `${fs * 0.9}px sans-serif`;
+  ctx.fillText(`轨道能量: ${(E/1e6).toFixed(2)} MJ/kg`, S * 0.03, h - S * 0.03);
+
+  animationId = requestAnimationFrame(draw);
+}
+
+document.getElementById('height').addEventListener('input', e => { document.getElementById('heightVal').value = e.target.value; });
+document.getElementById('vRatio').addEventListener('input', e => { document.getElementById('vRatioVal').value = e.target.value; });
+document.getElementById('launchAngle').addEventListener('input', e => { document.getElementById('launchAngleVal').textContent = e.target.value; });
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+resize();
+window.addEventListener('resize', resize);
+reset();
+</script>
+</body>
+</html>

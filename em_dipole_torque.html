@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>磁偶极子力矩 - 物理数值仿真平台</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+#app{height:100%;display:flex;flex-direction:column}
+main{flex:1;display:flex;overflow:hidden}#canvasWrap{flex:1;position:relative}canvas{display:block;width:100%;height:100%}
+#sidebar{width:300px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0}.row label{flex:0 0 100px;font-size:13px}
+.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+</style></head>
+<body><div id="app">
+
+<main><div id="canvasWrap"><canvas id="c"></canvas></div>
+<div id="sidebar">
+<div class="sec"><h3>参数设置</h3>
+<div class="row"><label>磁场强度 B</label><input id="p1" type="range" min="0.2" max="3" step="0.1" value="1.5"><input id="p1n" type="number" value="1.5"></div>
+<div class="row"><label>磁矩 m</label><input id="p2" type="range" min="0.1" max="2" step="0.1" value="1"><input id="p2n" type="number" value="1"></div>
+<div class="row"><label>初始角度 θ°</label><input id="p3" type="range" min="0" max="180" value="60"><input id="p3n" type="number" value="60"></div>
+<div class="row"><label>阻尼</label><input id="p4" type="range" min="0" max="0.5" step="0.01" value="0.05"><input id="p4n" type="number" value="0.05"></div>
+</div></div></main></div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+window.addEventListener('resize',resize);let inited=false;
+const p1=document.getElementById('p1'),p1n=document.getElementById('p1n'),p2=document.getElementById('p2'),p2n=document.getElementById('p2n'),p3=document.getElementById('p3'),p3n=document.getElementById('p3n'),p4=document.getElementById('p4'),p4n=document.getElementById('p4n');
+function link(a,b){a.oninput=()=>{b.value=a.value};b.oninput=()=>{a.value=b.value}}
+link(p1,p1n);link(p2,p2n);link(p3,p3n);link(p4,p4n);
+let angle=+p3.value/180*Math.PI,omega=0;
+function draw(){
+if(!inited){resize();inited=true;}
+const W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H){requestAnimationFrame(draw);return}
+const B=+p1.value,m=+p2.value,damp=+p4.value;
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+const margin=60,cx=(margin+W-margin)/2,cy=(margin+H-margin)/2,R=Math.min(W,H)/3;
+// physics: τ = m × B = mB sinθ
+const torque=-m*B*Math.sin(angle);
+omega+=torque*0.005-damp*omega;angle+=omega;
+// B field arrows
+ctx.strokeStyle='rgba(88,166,255,0.4)';ctx.lineWidth=1;
+for(let i=-4;i<=4;i++){for(let j=-3;j<=3;j++){
+const xx=cx+i*R*0.4,yy=cy+j*R*0.4;
+ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(xx,yy-20);ctx.stroke();
+ctx.beginPath();ctx.moveTo(xx,yy-20);ctx.lineTo(xx-4,yy-14);ctx.lineTo(xx+4,yy-14);ctx.fillStyle='rgba(88,166,255,0.4)';ctx.fill();
+}}
+// dipole
+ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
+ctx.fillStyle='#f78166';ctx.beginPath();ctx.arc(0,-R*0.4,R*0.12,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#58a6ff';ctx.beginPath();ctx.arc(0,R*0.4,R*0.12,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#c9d1d9';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-R*0.25);ctx.lineTo(0,R*0.25);ctx.stroke();
+// m vector arrow
+ctx.strokeStyle='#3fb950';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,R*0.4);ctx.lineTo(0,R*0.75);ctx.stroke();
+ctx.beginPath();ctx.moveTo(-6,R*0.65);ctx.lineTo(0,R*0.8);ctx.lineTo(6,R*0.65);ctx.fillStyle='#3fb950';ctx.fill();
+ctx.restore();
+// info
+ctx.fillStyle='#8b949e';ctx.font='14px system-ui';
+ctx.fillText(`θ = ${(angle*180/Math.PI%360).toFixed(1)}° | ω = ${omega.toFixed(3)} rad/s | τ = ${torque.toFixed(3)}`,margin,H-margin-20);
+requestAnimationFrame(draw);
+}requestAnimationFrame(draw);
+</script></body></html>

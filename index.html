@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>物理数值仿真平台</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --text: #c9d1d9; --accent: #58a6ff; --ac2: #3fb950;
+    --ac3: #f78166; --ac4: #d2a8ff; --ac5: #ffa657;
+    --card-bg: #1c2333;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column;
+  }
+  #topbar {
+    height: 44px; min-height: 44px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 16px;
+    gap: 10px; z-index: 10;
+  }
+  #topbar .logo { font-size: 1em; font-weight: 700; color: #f0f6fc; white-space: nowrap; }
+  #topbar .domain-badge {
+    font-size: 0.68em; padding: 2px 8px; border-radius: 8px;
+    background: rgba(88,166,255,0.12); color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.2);
+  }
+  #topbar .info { margin-left: auto; font-size: 0.72em; color: #8b949e; display: flex; gap: 14px; }
+  #categoryBar {
+    height: 40px; min-height: 40px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: stretch; overflow-x: auto;
+  }
+  #categoryBar .cat-tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 20px; cursor: pointer; white-space: nowrap;
+    font-size: 0.82em; color: #8b949e;
+    border-bottom: 2px solid transparent;
+    transition: 0.15s; user-select: none;
+  }
+  #categoryBar .cat-tab:hover { color: var(--text); }
+  #categoryBar .cat-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  #categoryBar .cat-icon { font-size: 1.1em; }
+  #main { flex: 1; display: flex; overflow: hidden; position: relative; }
+  #listWrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #expList {
+    flex: 1; overflow-y: auto; padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+  }
+  #expList::-webkit-scrollbar { width: 4px; }
+  #expList::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+  #pager {
+    height: 38px; min-height: 38px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 0 12px;
+  }
+  #pager .pg-btn {
+    min-width: 28px; height: 26px; border: 1px solid var(--border);
+    background: var(--card-bg); color: var(--text); border-radius: 5px;
+    cursor: pointer; font-size: 0.78em; display: flex; align-items: center;
+    justify-content: center; padding: 0 6px; transition: 0.15s;
+  }
+  #pager .pg-btn:hover { border-color: var(--accent); color: var(--accent); }
+  #pager .pg-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #pager .pg-btn:disabled { opacity: 0.3; cursor: default; }
+  #pager .pg-info { font-size: 0.72em; color: #8b949e; margin: 0 10px; }
+  .exp-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer; transition: 0.2s;
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  .exp-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .exp-card canvas {
+    width: 100%; flex: 1 1 0; min-height: 0; display: block;
+    border-radius: 10px 10px 0 0;
+  }
+  .exp-card .card-info {
+    flex: 0 0 auto; min-height: 42px;
+    padding: 5px 8px 6px;
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; justify-content: center;
+    background: var(--card-bg);
+  }
+  .exp-card .card-title {
+    font-size: 0.85em; font-weight: 700; color: #f0f6fc;
+    line-height: 1.35; margin-bottom: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .exp-card .card-desc {
+    font-size: 0.65em; color: #6e7681; line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #simView {
+    position: absolute; inset: 0; display: none; flex-direction: column;
+    background: var(--bg); z-index: 5;
+  }
+  #simView.active { display: flex; }
+  #simView .sim-topbar {
+    height: 38px; background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 14px; gap: 10px;
+  }
+  #simView .sim-topbar .back-btn {
+    padding: 4px 10px; background: var(--accent); color: #fff; border: none;
+    border-radius: 4px; cursor: pointer; font-size: 0.76em;
+  }
+  #simView .sim-topbar .back-btn:hover { opacity: 0.85; }
+  #simView .sim-topbar .sim-title { font-size: 0.82em; color: #f0f6fc; }
+  #simView iframe { flex: 1; width: 100%; border: none; }
+  @media (max-width: 900px) {
+    #expList { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(6, 1fr); }
+  }
+  @media (max-width: 600px) {
+    #topbar .info { display: none; }
+    #categoryBar .cat-tab { padding: 0 12px; font-size: 0.74em; }
+    #expList { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(8, 1fr); padding: 6px; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <span class="logo">🔬 物理数值仿真平台</span>
+  <span class="domain-badge" id="topBadge">力学</span>
+  <span class="info">
+    <span>📊 <span id="totalCount">0</span>个实验</span>
+    <span>⚡ 本地计算</span>
+    <span>🌐 HTML5</span>
+  </span>
+</div>
+<div id="categoryBar">
+  <div class="cat-tab active" data-cat="mechanics"><span class="cat-icon">⚙️</span>力学</div>
+  <div class="cat-tab" data-cat="waves"><span class="cat-icon">〰️</span>振动与波</div>
+  <div class="cat-tab" data-cat="electromagnetism"><span class="cat-icon">🧲</span>电磁学</div>
+  <div class="cat-tab" data-cat="thermo"><span class="cat-icon">🌡️</span>热学</div>
+  <div class="cat-tab" data-cat="optics"><span class="cat-icon">💡</span>光学</div>
+  <div class="cat-tab" data-cat="modern"><span class="cat-icon">🌌</span>近现代与天体物理</div>
+  <div class="cat-tab" data-cat="quantum"><span class="cat-icon">⚛️</span>量子与核物理</div>
+</div>
+<div id="main">
+  <div id="listWrap">
+    <div id="expList"></div>
+    <div id="pager"></div>
+  </div>
+  <div id="simView">
+    <div class="sim-topbar">
+      <button class="back-btn" id="backBtn">← 返回实验列表</button>
+      <span class="sim-title" id="simTitle"></span>
+    </div>
+    <iframe id="simFrame" title="simulation"></iframe>
+  </div>
+</div>
+<script>
+const PV = {
+  projectile(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();for(let i=0;i<=1;i+=0.02){const x=w*0.1+i*w*0.8,y=h*0.85-i*4*h*0.18*(1-i);i===0?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(w*0.7,h*0.3,4,0,Math.PI*2);c.fill();c.strokeStyle='#8b949e';c.lineWidth=1;c.beginPath();c.moveTo(w*0.1,h*0.85);c.lineTo(w*0.9,h*0.85);c.stroke()},
+  pendulum(c,w,h){const cx=w/2,cy=h*0.1,r=h*0.55,a=0.6;c.strokeStyle='#8b949e';c.lineWidth=1;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+r*Math.sin(a),cy+r*Math.cos(a));c.stroke();c.fillStyle='#58a6ff';c.beginPath();c.arc(cx+r*Math.sin(a),cy+r*Math.cos(a),6,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.3)';c.beginPath();c.arc(cx,cy,r,0.3,Math.PI-0.3);c.stroke()},
+  collision(c,w,h){c.fillStyle='#f78166';c.beginPath();c.arc(w*0.3,h*0.5,8,0,Math.PI*2);c.fill();c.fillStyle='#58a6ff';c.beginPath();c.arc(w*0.7,h*0.5,8,0,Math.PI*2);c.fill();c.strokeStyle='rgba(247,129,102,0.5)';c.lineWidth=2;c.beginPath();c.moveTo(w*0.3+8,h*0.5);c.lineTo(w*0.3+25,h*0.5);c.stroke();c.strokeStyle='rgba(88,166,255,0.5)';c.beginPath();c.moveTo(w*0.7-8,h*0.5);c.lineTo(w*0.7-25,h*0.5);c.stroke();c.strokeStyle='#8b949e';c.lineWidth=1;c.setLineDash([3,3]);c.beginPath();c.moveTo(w*0.5,h*0.15);c.lineTo(w*0.5,h*0.85);c.stroke();c.setLineDash([])},
+  orbit(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,8,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;c.beginPath();c.ellipse(cx,cy,w*0.35,h*0.25,0,0,Math.PI*2);c.stroke();c.beginPath();c.ellipse(cx,cy,w*0.22,h*0.35,0.5,0,Math.PI*2);c.stroke();c.fillStyle='#58a6ff';c.beginPath();c.arc(cx+w*0.35,cy,4,0,Math.PI*2);c.fill()},
+  oscillator(c,w,h){c.strokeStyle='#d2a8ff';c.lineWidth=2;c.beginPath();for(let i=0;i<w;i+=2){const y=h/2+Math.sin(i*0.06)*h*0.3*Math.exp(-i*0.003);i===0?c.moveTo(i,y):c.lineTo(i,y)}c.stroke();c.strokeStyle='rgba(210,168,255,0.2)';c.lineWidth=1;c.beginPath();c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke()},
+  standingWave(c,w,h){c.strokeStyle='#d2a8ff';c.lineWidth=2;c.beginPath();for(let i=0;i<w;i+=2){const y=h/2+Math.sin(i*Math.PI*3/w)*h*0.3;i===0?c.moveTo(i,y):c.lineTo(i,y)}c.stroke();c.strokeStyle='rgba(210,168,255,0.4)';c.beginPath();for(let i=0;i<w;i+=2){const y=h/2-Math.sin(i*Math.PI*3/w)*h*0.3;i===0?c.moveTo(i,y):c.lineTo(i,y)}c.stroke();c.fillStyle='#8b949e';c.fillRect(0,h*0.15,3,h*0.7);c.fillRect(w-3,h*0.15,3,h*0.7)},
+  efield(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#f78166';c.beginPath();c.arc(cx-20,cy,6,0,Math.PI*2);c.fill();c.fillStyle='#58a6ff';c.beginPath();c.arc(cx+20,cy,6,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let a=0;a<Math.PI*2;a+=0.5){c.beginPath();c.moveTo(cx+20+Math.cos(a)*8,cy+Math.sin(a)*8);c.lineTo(cx+20+Math.cos(a)*25,cy+Math.sin(a)*25);c.stroke()}c.strokeStyle='rgba(247,129,102,0.4)';for(let a=0;a<Math.PI*2;a+=0.5){c.beginPath();c.moveTo(cx-20+Math.cos(a)*8,cy+Math.sin(a)*8);c.lineTo(cx-20+Math.cos(a)*25,cy+Math.sin(a)*25);c.stroke()}},
+  lorentz(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();const cx=w/2,cy=h/2,r=h*0.3;for(let a=0;a<Math.PI*3;a+=0.05){const x=cx+r*Math.cos(a)+a*3,y=cy+r*Math.sin(a);a===0?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx+r*Math.cos(0)+3,cy+r*Math.sin(0),3,0,Math.PI*2);c.fill()},
+  rlc(c,w,h){const y=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();for(let i=0;i<w;i+=2){const v=Math.sin(i*0.08)*h*0.3*Math.exp(-i*0.004);i===0?c.moveTo(i,y-v):c.lineTo(i,y-v)}c.stroke();c.strokeStyle='#f78166';c.lineWidth=1;c.beginPath();for(let i=0;i<w;i+=2){const v=Math.cos(i*0.08)*h*0.3*Math.exp(-i*0.004);i===0?c.moveTo(i,y-v):c.lineTo(i,y-v)}c.stroke()},
+  battery(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#8b949e';c.lineWidth=2;c.strokeRect(cx-15,cy-25,30,50);c.fillStyle='#3fb950';c.fillRect(cx-12,cy-5,24,27);c.fillStyle='#f78166';c.fillRect(cx-12,cy-22,24,17);c.fillStyle='#58a6ff';c.font='10px sans-serif';c.fillText('+',cx-3,cy-12);c.fillText('−',cx-3,cy+18);c.strokeStyle='rgba(63,185,80,0.4)';c.lineWidth=1;for(let i=0;i<5;i++){const x=cx-10+i*5;c.beginPath();c.moveTo(x,cy+5);c.lineTo(x,cy+20);c.stroke()}},
+  accelerator(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.35,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.beginPath();c.arc(cx,cy,h*0.25,0,Math.PI*2);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx+h*0.35,cy,4,0,Math.PI*2);c.fill();c.strokeStyle='#8b949e';c.lineWidth=1;c.beginPath();c.moveTo(cx,cy-h*0.35);c.lineTo(cx,cy-h*0.25);c.stroke();c.beginPath();c.moveTo(cx,cy+h*0.25);c.lineTo(cx,cy+h*0.35);c.stroke()},
+  multicharge(c,w,h){const pts=[[w*0.3,h*0.3],[w*0.7,h*0.3],[w*0.5,h*0.7]];c.fillStyle='#f78166';pts.forEach(p=>{c.beginPath();c.arc(p[0],p[1],4,0,Math.PI*2);c.fill()});c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;pts.forEach(p=>{for(let a=0;a<Math.PI*2;a+=0.6){c.beginPath();c.moveTo(p[0]+Math.cos(a)*6,p[1]+Math.sin(a)*6);c.lineTo(p[0]+Math.cos(a)*18,p[1]+Math.sin(a)*18);c.stroke()}})},
+  particle(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();const cx=w/2,cy=h/2,r=h*0.25;for(let a=0;a<Math.PI*4;a+=0.05){const x=cx+r*Math.cos(a)+a*2,y=cy+r*Math.sin(a)*0.6;a===0?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();c.fillStyle='#f78166';const la=Math.PI*4;c.beginPath();c.arc(cx+r*Math.cos(la)+la*2,cy+r*Math.sin(la)*0.6,3,0,Math.PI*2);c.fill()},
+  fourpoint(c,w,h){const y=h*0.6;c.strokeStyle='#8b949e';c.lineWidth=2;c.beginPath();c.moveTo(w*0.1,y);c.lineTo(w*0.9,y);c.stroke();c.fillStyle='#f78166';[w*0.25,w*0.75].forEach(x=>{c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill()});c.fillStyle='#58a6ff';[w*0.35,w*0.65].forEach(x=>{c.beginPath();c.arc(x,y,3,0,Math.PI*2);c.fill()});c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;c.setLineDash([2,2]);c.beginPath();c.moveTo(w*0.35,y-15);c.lineTo(w*0.65,y-15);c.stroke();c.setLineDash([])},
+  helmholtz(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();c.ellipse(cx-w*0.15,cy,h*0.12,h*0.35,0,0,Math.PI*2);c.stroke();c.beginPath();c.ellipse(cx+w*0.15,cy,h*0.12,h*0.35,0,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let i=-3;i<=3;i++){c.beginPath();c.moveTo(cx-w*0.15,cy+i*h*0.08);c.lineTo(cx+w*0.15,cy+i*h*0.08);c.stroke()}},
+  spectrometer(c,w,h){c.fillStyle='#8b949e';c.fillRect(w*0.1,h*0.3,8,h*0.4);c.strokeStyle='#58a6ff';c.lineWidth=1.5;const cx=w*0.5,cy=h*0.5;c.beginPath();c.arc(cx,cy,h*0.35,-0.3,Math.PI+0.3);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx+h*0.35*Math.cos(-0.1),cy+h*0.35*Math.sin(-0.1),3,0,Math.PI*2);c.fill();c.fillStyle='#3fb950';c.beginPath();c.arc(cx+h*0.35*Math.cos(1),cy+h*0.35*Math.sin(1),3,0,Math.PI*2);c.fill();c.fillStyle='#d2a8ff';c.beginPath();c.arc(cx+h*0.35*Math.cos(2),cy+h*0.35*Math.sin(2),3,0,Math.PI*2);c.fill()},
+  eddy(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.3,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let r=h*0.15;r<h*0.3;r+=8){c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke()}c.fillStyle='#f78166';c.beginPath();c.arc(cx,cy-h*0.3-5,5,0,Math.PI*2);c.fill();c.strokeStyle='rgba(247,129,102,0.4)';c.beginPath();c.moveTo(cx,cy-h*0.3-5);c.lineTo(cx,cy-h*0.3+10);c.stroke()},
+  superconductor(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,cy);c.lineTo(w*0.85,cy);c.stroke();c.fillStyle='rgba(88,166,255,0.15)';c.fillRect(w*0.15,cy-h*0.15,w*0.7,h*0.3);c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let i=0;i<6;i++){const x=w*0.2+i*w*0.1;c.beginPath();c.arc(x,cy,4,0,Math.PI*2);c.stroke()}c.fillStyle='#f78166';c.beginPath();c.arc(w*0.85,cy,4,0,Math.PI*2);c.fill()},
+  waveguide(c,w,h){c.strokeStyle='#8b949e';c.lineWidth=2;c.strokeRect(w*0.15,h*0.2,w*0.7,h*0.6);c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();for(let i=0;i<w*0.7;i+=3){const x=w*0.15+i,y=h*0.5+Math.sin(i*0.08)*h*0.2;i===0?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.beginPath();for(let i=0;i<w*0.7;i+=3){const x=w*0.15+i,y=h*0.5-Math.sin(i*0.08)*h*0.2;i===0?c.moveTo(x,y):c.lineTo(x,y)}c.stroke()},
+  skin(c,w,h){const cx=w/2;c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();for(let i=0;i<h;i+=2){const x=cx+Math.exp(-Math.abs(i-h/2)*0.03)*w*0.3;i===0?c.moveTo(x,i):c.lineTo(x,i)}c.stroke();c.strokeStyle='rgba(247,129,102,0.3)';c.lineWidth=1;c.beginPath();for(let i=0;i<h;i+=2){const x=cx+Math.exp(-Math.abs(i-h/2)*0.06)*w*0.2;i===0?c.moveTo(x,i):c.lineTo(x,i)}c.stroke();c.strokeStyle='#8b949e';c.setLineDash([3,3]);c.beginPath();c.moveTo(cx,0);c.lineTo(cx,h);c.stroke();c.setLineDash([])},
+  mri(c,w,h){const cx=w/2,cy=h/2,sz=Math.min(w,h)*0.35;c.strokeStyle='#58a6ff';c.lineWidth=1;const n=8;for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=Math.sin(i*0.8)*Math.cos(j*0.8)*0.5+0.5;c.fillStyle=`rgba(88,166,255,${v*0.8})`;c.fillRect(cx-sz/2+i*sz/n,cy-sz/2+j*sz/n,sz/n-1,sz/n-1)}},
+  josephson(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#58a6ff';c.fillRect(cx-25,cy-10,20,20);c.fillRect(cx+5,cy-10,20,20);c.fillStyle='rgba(247,129,102,0.5)';c.fillRect(cx-5,cy-8,10,16);c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let i=0;i<3;i++){const y=cy-6+i*6;c.beginPath();c.moveTo(cx-5,y);c.quadraticCurveTo(cx,y-4,cx+5,y);c.stroke()}},
+  semiconductor(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='rgba(88,166,255,0.2)';c.fillRect(w*0.1,cy-15,w*0.35,30);c.fillStyle='rgba(247,129,102,0.2)';c.fillRect(w*0.55,cy-15,w*0.35,30);c.strokeStyle='#58a6ff';c.lineWidth=1;c.beginPath();c.moveTo(w*0.1,cy-10);c.lineTo(w*0.45,cy-10);c.lineTo(w*0.5,cy+10);c.lineTo(w*0.9,cy+10);c.stroke();c.strokeStyle='#8b949e';c.setLineDash([2,2]);c.beginPath();c.moveTo(w*0.5,h*0.15);c.lineTo(w*0.5,h*0.85);c.stroke();c.setLineDash([])},
+  lockin(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();for(let i=0;i<w;i+=2){const y=h/2+Math.sin(i*0.1)*h*0.25;i===0?c.moveTo(i,y):c.lineTo(i,y)}c.stroke();c.strokeStyle='#f78166';c.lineWidth=1;c.beginPath();for(let i=0;i<w;i+=2){const y=h/2+Math.cos(i*0.1)*h*0.15;i===0?c.moveTo(i,y):c.lineTo(i,y)}c.stroke();c.fillStyle='#3fb950';c.fillRect(w*0.7,h*0.15,w*0.25,h*0.15);c.fillStyle='#8b949e';c.font='8px sans-serif';c.fillText('PSD',w*0.76,h*0.26)},
+  laser(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=3;c.beginPath();c.moveTo(w*0.1,cy);c.lineTo(w*0.4,cy);c.stroke();c.fillStyle='rgba(247,129,102,0.15)';c.beginPath();c.ellipse(w*0.4,cy,w*0.05,h*0.35,0,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let i=0;i<8;i++){const a=i*Math.PI/4;c.beginPath();c.moveTo(w*0.5,cy);c.lineTo(w*0.5+Math.cos(a)*w*0.3,cy+Math.sin(a)*h*0.3);c.stroke()}c.fillStyle='#58a6ff';c.beginPath();c.arc(w*0.7,cy,4,0,Math.PI*2);c.fill()},
+  mriPrinciple(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.3,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;c.beginPath();c.ellipse(cx,cy,h*0.3,h*0.1,0.3,0,Math.PI*2);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx+h*0.3,cy,4,0,Math.PI*2);c.fill();c.strokeStyle='#8b949e';c.beginPath();c.moveTo(cx,cy);c.lineTo(cx,cy-h*0.3);c.stroke()},
+  electron(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=1.5;const cx=w/2,cy=h/2,r=h*0.25;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx+r,cy,4,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.2)';c.beginPath();c.moveTo(cx-r,cy);c.lineTo(cx+r,cy);c.stroke();c.beginPath();c.moveTo(cx,cy-r);c.lineTo(cx,cy+r);c.stroke()},
+  pet(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#8b949e';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.35,0,Math.PI*2);c.stroke();c.fillStyle='rgba(247,129,102,0.2)';c.beginPath();c.arc(cx,cy,h*0.15,0,Math.PI*2);c.fill();c.strokeStyle='#f78166';c.lineWidth=1.5;const a1=-0.4,a2=Math.PI+0.4;c.beginPath();c.moveTo(cx+h*0.15*Math.cos(a1),cy+h*0.15*Math.sin(a1));c.lineTo(cx+h*0.35*Math.cos(a1),cy+h*0.35*Math.sin(a1));c.stroke();c.beginPath();c.moveTo(cx+h*0.15*Math.cos(a2),cy+h*0.15*Math.sin(a2));c.lineTo(cx+h*0.35*Math.cos(a2),cy+h*0.35*Math.sin(a2));c.stroke()},
+  fusion(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.ellipse(cx,cy,h*0.35,h*0.2,0,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.beginPath();c.ellipse(cx,cy,h*0.25,h*0.12,0,0,Math.PI*2);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,6,0,Math.PI*2);c.fill();c.strokeStyle='rgba(255,166,87,0.3)';c.lineWidth=1;for(let a=0;a<Math.PI*2;a+=0.8){c.beginPath();c.moveTo(cx+6*Math.cos(a),cy+6*Math.sin(a));c.lineTo(cx+20*Math.cos(a),cy+20*Math.sin(a));c.stroke()}},
+  diamagnetic(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='rgba(88,166,255,0.15)';c.fillRect(cx-20,cy-8,40,16);c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(cx-25,cy);c.lineTo(cx-20,cy);c.stroke();c.beginPath();c.moveTo(cx+20,cy);c.lineTo(cx+25,cy);c.stroke();c.strokeStyle='rgba(247,129,102,0.4)';c.lineWidth=1;for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(cx-30,cy+i*5);c.lineTo(cx+30,cy+i*5);c.stroke()}c.fillStyle='#f78166';c.beginPath();c.arc(cx,cy-15,5,0,Math.PI*2);c.fill()},
+  magneticMatrix(c,w,h){const cx=w/2,cy=h/2,r=h*0.3;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let i=0;i<6;i++){const a=i*Math.PI/3;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));c.stroke()}c.fillStyle='#f78166';c.beginPath();c.arc(cx+r*0.7,cy,3,0,Math.PI*2);c.fill()},
+  dipole(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(cx,cy-h*0.3);c.lineTo(cx,cy+h*0.3);c.stroke();c.fillStyle='#f78166';c.beginPath();c.moveTo(cx,cy-h*0.3);c.lineTo(cx-5,cy-h*0.2);c.lineTo(cx+5,cy-h*0.2);c.fill();c.fillStyle='#58a6ff';c.beginPath();c.moveTo(cx,cy+h*0.3);c.lineTo(cx-5,cy+h*0.2);c.lineTo(cx+5,cy+h*0.2);c.fill();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let a=0;a<Math.PI*2;a+=0.5){c.beginPath();c.moveTo(cx+Math.cos(a)*8,cy+Math.sin(a)*8);c.lineTo(cx+Math.cos(a)*22,cy+Math.sin(a)*22);c.stroke()}},
+  faraday(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=3;c.beginPath();c.moveTo(cx-15,cy-20);c.lineTo(cx-15,cy+20);c.stroke();c.fillStyle='#f78166';c.beginPath();c.moveTo(cx-15,cy-20);c.lineTo(cx-20,cy-10);c.lineTo(cx-10,cy-10);c.fill();c.fillStyle='#58a6ff';c.beginPath();c.moveTo(cx+15,cy+20);c.lineTo(cx+10,cy+10);c.lineTo(cx+20,cy+10);c.fill();c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.ellipse(cx,cy,w*0.2,h*0.15,0,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(63,185,80,0.3)';c.lineWidth=1;c.beginPath();c.ellipse(cx,cy,w*0.25,h*0.2,0,0,Math.PI*2);c.stroke()},
+  ampere(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=3;c.beginPath();c.moveTo(w*0.15,cy);c.lineTo(w*0.85,cy);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let i=0;i<5;i++){const x=w*0.2+i*w*0.14;c.beginPath();c.moveTo(x,cy-15);c.lineTo(x,cy+15);c.stroke();c.beginPath();c.moveTo(x-3,cy-10);c.lineTo(x,cy-15);c.lineTo(x+3,cy-10);c.fill()}c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx,cy+h*0.3);c.stroke();c.beginPath();c.moveTo(cx-4,cy+h*0.25);c.lineTo(cx,cy+h*0.3);c.lineTo(cx+4,cy+h*0.25);c.stroke()},
+  biotsavart(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.ellipse(cx,cy,w*0.2,h*0.3,0,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let a=0;a<Math.PI*2;a+=0.5){const r=w*0.15+Math.sin(a*3)*w*0.05;c.beginPath();c.moveTo(cx+Math.cos(a)*w*0.2,cy+Math.sin(a)*h*0.3);c.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r*h/w*0.3);c.stroke()}},
+  inductance(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();for(let i=0;i<w;i+=2){const y=h/2+Math.sin(i*0.06)*h*0.25*(1-i/w);i===0?c.moveTo(i,y):c.lineTo(i,y)}c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;c.setLineDash([3,3]);c.beginPath();c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke();c.setLineDash([])},
+  displacement(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#8b949e';c.fillRect(cx-25,cy-20,6,40);c.fillRect(cx+19,cy-20,6,40);c.strokeStyle='rgba(88,166,255,0.5)';c.lineWidth=1.5;for(let i=0;i<4;i++){const y=cy-12+i*8;c.beginPath();c.moveTo(cx-18,y);c.lineTo(cx+18,y);c.stroke()}c.strokeStyle='rgba(247,129,102,0.4)';c.lineWidth=1;for(let r=10;r<=25;r+=8){c.beginPath();c.ellipse(cx,cy,r,r*0.4,0,0,Math.PI*2);c.stroke()}},
+  motionalEmf(c,w,h){c.strokeStyle='#8b949e';c.lineWidth=2;c.beginPath();c.moveTo(w*0.2,h*0.2);c.lineTo(w*0.8,h*0.2);c.stroke();c.beginPath();c.moveTo(w*0.2,h*0.2);c.lineTo(w*0.2,h*0.8);c.stroke();c.beginPath();c.moveTo(w*0.8,h*0.2);c.lineTo(w*0.8,h*0.8);c.stroke();c.fillStyle='#f78166';c.fillRect(w*0.48,h*0.2,4,h*0.6);c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let i=0;i<4;i++){for(let j=0;j<3;j++){const x=w*0.25+i*w*0.15,y=h*0.3+j*h*0.15;c.beginPath();c.moveTo(x-3,y-3);c.lineTo(x+3,y+3);c.moveTo(x+3,y-3);c.lineTo(x-3,y+3);c.stroke()}}},
+  capacitor(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#8b949e';c.lineWidth=3;c.beginPath();c.moveTo(cx-8,cy-h*0.3);c.lineTo(cx-8,cy+h*0.3);c.stroke();c.beginPath();c.moveTo(cx+8,cy-h*0.3);c.lineTo(cx+8,cy+h*0.3);c.stroke();c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let i=0;i<5;i++){const y=cy-h*0.2+i*h*0.1;c.beginPath();c.moveTo(cx-8,y);c.lineTo(cx+8,y);c.stroke()}c.fillStyle='#f78166';c.font='10px sans-serif';c.fillText('+',cx-18,cy-h*0.2);c.fillText('−',cx+12,cy-h*0.2)},
+  gas(c,w,h){const cx=w/2,cy=h/2;const pts=[];for(let i=0;i<30;i++)pts.push([w*0.15+Math.random()*w*0.7,h*0.15+Math.random()*h*0.7]);c.fillStyle='rgba(88,166,255,0.6)';pts.forEach(p=>{c.beginPath();c.arc(p[0],p[1],2,0,Math.PI*2);c.fill()});c.strokeStyle='rgba(88,166,255,0.2)';c.lineWidth=0.5;for(let i=0;i<15;i++){const a=Math.random()*Math.PI*2,l=8+Math.random()*12;c.beginPath();c.moveTo(pts[i][0],pts[i][1]);c.lineTo(pts[i][0]+Math.cos(a)*l,pts[i][1]+Math.sin(a)*l);c.stroke()}c.strokeStyle='#8b949e';c.lineWidth=1;c.strokeRect(w*0.12,h*0.12,w*0.76,h*0.76)},
+  brownian(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=1;c.beginPath();let x=cx,y=cy;for(let i=0;i<50;i++){x+=(Math.random()-0.5)*8;y+=(Math.random()-0.5)*8;i===0?c.moveTo(cx,cy):c.lineTo(x,y)}c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx,cy,3,0,Math.PI*2);c.fill();c.fillStyle='#58a6ff';c.beginPath();c.arc(x,y,3,0,Math.PI*2);c.fill()},
+  young(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#8b949e';c.lineWidth=1;c.beginPath();c.moveTo(w*0.1,cy-h*0.3);c.lineTo(w*0.4,cy);c.lineTo(w*0.1,cy+h*0.3);c.stroke();c.beginPath();c.moveTo(w*0.1,cy-h*0.3);c.lineTo(w*0.4,cy);c.lineTo(w*0.1,cy+h*0.3);c.stroke();c.strokeStyle='rgba(63,185,80,0.5)';c.lineWidth=2;for(let i=0;i<8;i++){const y=h*0.15+i*h*0.1;const a=Math.cos(i*0.8)*0.3+0.5;c.strokeStyle=`rgba(63,185,80,${a})`;c.beginPath();c.moveTo(w*0.5,y);c.lineTo(w*0.9,y);c.stroke()}},
+  lens(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.ellipse(cx,cy,h*0.1,h*0.35,0,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(247,129,102,0.5)';c.lineWidth=1;for(let i=-2;i<=2;i++){const y=cy+i*h*0.12;c.beginPath();c.moveTo(w*0.1,y);c.lineTo(cx-h*0.1,y);c.stroke();c.beginPath();c.moveTo(cx+h*0.1,y);const dy=(y-cy)*0.5;c.lineTo(w*0.9,cy+dy);c.stroke()}c.strokeStyle='#8b949e';c.setLineDash([3,3]);c.beginPath();c.moveTo(cx,h*0.1);c.lineTo(cx,h*0.9);c.stroke();c.setLineDash([])},
+  quantum(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();for(let i=0;i<w;i+=2){const y=h/2+Math.exp(-Math.pow((i/w-0.3)*4,2))*h*0.3*Math.cos(i*0.15);i===0?c.moveTo(i,y):c.lineTo(i,y)}c.stroke();c.fillStyle='rgba(88,166,255,0.15)';c.beginPath();for(let i=0;i<w;i+=2){const y=h/2+Math.exp(-Math.pow((i/w-0.3)*4,2))*h*0.3;i===0?c.moveTo(i,h/2):c.lineTo(i,h/2-y)}for(let i=w-1;i>=0;i-=2){const y=h/2+Math.exp(-Math.pow((i/w-0.3)*4,2))*h*0.3;c.lineTo(i,h/2+y)}c.fill();c.strokeStyle='#f78166';c.lineWidth=1;c.setLineDash([3,3]);c.beginPath();c.moveTo(w*0.6,h*0.15);c.lineTo(w*0.6,h*0.85);c.stroke();c.setLineDash([])},
+  relativity(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=1;c.beginPath();c.moveTo(w*0.1,h*0.1);c.lineTo(w*0.9,h*0.9);c.stroke();c.beginPath();c.moveTo(w*0.1,h*0.9);c.lineTo(w*0.9,h*0.1);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,5,0,Math.PI*2);c.fill();c.strokeStyle='#f78166';c.lineWidth=1.5;c.beginPath();c.ellipse(cx,cy,w*0.3,h*0.15,0.5,0,Math.PI*2);c.stroke();c.fillStyle='#8b949e';c.font='8px sans-serif';c.fillText('t',w*0.85,h*0.12);c.fillText('x',w*0.12,h*0.88)},
+  magneticMirror(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();c.arc(cx-w*0.25,cy,h*0.25,-0.3,Math.PI+0.3);c.stroke();c.beginPath();c.arc(cx+w*0.25,cy,h*0.25,Math.PI-0.3,-0.3);c.stroke();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(cx-w*0.25,h*0.2+i*h*0.15);c.lineTo(cx+w*0.25,h*0.2+i*h*0.15);c.stroke()};c.fillStyle='#58a6ff';c.beginPath();c.arc(cx,cy-5,3,0,Math.PI*2);c.fill()},
+  solarCell(c,w,h){c.fillStyle='rgba(255,166,87,0.8)';c.fillRect(w*0.15,h*0.3,w*0.7,h*0.4);c.strokeStyle='#58a6ff';c.lineWidth=1;for(let i=0;i<5;i++)for(let j=0;j<8;j++){c.strokeRect(w*0.18+i*w*0.08,h*0.35+j*h*0.07,w*0.06,h*0.05)};c.fillStyle='#3fb950';c.fillRect(w*0.7,h*0.65,w*0.15,h*0.1);c.fillStyle='#8b949e';c.font='8px sans-serif';c.fillText('+',w*0.76,h*0.73)},
+  circuitLab(c,w,h){c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(w*0.2,h*0.3);c.lineTo(w*0.35,h*0.3);c.lineTo(w*0.35,h*0.5);c.lineTo(w*0.5,h*0.5);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(w*0.42,h*0.5,5,0,Math.PI*2);c.fill();c.strokeStyle='#58a6ff';c.beginPath();c.moveTo(w*0.5,h*0.5);c.lineTo(w*0.5,h*0.7);c.lineTo(w*0.7,h*0.7);c.stroke();c.fillStyle='#ffa657';c.fillRect(w*0.2,h*0.65,w*0.1,h*0.08);c.fillStyle='#8b949e';c.font='8px sans-serif';c.fillText('V',w*0.23,h*0.71)},
+  particleMagnetic(c,w,h){const cx=w/2,cy=h/2,r=h*0.25;c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx+r,cy,4,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.2)';c.lineWidth=1;for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(w*0.1,cy+i*h*0.1);c.lineTo(w*0.9,cy+i*h*0.1);c.stroke()}},
+  cyclotron(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.35,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let r=h*0.15;r<h*0.35;r+=h*0.07){c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke()};c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,4,0,Math.PI*2);c.fill()},
+  electromagneticInduction(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.2,0,Math.PI*2);c.stroke();c.fillStyle='#f78166';c.fillRect(cx-12,cy-h*0.4,24,h*0.15);c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;c.setLineDash([3,3]);c.beginPath();c.arc(cx,cy,h*0.12,0,Math.PI*2);c.stroke();c.setLineDash([])},
+  compositeField(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();for(let a=0;a<Math.PI*4;a+=0.05){const r=h*0.2*(1+a*0.02);const x=cx+r*Math.cos(a),y=cy+r*Math.sin(a)*0.5;a===0?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx+h*0.2,cy,3,0,Math.PI*2);c.fill();c.strokeStyle='rgba(247,129,102,0.2)';c.lineWidth=1;for(let i=-3;i<=3;i++){c.beginPath();c.moveTo(w*0.1,cy+i*h*0.1);c.lineTo(w*0.9,cy+i*h*0.1);c.stroke()}},
+  phasedArray(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#58a6ff';for(let i=-3;i<=3;i++)for(let j=-2;j<=2;j++){c.beginPath();c.arc(cx+i*w*0.08,cy+j*h*0.1,5,0,Math.PI*2);c.fill()};c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+w*0.35,cy-h*0.25);c.stroke();c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+w*0.35,cy);c.stroke();c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+w*0.35,cy+h*0.25);c.stroke();},
+  inductanceCalc(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.arc(cx-w*0.15,cy,h*0.15,0,Math.PI*2);c.stroke();c.beginPath();c.arc(cx+w*0.15,cy,h*0.15,0,Math.PI*2);c.stroke();c.strokeStyle='#f78166';c.lineWidth=1.5;c.beginPath();c.moveTo(cx-w*0.15-h*0.15,cy);c.lineTo(cx-w*0.15,cy);c.stroke();c.beginPath();c.moveTo(cx+w*0.15,cy);c.lineTo(cx+w*0.15+h*0.15,cy);c.stroke();c.fillStyle='#8b949e';c.font='10px sans-serif';c.fillText('L',cx-4,cy+4);},
+  microwaveTrans(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(w*0.1,cy);c.lineTo(w*0.2,cy);c.stroke();c.beginPath();c.moveTo(w*0.2,cy-h*0.12);c.lineTo(w*0.2,cy+h*0.12);c.stroke();c.beginPath();c.moveTo(w*0.2,cy);c.lineTo(w*0.5,cy);c.stroke();c.beginPath();c.moveTo(w*0.5,cy-h*0.15);c.lineTo(w*0.5,cy+h*0.15);c.stroke();c.beginPath();c.moveTo(w*0.5,cy);c.lineTo(w*0.8,cy);c.stroke();c.beginPath();c.moveTo(w*0.8,cy-h*0.1);c.lineTo(w*0.8,cy+h*0.1);c.stroke();c.beginPath();c.moveTo(w*0.8,cy);c.lineTo(w*0.9,cy);c.stroke();c.fillStyle='#f78166';c.font='10px sans-serif';c.fillText('Z',w*0.35,cy-5);c.fillText('T',w*0.65,cy-5);},
+  newtonSecondLab(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.2,cy+h*0.2);c.lineTo(w*0.8,cy-h*0.2);c.stroke();c.fillStyle='#58a6ff';c.fillRect(w*0.65,cy-h*0.15,w*0.1,h*0.12);c.strokeStyle='#f78166';c.lineWidth=1.5;c.beginPath();c.moveTo(w*0.65,cy-h*0.15);c.lineTo(w*0.65,cy+h*0.25);c.stroke();},
+  specialRelativity(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=1;c.beginPath();c.moveTo(w*0.1,h*0.1);c.lineTo(w*0.9,h*0.9);c.stroke();c.beginPath();c.moveTo(w*0.1,h*0.9);c.lineTo(w*0.9,h*0.1);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,6,0,Math.PI*2);c.fill();c.strokeStyle='#d2a8ff';c.lineWidth=1.5;c.beginPath();c.ellipse(cx,cy,w*0.25,h*0.12,0.5,0,Math.PI*2);c.stroke();},
+  uncertainty(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.25,0,Math.PI*2);c.stroke();c.fillStyle='#3fb950';c.beginPath();c.arc(cx,cy,4,0,Math.PI*2);c.fill();c.fillStyle='#58a6ff';for(let i=0;i<8;i++){const a=i*Math.PI/4;c.beginPath();c.arc(cx+h*0.15*Math.cos(a),cy+h*0.15*Math.sin(a),3,0,Math.PI*2);c.fill()}},
+  universalGravity(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,h*0.2,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.4)';c.lineWidth=1;for(let r=h*0.3;r<h*0.45;r+=h*0.07){c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke()};c.fillStyle='#58a6ff';c.beginPath();c.arc(cx+h*0.35,cy-5,5,0,Math.PI*2);c.fill();},
+  coriolis(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#161b22';c.beginPath();c.arc(cx,cy,h*0.35,0,Math.PI*2);c.fill();c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.35,0,Math.PI*2);c.stroke();c.strokeStyle='#f78166';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,cy-h*0.35);c.lineTo(cx,cy+h*0.35);c.stroke();c.beginPath();c.moveTo(cx-w*0.35,cy);c.lineTo(cx+w*0.35,cy);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx+w*0.2,cy-h*0.1,4,0,Math.PI*2);c.fill();},
+  orbitalSatellite(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#3fb950';c.beginPath();c.arc(cx,cy,h*0.18,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1.5;c.beginPath();c.ellipse(cx,cy,w*0.25,h*0.15,0,0,Math.PI*2);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx+w*0.25,cy,3,0,Math.PI*2);c.fill();c.strokeStyle='#f78166';c.lineWidth=1;c.beginPath();c.moveTo(cx+w*0.25-6,cy);c.lineTo(cx+w*0.25+6,cy);c.stroke();},
+  threeBody(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();for(let a=0;a<Math.PI*2;a+=0.05){const r=h*0.15+h*0.05*Math.sin(a*3);c.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a))}c.closePath();c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,5,0,Math.PI*2);c.fill();c.fillStyle='#f78166';c.beginPath();c.arc(cx+h*0.18,cy,4,0,Math.PI*2);c.fill();c.fillStyle='#3fb950';c.beginPath();c.arc(cx,h*0.65,4,0,Math.PI*2);c.fill();},
+  chaoticPendulum(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();c.moveTo(cx,h*0.15);c.lineTo(cx+w*0.25,cy+h*0.15);c.stroke();c.fillStyle='#58a6ff';c.beginPath();c.arc(cx+w*0.25,cy+h*0.15,6,0,Math.PI*2);c.fill();c.strokeStyle='#d2a8ff';c.lineWidth=1;c.beginPath();c.moveTo(cx,h*0.15);c.lineTo(cx-w*0.2,cy+h*0.1);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx-w*0.2,cy+h*0.1,5,0,Math.PI*2);c.fill();},
+  rigidBody(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.arc(cx,cy,h*0.22,0,Math.PI*2);c.stroke();c.strokeStyle='#f78166';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,cy-h*0.22);c.lineTo(cx,cy+h*0.22);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx-w*0.15,cy-h*0.15,4,0,Math.PI*2);c.fill();},
+  springOscillator(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.2,cy);c.lineTo(w*0.4,cy);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(w*0.55,cy,8,0,Math.PI*2);c.fill();c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();c.moveTo(w*0.4,cy);for(let i=0;i<4;i++){c.lineTo(w*0.45+i*w*0.025,cy+h*0.06);c.lineTo(w*0.475+i*w*0.025,cy-h*0.06);}c.lineTo(w*0.6,cy);c.stroke();},
+  surfaceTension(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='rgba(88,166,255,0.2)';c.beginPath();c.moveTo(w*0.2,cy);c.lineTo(w*0.5,cy-h*0.15);c.lineTo(w*0.8,cy);c.closePath();c.fill();c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(w*0.2,cy);c.lineTo(w*0.8,cy);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy+h*0.15,5,0,Math.PI*2);c.fill();},
+  projectile(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,cy+h*0.25);c.lineTo(w*0.9,cy+h*0.25);c.stroke();c.strokeStyle='#ffa657';c.lineWidth=1.5;c.beginPath();c.moveTo(w*0.25,cy+h*0.25);c.lineTo(w*0.75,cy-h*0.1);c.stroke();c.fillStyle='#58a6ff';c.beginPath();c.arc(w*0.5,cy+h*0.05,4,0,Math.PI*2);c.fill();},
+  diamagneticLev(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();c.arc(cx,cy+h*0.15,h*0.2,0,Math.PI*2);c.stroke();c.fillStyle='#58a6ff';c.beginPath();c.arc(cx,cy-h*0.12,6,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=1;for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(cx+i*w*0.1,cy+h*0.15-h*0.2);c.lineTo(cx+i*w*0.1,cy+h*0.15+h*0.2);c.stroke();}},
+  conveyorBelt(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#3fb950';c.fillRect(w*0.15,cy-h*0.1,w*0.7,h*0.08);c.fillStyle='#58a6ff';c.fillRect(w*0.55,cy-h*0.2,w*0.12,h*0.12);c.strokeStyle='#f78166';c.lineWidth=1;c.beginPath();c.moveTo(w*0.55,cy-h*0.2);c.lineTo(w*0.55,cy-h*0.08);c.stroke();},
+  doubleBallSlide(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(w*0.2,cy);c.lineTo(w*0.8,cy);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(w*0.35,cy,7,0,Math.PI*2);c.fill();c.fillStyle='#f78166';c.beginPath();c.arc(w*0.65,cy,5,0,Math.PI*2);c.fill();c.strokeStyle='#d2a8ff';c.lineWidth=1.5;c.beginPath();c.moveTo(w*0.35,cy);c.lineTo(w*0.65,cy);c.stroke();},
+  carCollision(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#f78166';c.fillRect(w*0.2,cy-h*0.1,w*0.15,h*0.15);c.fillStyle='#58a6ff';c.fillRect(w*0.65,cy-h*0.1,w*0.15,h*0.15);c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,cy);c.lineTo(w*0.9,cy);c.stroke();},
+  galtonBoard(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#58a6ff';c.lineWidth=1.5;for(let r=0;r<5;r++){for(let i=0;i<=r;i++){const x=cx-w*0.18+i*w*0.09,y=h*0.15+r*h*0.1;c.beginPath();c.arc(x,y,3,0,Math.PI*2);c.stroke();}}c.fillStyle='#ffa657';for(let i=0;i<6;i++){c.fillRect(w*0.15+i*w*0.12,h*0.7,w*0.08,h*0.15);}},
+  dopplerFreeFall(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#f78166';c.beginPath();c.arc(cx,h*0.3,6,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.5)';c.lineWidth=1.5;for(let i=1;i<=4;i++){c.beginPath();c.arc(cx,h*0.3,8*i,0,Math.PI*2);c.stroke();}c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(cx-8,h*0.2);c.lineTo(cx+8,h*0.2);c.stroke();},
+  rotatingDrum(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='rgba(63,185,80,0.3)';c.beginPath();c.moveTo(w*0.15,h*0.85);c.lineTo(w*0.85,h*0.55);c.lineTo(w*0.85,h*0.85);c.closePath();c.fill();c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,h*0.85);c.lineTo(w*0.85,h*0.55);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(cx-w*0.1,cy,8,0,Math.PI*2);c.fill();c.strokeStyle='rgba(247,129,102,0.4)';c.lineWidth=1;c.beginPath();c.arc(cx-w*0.1,cy,12,0,Math.PI*2);c.stroke();},
+  chladni(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='rgba(210,168,255,0.15)';c.fillRect(w*0.15,h*0.15,w*0.7,h*0.7);c.strokeStyle='#d2a8ff';c.lineWidth=1.5;for(let i=0;i<6;i++){for(let j=0;j<6;j++){const x=w*0.18+i*w*0.11,y=h*0.18+j*w*0.11;const val=Math.sin(i*0.8)*Math.sin(j*0.8);if(val>0.3){c.fillStyle='rgba(247,129,102,0.7)';c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill();}}}},
+  springOsc(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,cy);c.lineTo(w*0.35,cy);c.stroke();c.fillStyle='#f78166';c.beginPath();c.arc(w*0.5,cy,9,0,Math.PI*2);c.fill();c.strokeStyle='#d2a8ff';c.lineWidth=1.8;c.beginPath();c.moveTo(w*0.35,cy);for(let i=0;i<4;i++){c.lineTo(w*0.38+i*w*0.03,cy-h*0.07);c.lineTo(w*0.4+i*w*0.03,cy+h*0.07);}c.lineTo(w*0.5,cy);c.stroke();},
+  musicalSound(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#d2a8ff';c.lineWidth=1.5;for(let i=0;i<3;i++){const k=0.5+i*0.3;c.beginPath();for(let x=0;x<w;x+=2){const y=cy+Math.sin(x*0.05*k)*h*0.15*(1-i*0.2);if(x===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();}const colors=['#f78166','#ffa657','#3fb950'];colors.forEach((col,i)=>{c.fillStyle=col;c.beginPath();c.arc(w*0.2+i*w*0.3,cy+h*0.3,7,0,Math.PI*2);c.fill();});},
+  carbonNanoSpeaker(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();for(let i=0;i<8;i++){const y=h*0.2+i*h*0.08;c.beginPath();c.moveTo(w*0.3,y);c.lineTo(w*0.7,y);c.stroke();}c.fillStyle='rgba(210,168,255,0.25)';c.fillRect(w*0.35,h*0.25,w*0.3,h*0.5);c.fillStyle='#d2a8ff';c.fillRect(w*0.38,h*0.35,w*0.08,h*0.3);c.fillRect(w*0.54,h*0.35,w*0.08,h*0.3);},
+  waveguideWave(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#8b949e';c.lineWidth=3;c.strokeRect(w*0.1,h*0.2,w*0.8,h*0.6);c.strokeStyle='#d2a8ff';c.lineWidth=2;c.beginPath();for(let x=0;x<w*0.7;x+=2){const y=cy+Math.sin(x*0.08)*h*0.18;if(x===0)c.moveTo(w*0.15+x,y);else c.lineTo(w*0.15+x,y);}c.stroke();c.strokeStyle='rgba(210,168,255,0.35)';c.lineWidth=1;c.beginPath();for(let x=0;x<w*0.7;x+=2){const y=cy-Math.sin(x*0.08)*h*0.18;if(x===0)c.moveTo(w*0.15+x,y);else c.lineTo(w*0.15+x,y);}c.stroke();},
+  dopplerEffect(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#f78166';c.beginPath();c.arc(w*0.6,cy,8,0,Math.PI*2);c.fill();c.strokeStyle='rgba(210,168,255,0.5)';c.lineWidth=1.5;for(let i=1;i<=5;i++){const left=12*i*(0.5+i*0.1);const right=12*i*(1.5-i*0.1);c.beginPath();c.arc(w*0.6,cy,left,Math.PI*0.7,Math.PI*1.3);c.stroke();c.beginPath();c.arc(w*0.6,cy,right,Math.PI*1.7,Math.PI*0.3);c.stroke();}c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.55,cy-10);c.lineTo(w*0.7,cy-10);c.stroke();},
+  ultrasonicSensor(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#d2a8ff';c.lineWidth=2;c.beginPath();c.moveTo(w*0.2,cy);c.lineTo(w*0.45,cy);c.stroke();c.fillStyle='#f78166';c.fillRect(w*0.25,cy-h*0.1,w*0.2,h*0.2);c.strokeStyle='rgba(210,168,255,0.4)';c.lineWidth=1.5;c.beginPath();c.moveTo(w*0.45,cy-h*0.05);c.quadraticCurveTo(w*0.65,cy-h*0.08,w*0.75,cy-h*0.02);c.moveTo(w*0.45,cy+h*0.05);c.quadraticCurveTo(w*0.65,cy+h*0.08,w*0.75,cy+h*0.02);c.stroke();c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.75,cy-h*0.02);c.quadraticCurveTo(w*0.65,cy-h*0.08,w*0.45,cy-h*0.05);c.moveTo(w*0.75,cy+h*0.02);c.quadraticCurveTo(w*0.65,cy+h*0.08,w*0.45,cy+h*0.05);c.stroke();},
+  archerParadox(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,h*0.85);c.lineTo(w*0.8,h*0.3);c.stroke();c.fillStyle='#8b949e';c.fillRect(w*0.7,h*0.25,w*0.08,h*0.15);c.fillStyle='#ffa657';c.beginPath();c.arc(w*0.18,h*0.82,5,0,Math.PI*2);c.fill();c.strokeStyle='rgba(247,129,102,0.6)';c.lineWidth=1.5;c.beginPath();c.moveTo(w*0.18,h*0.82);c.quadraticCurveTo(w*0.45,h*0.55,w*0.75,h*0.28);c.stroke();},
+  phasedArray(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#d2a8ff';c.lineWidth=1.5;for(let i=0;i<5;i++){for(let j=0;j<5;j++){const x=cx-w*0.2+j*w*0.1,y=cy-h*0.2+i*h*0.1;c.fillStyle='rgba(210,168,255,0.5)';c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill();}}c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();for(let r=0;r<6;r++){const theta=r*0.3;c.moveTo(cx,cy);c.lineTo(cx+Math.cos(theta)*w*0.35,cy+Math.sin(theta)*h*0.35);}c.stroke();},
+  dopplerFreeFall(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#f78166';c.beginPath();c.arc(cx,h*0.35,6,0,Math.PI*2);c.fill();c.strokeStyle='rgba(210,168,255,0.4)';c.lineWidth=1.5;for(let i=1;i<=4;i++){c.beginPath();c.arc(cx,h*0.35,i*15,0,Math.PI*2);c.stroke();}c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,h*0.85);c.lineTo(w*0.85,h*0.85);c.stroke();c.fillStyle='#3fb950';c.beginPath();c.arc(w*0.5,h*0.85,8,0,Math.PI*2);c.fill();},
+  microwaveImpedance(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#8b949e';c.lineWidth=2;c.strokeRect(w*0.2,h*0.3,w*0.6,h*0.4);c.strokeStyle='#d2a8ff';c.lineWidth=2;c.beginPath();c.moveTo(w*0.3,cy);c.lineTo(w*0.5,cy);c.stroke();c.fillStyle='#f78166';c.fillRect(w*0.5,h*0.35,w*0.05,h*0.3);c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.55,cy);c.lineTo(w*0.7,cy);c.stroke();},
+  waveSuperposition(c,w,h){const cx=w/2,cy=h/2;c.strokeStyle='#d2a8ff';c.lineWidth=2;c.beginPath();for(let x=0;x<w;x+=3){const y=cy+Math.sin(x*0.02)*h*0.15+Math.sin(x*0.025)*h*0.1;if(x===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();c.strokeStyle='rgba(63,185,80,0.5)';c.lineWidth=1.5;c.beginPath();for(let x=0;x<w;x+=3){const y=cy+Math.sin(x*0.02)*h*0.15;if(x===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();c.strokeStyle='rgba(247,129,102,0.5)';c.lineWidth=1.5;c.beginPath();for(let x=0;x<w;x+=3){const y=cy+Math.sin(x*0.025)*h*0.1;if(x===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();},
+  darkMatter(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);c.strokeStyle='rgba(210,168,255,0.3)';c.lineWidth=1;for(let i=0;i<150;i++){const r=Math.random()*w*0.4,th=Math.random()*Math.PI*2;c.beginPath();c.arc(cx+r*Math.cos(th),cy+r*Math.sin(th),1,0,Math.PI*2);c.fillStyle=`rgba(210,168,255,${Math.random()*0.8+0.2})`;c.fill();}c.strokeStyle='#f78166';c.lineWidth=2;for(let i=1;i<=3;i++){c.beginPath();c.arc(cx,cy,i*w*0.12,0,Math.PI*2);c.stroke();}c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,4,0,Math.PI*2);c.fill();},
+  stellarParallax(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);c.strokeStyle='#3fb950';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,cy);c.lineTo(w*0.85,cy);c.stroke();c.fillStyle='#ffa657';c.beginPath();c.arc(w*0.5,cy,5,0,Math.PI*2);c.fill();c.strokeStyle='rgba(210,168,255,0.6)';c.lineWidth=2;c.beginPath();c.moveTo(w*0.15,cy);c.lineTo(cx,cy-h*0.25);c.lineTo(w*0.85,cy);c.stroke();c.fillStyle='#d2a8ff';c.beginPath();c.arc(cx,cy-h*0.25,4,0,Math.PI*2);c.fill();},
+  muonTelescope(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);c.fillStyle='#8b949e';c.fillRect(w*0.3,h*0.5,w*0.4,h*0.35);c.strokeStyle='#d2a8ff';c.lineWidth=2;for(let i=0;i<5;i++){c.beginPath();c.moveTo(w*0.35+i*w*0.1,h*0.55);c.lineTo(w*0.35+i*w*0.1,h*0.8);c.stroke();}c.fillStyle='#f78166';c.beginPath();c.arc(cx,h*0.4,3,0,Math.PI*2);c.fill();c.strokeStyle='rgba(247,129,102,0.5)';c.lineWidth=1;c.beginPath();c.moveTo(cx,h*0.4);c.lineTo(cx+w*0.15,h*0.6);c.stroke();},
+  cosmicRays(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);for(let i=0;i<8;i++){c.strokeStyle=`rgba(${255-i*20},${166+i*5},${81+i*10},0.6)`;c.lineWidth=1;const x1=Math.random()*w,y1=0,x2=Math.random()*w,y2=h;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();}c.fillStyle='#ffa657';for(let i=0;i<30;i++){c.beginPath();c.arc(Math.random()*w,Math.random()*h,1,0,Math.PI*2);c.fill();}},
+  galaxyRotation(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);c.fillStyle='#f78166';c.beginPath();c.arc(cx,cy,6,0,Math.PI*2);c.fill();for(let r=w*0.15;r<w*0.4;r+=w*0.08){c.strokeStyle=`rgba(210,168,255,${0.6-r/w})`;c.lineWidth=2;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();}c.strokeStyle='#ffa657';c.lineWidth=1;for(let i=0;i<6;i++){const th=i*Math.PI/3;c.beginPath();c.moveTo(cx+r*0.3*Math.cos(th),cy+r*0.3*Math.sin(th));c.lineTo(cx+r*0.4*Math.cos(th),cy+r*0.4*Math.sin(th));c.stroke();}},
+  gravitationalLens(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);c.fillStyle='#f78166';c.beginPath();c.arc(cx,cy,8,0,Math.PI*2);c.fill();c.strokeStyle='rgba(210,168,255,0.5)';c.lineWidth=1.5;for(let i=-2;i<=2;i++){c.beginPath();const y=cy+i*h*0.1;c.moveTo(0,y);const d=Math.abs(i*h*0.1);const bulge=d*d*0.001;c.quadraticCurveTo(cx,cy+bulge,w,y);c.stroke();}},
+  cosmicMicrowave(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);for(let i=0;i<200;i++){const x=Math.random()*w,y=Math.random()*h;const t=Math.random();const r=t<0.8?2:(t<0.95?3:4);c.fillStyle=t<0.8?'rgba(139,148,158,0.6)':(t<0.95?'rgba(210,168,255,0.7)':'rgba(255,166,87,0.8)');c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();}},
+  blackHole(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#1a1a2e';c.fillRect(0,0,w,h);c.fillStyle='#000';c.beginPath();c.arc(cx,cy,w*0.05,0,Math.PI*2);c.fill();const grad=c.createRadialGradient(cx,cy,0,cx,cy,w*0.15);grad.addColorStop(0,'rgba(210,168,255,0.3)');grad.addColorStop(0.7,'rgba(139,92,246,0.2)');grad.addColorStop(1,'rgba(139,92,246,0)');c.fillStyle=grad;c.beginPath();c.arc(cx,cy,w*0.15,0,Math.PI*2);c.fill();c.strokeStyle='rgba(255,255,255,0.5)';c.lineWidth=1;c.beginPath();c.arc(cx,cy,w*0.1,0,Math.PI*2);c.stroke();},
+  gpsTimeCorrection(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,h*0.25,0,Math.PI*2);c.fill();c.strokeStyle='rgba(88,166,255,0.5)';c.lineWidth=1;for(let r=h*0.35;r<h*0.45;r+=h*0.05){c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke()};c.fillStyle='#58a6ff';c.beginPath();c.arc(cx+h*0.35,cy,5,0,Math.PI*2);c.fill();c.strokeStyle='#3fb950';c.lineWidth=1.5;c.beginPath();c.moveTo(cx+h*0.35,cy);c.lineTo(cx+h*0.35,cy+h*0.2);c.stroke();c.fillStyle='#3fb950';c.beginPath();c.arc(cx+h*0.35,cy+h*0.22,3,0,Math.PI*2);c.fill();},
+  gravitySlingshot(c,w,h){const cx=w/2,cy=h/2;c.fillStyle='#ffa657';c.beginPath();c.arc(cx,cy,h*0.2,0,Math.PI*2);c.fill();c.strokeStyle='rgba(210,168,255,0.3)';c.lineWidth=1;c.beginPath();c.arc(cx,cy,h*0.35,0,Math.PI*2);c.stroke();c.fillStyle='#58a6ff';c.beginPath();c.arc(cx+h*0.35,cy-h*0.15,4,0,Math.PI*2);c.fill();c.strokeStyle='#f78166';c.lineWidth=2;c.beginPath();c.moveTo(w*0.1,cy-h*0.15);c.quadraticCurveTo(cx+h*0.2,cy,h*0.9,cy+h*0.2);c.stroke();},
+  idealGas(c,w,h){
+    const bx=w*0.1,by=h*0.1,bw=w*0.65,bh=h*0.8;
+    c.fillStyle='#0d1117';c.fillRect(bx,by,bw,bh);
+    c.strokeStyle='#30363d';c.lineWidth=1.5;c.strokeRect(bx,by,bw,bh);
+    const pistonW=8;const px=bx+bw;
+    const pg=c.createLinearGradient(px-pistonW/2,0,px+pistonW/2,0);
+    pg.addColorStop(0,'#4a5568');pg.addColorStop(0.5,'#718096');pg.addColorStop(1,'#4a5568');
+    c.fillStyle=pg;c.fillRect(px-pistonW/2,by,pistonW,bh);
+    for(let i=0;i<25;i++){
+      const x=bx+8+Math.random()*(bw-16);
+      const y=by+8+Math.random()*(bh-16);
+      const sp=Math.random();
+      const r=Math.floor(sp*255),g=Math.floor((1-Math.abs(sp-0.5)*2)*200+30),b=Math.floor((1-sp)*255);
+      c.fillStyle=`rgb(${r},${g},${b})`;
+      c.beginPath();c.arc(x,y,2.5,0,Math.PI*2);c.fill();
+    }
+    c.fillStyle='#8b949e';c.font='9px sans-serif';c.textAlign='left';
+    c.fillText('PV=nRT',bx+6,by+bh-6);
+    c.fillStyle='#ffa657';c.font='bold 9px sans-serif';c.textAlign='center';
+    c.fillText('活塞',px+pistonW+8,h/2);
+  },
+  heatConduction(c,w,h){
+    const cols=16,rows=10;
+    const gx=w*0.1,gy=h*0.1;
+    const gw=(w*0.8)/cols,gh=(h*0.8)/rows;
+    for(let i=0;i<cols;i++){
+      for(let j=0;j<rows;j++){
+        const t=(i/(cols-1));
+        const norm=t;
+        let r,g,b;
+        if(norm<0.25){const f=norm/0.25;r=0;g=Math.floor(f*100);b=Math.floor(100+f*155);}
+        else if(norm<0.5){const f=(norm-0.25)/0.25;r=0;g=Math.floor(100+f*155);b=Math.floor(255-f*155);}
+        else if(norm<0.75){const f=(norm-0.5)/0.25;r=Math.floor(f*255);g=255;b=0;}
+        else{const f=(norm-0.75)/0.25;r=255;g=Math.floor(255-f*200);b=0;}
+        c.fillStyle=`rgb(${r},${g},${b})`;
+        c.fillRect(gx+i*gw,gy+j*gh,gw+0.5,gh+0.5);
+      }
+    }
+    c.strokeStyle='#30363d';c.lineWidth=1.5;c.strokeRect(gx,gy,cols*gw,rows*gh);
+    c.fillStyle='#79c0ff';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('0°C',gx+12,gy-3);
+    c.fillStyle='#f85149';c.fillText('100°C',gx+cols*gw-14,gy-3);
+    c.fillStyle='#8b949e';c.font='8px sans-serif';
+    c.fillText('∂T/∂t = α∇²T',gx+cols*gw/2,gy+rows*gh+12);
+  },
+  carnotCycle(c,w,h){
+    const mx=w*0.15,my=h*0.1,mw=w*0.7,mh=h*0.75;
+    c.strokeStyle='#8b949e';c.lineWidth=0.8;
+    c.beginPath();c.moveTo(mx,my+mh);c.lineTo(mx,my);c.stroke();
+    c.beginPath();c.moveTo(mx,my+mh);c.lineTo(mx+mw,my+mh);c.stroke();
+    c.setLineDash([3,3]);c.strokeStyle='#30363d88';c.lineWidth=0.6;
+    for(let i=1;i<=3;i++){const tIso=200+i*200;const y=my+mh-((tIso-200)/800)*mh;
+      c.beginPath();for(let v=1;v<=8;v+=0.1){const p=800*tIso/(v*100);const x=mx+(v/8)*mw;const py=my+mh-(p/10000)*mh;if(v===1)c.moveTo(x,py);else c.lineTo(x,py);}c.stroke();}
+    c.setLineDash([]);
+    c.strokeStyle='#f85149';c.lineWidth=2;
+    c.beginPath();c.moveTo(mx+mw*0.15,my+mh*0.25);
+    c.bezierCurveTo(mx+mw*0.35,my+mh*0.05,mx+mw*0.55,my+mh*0.1,mx+mw*0.65,my+mh*0.2);
+    c.stroke();
+    c.strokeStyle='#79c0ff';c.lineWidth=2;
+    c.beginPath();c.moveTo(mx+mw*0.65,my+mh*0.2);
+    c.bezierCurveTo(mx+mw*0.8,my+mh*0.4,mx+mw*0.75,my+mh*0.65,mx+mw*0.6,my+mh*0.7);
+    c.stroke();
+    c.strokeStyle='#79c0ff';c.lineWidth=2;
+    c.beginPath();c.moveTo(mx+mw*0.6,my+mh*0.7);
+    c.bezierCurveTo(mx+mw*0.45,my+mh*0.8,mx+mw*0.3,my+mh*0.78,mx+mw*0.25,my+mh*0.7);
+    c.stroke();
+    c.strokeStyle='#f85149';c.lineWidth=2;
+    c.beginPath();c.moveTo(mx+mw*0.25,my+mh*0.7);
+    c.bezierCurveTo(mx+mw*0.15,my+mh*0.55,mx+mw*0.12,my+mh*0.35,mx+mw*0.15,my+mh*0.25);
+    c.stroke();
+    const pts=[{x:mx+mw*0.15,y:my+mh*0.25},{x:mx+mw*0.65,y:my+mh*0.2},{x:mx+mw*0.6,y:my+mh*0.7},{x:mx+mw*0.25,y:my+mh*0.7}];
+    c.fillStyle='#ffa657';pts.forEach((p,i)=>{c.beginPath();c.arc(p.x,p.y,4,0,Math.PI*2);c.fill();c.fillStyle='#0d1117';c.font='bold 9px sans-serif';c.textAlign='center';c.fillText(String(i+1),p.x,p.y+3);c.fillStyle='#ffa657';});
+    c.fillStyle='#8b949e';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('V',mx+mw/2,my+mh+14);c.fillText('P',mx-10,my+mh/2);
+    c.fillStyle='#3fb950';c.font='bold 9px sans-serif';c.fillText('η=1-Tc/Th',mx+mw/2,my+mh+24);
+  },
+  superconductorLeads(c,w,h){
+    const lx=w*0.12,lw=w*0.76,lh=h*0.22;
+    const scY=h*0.12,cuY=h*0.58;
+    const scGrad=c.createLinearGradient(lx,0,lx+lw,0);
+    scGrad.addColorStop(0,'rgba(121,192,255,0.9)');scGrad.addColorStop(1,'rgba(248,81,73,0.6)');
+    c.fillStyle=scGrad;c.fillRect(lx,scY,lw,lh);
+    c.strokeStyle='#79c0ff';c.lineWidth=1.5;c.strokeRect(lx,scY,lw,lh);
+    const cuGrad=c.createLinearGradient(lx,0,lx+lw,0);
+    cuGrad.addColorStop(0,'rgba(121,192,255,0.9)');cuGrad.addColorStop(0.5,'rgba(255,166,87,0.8)');cuGrad.addColorStop(1,'rgba(248,81,73,0.9)');
+    c.fillStyle=cuGrad;c.fillRect(lx,cuY,lw,lh);
+    c.strokeStyle='#f85149';c.lineWidth=1.5;c.strokeRect(lx,cuY,lw,lh);
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(lx+15,scY+lh/2);c.lineTo(lx+lw-15,scY+lh/2);c.stroke();
+    c.beginPath();c.moveTo(lx+lw-15,scY+lh/2);c.lineTo(lx+lw-22,scY+lh/2-4);c.lineTo(lx+lw-22,scY+lh/2+4);c.closePath();c.fillStyle='#ffa657';c.fill();
+    c.beginPath();c.moveTo(lx+15,cuY+lh/2);c.lineTo(lx+lw-15,cuY+lh/2);c.stroke();
+    c.beginPath();c.moveTo(lx+lw-15,cuY+lh/2);c.lineTo(lx+lw-22,cuY+lh/2-4);c.lineTo(lx+lw-22,cuY+lh/2+4);c.closePath();c.fill();
+    c.fillStyle='#c9d1d9';c.font='bold 9px sans-serif';c.textAlign='left';
+    c.fillText('超导引线 (ρ=0)',lx+4,scY-4);
+    c.fillText('铜引线 (ρ>0)',lx+4,cuY-4);
+    c.fillStyle='#79c0ff';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('4K',lx+10,scY+lh+10);c.fillText('300K',lx+lw-10,scY+lh+10);
+    c.fillStyle='#3fb950';c.font='bold 9px sans-serif';c.textAlign='center';
+    c.fillText('SC热耗 ≪ Cu热耗',w/2,h*0.48);
+  },
+  polarization3D(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#ffa657';c.beginPath();c.arc(cx-w*0.35,cy,8,0,Math.PI*2);c.fill();
+    c.strokeStyle='#ffa65788';c.lineWidth=1;
+    for(let a=0;a<Math.PI*2;a+=0.8){c.beginPath();c.moveTo(cx-w*0.35+Math.cos(a)*10,cy+Math.sin(a)*10);c.lineTo(cx-w*0.35+Math.cos(a)*18,cy+Math.sin(a)*18);c.stroke();}
+    c.strokeStyle='#f85149';c.lineWidth=2;c.strokeRect(cx-w*0.18,cy-14,10,28);
+    c.strokeStyle='#58a6ff';c.lineWidth=2;c.strokeRect(cx-w*0.05,cy-14,10,28);
+    c.fillStyle='rgba(248,81,73,0.5)';c.beginPath();c.arc(cx+w*0.18,cy-10,10,0,Math.PI*2);c.fill();
+    c.fillStyle='rgba(88,166,255,0.5)';c.beginPath();c.arc(cx+w*0.18,cy+10,10,0,Math.PI*2);c.fill();
+    c.strokeStyle='#8b949e';c.lineWidth=2;c.strokeRect(cx+w*0.30,cy-18,12,36);
+    c.fillStyle='#c9d1d9';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('光源',cx-w*0.35,cy+25);
+    c.fillText('左眼',cx+w*0.18,cy-22);
+    c.fillText('右眼',cx+w*0.18,cy+28);
+    c.fillStyle='#3fb950';c.font='bold 8px sans-serif';
+    c.fillText('3D',cx+w*0.36,cy+4);
+  },
+  diffraction(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#8b949e';c.lineWidth=2;
+    c.beginPath();c.moveTo(cx-w*0.30,cy-30);c.lineTo(cx-w*0.30,cy-5);c.stroke();
+    c.beginPath();c.moveTo(cx-w*0.30,cy+5);c.lineTo(cx-w*0.30,cy+30);c.stroke();
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    for(let a=-0.5;a<=0.5;a+=0.12){
+      c.beginPath();c.moveTo(cx-w*0.30,cy);c.lineTo(cx+w*0.35,cy+Math.tan(a)*w*0.6);c.stroke();
+    }
+    for(let y=-30;y<=30;y+=5){
+      const beta=Math.PI*8*y/60;const s=beta===0?1:Math.sin(beta)/beta;const I=s*s;
+      c.fillStyle='rgba(255,166,87,'+(0.15+I*0.85)+')';c.beginPath();c.arc(cx+w*0.35,cy+y,2+I*4,0,Math.PI*2);c.fill();
+    }
+    c.fillStyle='#8b949e';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('缝',cx-w*0.35,cy+4);c.fillText('屏',cx+w*0.40,cy+4);
+    c.fillStyle='#3fb950';c.font='bold 8px sans-serif';c.fillText('I∝sinc²(β)',cx,cy+42);
+  },
+  michelson(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#ffa657';c.beginPath();c.arc(cx-w*0.35,cy,5,0,Math.PI*2);c.fill();
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;c.beginPath();c.moveTo(cx-w*0.30,cy);c.lineTo(cx,cy);c.stroke();
+    c.strokeStyle='#58a6ff';c.lineWidth=2;c.beginPath();c.moveTo(cx-2,cy-2);c.lineTo(cx-2,cy-h*0.30);c.stroke();
+    c.strokeStyle='#f85149';c.lineWidth=2;c.beginPath();c.moveTo(cx+2,cy+2);c.lineTo(cx+w*0.30,cy+2);c.stroke();
+    c.strokeStyle='#8b949e';c.lineWidth=1.5;c.strokeRect(cx-6,cy-6,12,12);
+    c.fillStyle='#79c0ff';c.fillRect(cx-8,cy-h*0.32,16,6);
+    c.fillStyle='#f85149';c.fillRect(cx+w*0.28,cy-4,6,8);
+    c.strokeStyle='#58a6ff';c.lineWidth=1;c.beginPath();c.moveTo(cx,cy-h*0.30);c.lineTo(cx,cy);c.stroke();
+    c.strokeStyle='#3fb950';c.lineWidth=1.5;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx-w*0.10,cy+h*0.30);c.stroke();
+    c.fillStyle='#c9d1d9';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('BS',cx,cy+18);c.fillText('M1',cx+8,cy-h*0.34);c.fillText('M2',cx+w*0.32,cy+6);
+    c.fillStyle='#3fb950';c.font='bold 8px sans-serif';c.fillText('Δ=2d',cx-w*0.05,cy+h*0.36);
+  },
+  quantumEntangle(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#58a6ff';c.beginPath();c.arc(cx-w*0.22,cy,10,0,Math.PI*2);c.fill();
+    c.fillStyle='#f85149';c.beginPath();c.arc(cx+w*0.22,cy,10,0,Math.PI*2);c.fill();
+    c.strokeStyle='#d2a8ff';c.lineWidth=1.5;c.setLineDash([4,3]);
+    c.beginPath();c.moveTo(cx-w*0.12,cy);c.lineTo(cx+w*0.12,cy);c.stroke();c.setLineDash([]);
+    c.strokeStyle='rgba(210,168,255,0.3)';c.lineWidth=1;
+    for(let i=0;i<3;i++){
+      c.beginPath();c.ellipse(cx,cy,w*0.12+i*8,h*0.08+i*5,0,0,Math.PI*2);c.stroke();
+    }
+    c.fillStyle='#d2a8ff';c.font='bold 9px sans-serif';c.textAlign='center';
+    c.fillText('|Ψ⟩',cx,cy-25);
+    c.fillStyle='#58a6ff';c.font='8px sans-serif';c.fillText('↑',cx-w*0.22,cy+4);
+    c.fillStyle='#f85149';c.fillText('↓',cx+w*0.22,cy+4);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('EPR',cx,cy+30);
+  },
+  laserPrinciple(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#8b949e';c.fillRect(w*0.12,cy-12,w*0.18,24);
+    c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.strokeRect(w*0.12,cy-12,w*0.18,24);
+    c.fillStyle='#58a6ff';c.fillRect(w*0.12,cy-2,w*0.18,4);
+    c.fillStyle='#8b949e';c.fillRect(w*0.70,cy-12,w*0.18,24);
+    c.strokeStyle='#f85149';c.lineWidth=1.5;c.strokeRect(w*0.70,cy-12,w*0.18,24);
+    c.fillStyle='#f85149';c.fillRect(w*0.70,cy-2,w*0.18,4);
+    c.fillStyle='rgba(63,185,80,0.3)';c.fillRect(w*0.30,cy-10,w*0.40,20);
+    c.strokeStyle='#3fb950';c.lineWidth=2;
+    c.beginPath();c.moveTo(w*0.30,cy);c.lineTo(w*0.70,cy);c.stroke();
+    c.fillStyle='#3fb950';c.beginPath();c.arc(w*0.50,cy,3,0,Math.PI*2);c.fill();
+    c.fillStyle='#c9d1d9';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('全反镜',w*0.21,cy+22);c.fillText('半透镜',w*0.79,cy+22);
+    c.fillStyle='#3fb950';c.font='bold 8px sans-serif';c.fillText('增益介质',w*0.50,cy+22);
+    c.fillStyle='#ffa657';c.font='bold 7px sans-serif';c.fillText('hν',w*0.50,cy-18);
+  },
+  fiber(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#58a6ff';c.lineWidth=3;
+    c.beginPath();c.moveTo(w*0.08,cy);c.quadraticCurveTo(w*0.3,cy-h*0.25,w*0.5,cy);c.stroke();
+    c.beginPath();c.moveTo(w*0.5,cy);c.quadraticCurveTo(w*0.7,cy+h*0.25,w*0.92,cy);c.stroke();
+    c.strokeStyle='rgba(88,166,255,0.3)';c.lineWidth=8;
+    c.beginPath();c.moveTo(w*0.08,cy);c.quadraticCurveTo(w*0.3,cy-h*0.25,w*0.5,cy);c.stroke();
+    c.beginPath();c.moveTo(w*0.5,cy);c.quadraticCurveTo(w*0.7,cy+h*0.25,w*0.92,cy);c.stroke();
+    c.strokeStyle='rgba(139,148,158,0.4)';c.lineWidth=12;
+    c.beginPath();c.moveTo(w*0.08,cy);c.quadraticCurveTo(w*0.3,cy-h*0.25,w*0.5,cy);c.stroke();
+    c.beginPath();c.moveTo(w*0.5,cy);c.quadraticCurveTo(w*0.7,cy+h*0.25,w*0.92,cy);c.stroke();
+    c.fillStyle='#ffa657';c.beginPath();c.arc(w*0.08,cy,5,0,Math.PI*2);c.fill();
+    c.fillStyle='#3fb950';c.beginPath();c.arc(w*0.92,cy,5,0,Math.PI*2);c.fill();
+    c.fillStyle='#c9d1d9';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('纤芯',w*0.25,cy+30);c.fillText('包层',w*0.25,cy+42);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('n₁>n₂ 全反射',w*0.7,cy+35);
+  },
+  quantumEraser(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#8b949e';c.lineWidth=2;
+    c.beginPath();c.moveTo(cx-w*0.30,cy-25);c.lineTo(cx-w*0.30,cy-5);c.stroke();
+    c.beginPath();c.moveTo(cx-w*0.30,cy+5);c.lineTo(cx-w*0.30,cy+25);c.stroke();
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.30,cy);c.lineTo(cx+w*0.30,cy-15);c.stroke();
+    c.beginPath();c.moveTo(cx-w*0.30,cy);c.lineTo(cx+w*0.30,cy+15);c.stroke();
+    c.strokeStyle='#d2a8ff';c.lineWidth=2;c.setLineDash([3,3]);
+    c.beginPath();c.moveTo(cx-w*0.05,cy-20);c.lineTo(cx-w*0.05,cy+20);c.stroke();
+    c.setLineDash([]);
+    c.fillStyle='#d2a8ff';c.font='7px sans-serif';c.textAlign='center';c.fillText('擦除器',cx-w*0.05,cy-24);
+    for(let y=-20;y<=20;y+=6){
+      const I=0.5+0.5*Math.cos(y*0.3);
+      c.fillStyle='rgba(255,166,87,'+(0.15+I*0.85)+')';
+      c.beginPath();c.arc(cx+w*0.35,cy+y,2+I*3,0,Math.PI*2);c.fill();
+    }
+    c.fillStyle='#c9d1d9';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('双缝',cx-w*0.35,cy+4);c.fillText('屏',cx+w*0.40,cy+4);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('干涉恢复',cx+w*0.35,cy+32);
+  },
+  interference(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#ffa657';c.beginPath();c.arc(cx-w*0.35,cy,6,0,Math.PI*2);c.fill();
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.30,cy);c.lineTo(cx-w*0.10,cy);c.stroke();
+    c.strokeStyle='#58a6ff';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.10,cy);c.lineTo(cx+w*0.10,cy-h*0.15);c.stroke();
+    c.strokeStyle='#f85149';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.10,cy);c.lineTo(cx+w*0.10,cy+h*0.15);c.stroke();
+    c.strokeStyle='#8b949e';c.lineWidth=1;c.strokeRect(cx-w*0.12,cy-8,4,16);
+    for(let y=-25;y<=25;y+=4){
+      const I=0.5+0.5*Math.cos(y*0.25);
+      c.fillStyle='rgba(63,185,80,'+(0.15+I*0.85)+')';
+      c.beginPath();c.arc(cx+w*0.30,cy+y,2+I*3,0,Math.PI*2);c.fill();
+    }
+    c.fillStyle='#c9d1d9';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('光源',cx-w*0.35,cy+18);c.fillText('分束',cx-w*0.10,cy+18);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('Δ=光程差',cx+w*0.10,cy+30);
+  },
+  michelsonField(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#8b949e';c.lineWidth=1;c.strokeRect(cx-w*0.38,cy-h*0.38,w*0.76,h*0.76);
+    for(let r=8;r<=30;r+=7){
+      const I=0.5+0.5*Math.cos(r*0.5);
+      c.strokeStyle='rgba(63,185,80,'+(0.2+I*0.6)+')';c.lineWidth=1.2;
+      c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();
+    }
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.textAlign='center';
+    c.fillText('I(x,y)',cx,cy+h*0.42);
+  },
+  youngSim(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#8b949e';c.lineWidth=2;
+    c.beginPath();c.moveTo(cx-w*0.30,cy-20);c.lineTo(cx-w*0.30,cy-5);c.stroke();
+    c.beginPath();c.moveTo(cx-w*0.30,cy+5);c.lineTo(cx-w*0.30,cy+20);c.stroke();
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.30,cy);c.lineTo(cx+w*0.35,cy);c.stroke();
+    for(let y=-25;y<=25;y+=4){
+      const I=0.5+0.5*Math.cos(y*0.3);
+      c.fillStyle='rgba(255,166,87,'+(0.15+I*0.85)+')';
+      c.beginPath();c.arc(cx+w*0.35,cy+y,2+I*3,0,Math.PI*2);c.fill();
+    }
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.textAlign='center';
+    c.fillText('I=4I₀cos²(δ/2)',cx,cy+38);
+  },
+  newtonRing(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    for(let r=5;r<=35;r+=5){
+      const I=0.5+0.5*Math.cos(r*0.6);
+      c.strokeStyle='rgba(88,166,255,'+(0.2+I*0.7)+')';c.lineWidth=2;
+      c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();
+    }
+    c.fillStyle='#58a6ff';c.font='8px sans-serif';c.textAlign='center';
+    c.fillText('平凸透镜',cx,cy-40);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';
+    c.fillText('r²=mλR',cx,cy+42);
+  },
+  wedge(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#8b949e';c.fillRect(cx-w*0.35,cy+5,w*0.70,6);
+    c.fillStyle='rgba(88,166,255,0.3)';
+    c.beginPath();c.moveTo(cx-w*0.35,cy-5);c.lineTo(cx+w*0.35,cy-15);c.lineTo(cx+w*0.35,cy+5);c.lineTo(cx-w*0.35,cy+5);c.closePath();c.fill();
+    c.strokeStyle='#58a6ff';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.35,cy-5);c.lineTo(cx+w*0.35,cy-15);c.stroke();
+    for(let x=-25;x<=25;x+=5){
+      const I=0.5+0.5*Math.cos(x*0.4);
+      c.fillStyle='rgba(63,185,80,'+(0.15+I*0.85)+')';
+      c.beginPath();c.arc(cx+x*2.5,cy-10-Math.abs(x)*0.2,2+I*2,0,Math.PI*2);c.fill();
+    }
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.textAlign='center';
+    c.fillText('2nd=mλ',cx,cy+22);
+  },
+  laserArray(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    for(let i=0;i<5;i++){
+      const x=cx-w*0.3+i*w*0.15;
+      c.fillStyle='#f85149';c.beginPath();c.arc(x,cy-10,4,0,Math.PI*2);c.fill();
+      c.strokeStyle='#f85149';c.lineWidth=1.5;c.beginPath();c.moveTo(x,cy-6);c.lineTo(x,cy+8);c.stroke();
+    }
+    c.strokeStyle='#ffa657';c.lineWidth=2;
+    c.beginPath();c.moveTo(cx-w*0.10,cy+12);c.lineTo(cx+w*0.30,cy+12);c.stroke();
+    c.fillStyle='#ffa657';c.beginPath();c.arc(cx+w*0.35,cy+12,5,0,Math.PI*2);c.fill();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('相干合成',cx+w*0.12,cy+25);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('N束',cx,cy-22);
+  },
+  nuclearClock(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#d2a8ff';c.lineWidth=2;
+    c.beginPath();c.arc(cx,cy,18,0,Math.PI*2);c.stroke();
+    c.fillStyle='#d2a8ff';c.beginPath();c.arc(cx,cy,4,0,Math.PI*2);c.fill();
+    c.strokeStyle='#8b949e';c.lineWidth=1.5;c.strokeRect(cx-25,cy-8,50,16);
+    c.strokeStyle='#d2a8ff';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx+25,cy);c.lineTo(cx+w*0.35,cy);c.stroke();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('²²⁹Th',cx,cy+3);c.fillText('VUV',cx+w*0.30,cy-8);
+    c.fillStyle='#d2a8ff';c.font='bold 7px sans-serif';c.fillText('148nm',cx+w*0.30,cy+15);
+  },
+  thinFilm(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#8b949e';c.fillRect(cx-w*0.35,cy+8,w*0.70,6);
+    c.fillStyle='rgba(88,166,255,0.25)';c.fillRect(cx-w*0.35,cy-4,w*0.70,12);
+    c.strokeStyle='#58a6ff';c.lineWidth=1;c.strokeRect(cx-w*0.35,cy-4,w*0.70,12);
+    c.fillStyle='#8b949e';c.fillRect(cx-w*0.35,cy-10,w*0.70,6);
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.30,cy-18);c.lineTo(cx-w*0.10,cy-10);c.stroke();
+    c.beginPath();c.moveTo(cx-w*0.10,cy-10);c.lineTo(cx+w*0.10,cy-18);c.stroke();
+    c.beginPath();c.moveTo(cx-w*0.10,cy-10);c.lineTo(cx-w*0.05,cy+8);c.stroke();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('n₁',cx-w*0.25,cy-13);c.fillText('n₂',cx,cy+2);c.fillText('n₃',cx,cy+18);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('2n₂d=mλ',cx,cy+30);
+  },
+  grating(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#8b949e';c.lineWidth=2;
+    for(let i=0;i<8;i++){const x=cx-w*0.20+i*w*0.05;c.beginPath();c.moveTo(x,cy-20);c.lineTo(x,cy+20);c.stroke()}
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    for(let a=-0.4;a<=0.4;a+=0.2){c.beginPath();c.moveTo(cx-w*0.20,cy);c.lineTo(cx+w*0.35,cy+Math.tan(a)*w*0.5);c.stroke()}
+    for(let m=-2;m<=2;m++){
+      const y=cy+m*12;const I=m===0?1:0.4;
+      c.fillStyle='rgba(255,166,87,'+(0.2+I*0.8)+')';c.beginPath();c.arc(cx+w*0.35,y,2+I*3,0,Math.PI*2);c.fill();
+    }
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.textAlign='center';
+    c.fillText('d·sinθ=mλ',cx,cy+35);
+  },
+  lissajous(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#3fb950';c.lineWidth=1.5;
+    c.beginPath();
+    for(let t=0;t<=Math.PI*2;t+=0.02){
+      const x=cx+Math.sin(3*t)*w*0.25;
+      const y=cy+Math.sin(2*t)*h*0.25;
+      if(t===0)c.moveTo(x,y);else c.lineTo(x,y);
+    }
+    c.stroke();
+    c.fillStyle='#ffa657';c.font='bold 7px sans-serif';c.textAlign='center';
+    c.fillText('fx:fy=3:2',cx,cy+h*0.38);
+  },
+  circular(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#8b949e';c.lineWidth=2;c.beginPath();c.arc(cx-w*0.25,cy,15,0,Math.PI*2);c.stroke();
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    for(let a=0;a<Math.PI*2;a+=0.5){c.beginPath();c.moveTo(cx-w*0.25+Math.cos(a)*15,cy+Math.sin(a)*15);c.lineTo(cx+w*0.30,cy+Math.sin(a)*25);c.stroke()}
+    c.fillStyle='#ffa657';c.beginPath();c.arc(cx+w*0.30,cy,6,0,Math.PI*2);c.fill();
+    c.strokeStyle='rgba(255,166,87,0.4)';c.lineWidth=1;c.beginPath();c.arc(cx+w*0.30,cy,12,0,Math.PI*2);c.stroke();
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.textAlign='center';
+    c.fillText('艾里斑',cx+w*0.30,cy+22);
+  },
+  accelerator(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#d2a8ff';c.lineWidth=2;
+    c.beginPath();c.arc(cx,cy,w*0.28,0,Math.PI*2);c.stroke();
+    c.strokeStyle='#58a6ff';c.lineWidth=1.5;
+    c.beginPath();c.arc(cx,cy,w*0.28,0.2,1.2);c.stroke();
+    c.fillStyle='#f85149';c.beginPath();c.arc(cx+w*0.28*Math.cos(1.2),cy+w*0.28*Math.sin(1.2),4,0,Math.PI*2);c.fill();
+    c.strokeStyle='#ffa657';c.lineWidth=2;
+    c.beginPath();c.moveTo(cx+w*0.28*Math.cos(1.2),cy+w*0.28*Math.sin(1.2));c.lineTo(cx+w*0.42,cy+w*0.42);c.stroke();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('D型电极',cx,cy);c.fillText('重离子',cx+w*0.38,cy+w*0.35);
+    c.fillStyle='#d2a8ff';c.font='bold 7px sans-serif';c.fillText('qB/m',cx,cy+30);
+  },
+  quantumComputing(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#d2a8ff';c.lineWidth=2;
+    c.beginPath();c.moveTo(cx-w*0.30,cy-h*0.15);c.lineTo(cx+w*0.30,cy-h*0.15);c.stroke();
+    c.beginPath();c.moveTo(cx-w*0.30,cy+h*0.15);c.lineTo(cx+w*0.30,cy+h*0.15);c.stroke();
+    c.fillStyle='#58a6ff';c.beginPath();c.arc(cx-w*0.15,cy,5,0,Math.PI*2);c.fill();
+    c.fillStyle='#f85149';c.beginPath();c.arc(cx+w*0.15,cy,5,0,Math.PI*2);c.fill();
+    c.strokeStyle='#3fb950';c.lineWidth=1.5;c.strokeRect(cx-8,cy-8,16,16);
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('|0⟩',cx-w*0.15,cy+15);c.fillText('|1⟩',cx+w*0.15,cy+15);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('H',cx,cy-20);
+  },
+  chargedParticle(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#58a6ff';c.lineWidth=1;c.setLineDash([3,3]);
+    for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(cx+i*12,cy-h*0.35);c.lineTo(cx+i*12,cy+h*0.35);c.stroke()}
+    c.setLineDash([]);
+    c.fillStyle='#f85149';c.beginPath();c.arc(cx,cy,5,0,Math.PI*2);c.fill();
+    c.strokeStyle='#ffa657';c.lineWidth=2;
+    c.beginPath();c.moveTo(cx-20,cy+15);c.quadraticCurveTo(cx,cy-20,cx+20,cy+15);c.stroke();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('B⊙',cx+20,cy-5);c.fillText('q',cx-5,cy+5);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('r=mv/qB',cx,cy+30);
+  },
+  massSpectrometer(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#8b949e';c.lineWidth=1.5;c.strokeRect(cx-w*0.35,cy-h*0.25,w*0.20,h*0.15);
+    c.fillStyle='#58a6ff';c.font='7px sans-serif';c.textAlign='center';c.fillText('离子源',cx-w*0.25,cy-h*0.15);
+    c.strokeStyle='#ffa657';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.15,cy-h*0.18);c.lineTo(cx,cy-h*0.18);c.stroke();
+    c.strokeStyle='#f85149';c.lineWidth=2;
+    c.beginPath();c.arc(cx+w*0.05,cy+h*0.10,w*0.20,-Math.PI/2,0.3);c.stroke();
+    c.strokeStyle='#58a6ff';c.lineWidth=1.5;
+    c.beginPath();c.arc(cx+w*0.05,cy+h*0.10,w*0.15,-Math.PI/2,0.3);c.stroke();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('B',cx+w*0.05,cy+h*0.10);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('m/q',cx+w*0.30,cy+h*0.25);
+  },
+  mriKspace(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.strokeRect(cx-w*0.35,cy-h*0.30,w*0.30,h*0.30);
+    for(let i=0;i<4;i++){for(let j=0;j<4;j++){
+      c.fillStyle='rgba(88,166,255,'+(0.1+Math.random()*0.5)+')';
+      c.fillRect(cx-w*0.35+i*w*0.075,cy-h*0.30+j*h*0.075,w*0.075,h*0.075);
+    }}
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('K空间',cx-w*0.20,cy-h*0.32);
+    c.strokeStyle='#3fb950';c.lineWidth=1;c.strokeRect(cx+w*0.05,cy-h*0.30,w*0.30,h*0.30);
+    c.fillStyle='rgba(63,185,80,0.3)';c.beginPath();c.ellipse(cx+w*0.20,cy-h*0.15,w*0.10,h*0.08,0,0,Math.PI*2);c.fill();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.fillText('图像',cx+w*0.20,cy-h*0.32);
+    c.fillStyle='#ffa657';c.font='bold 7px sans-serif';c.fillText('FFT',cx,cy);
+  },
+  josephson(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#58a6ff';c.fillRect(cx-w*0.35,cy-8,w*0.25,16);
+    c.fillStyle='#58a6ff';c.fillRect(cx+w*0.10,cy-8,w*0.25,16);
+    c.fillStyle='#ffa657';c.fillRect(cx-w*0.10,cy-6,w*0.20,12);
+    c.strokeStyle='#d2a8ff';c.lineWidth=1.5;
+    c.beginPath();c.moveTo(cx-w*0.10,cy);c.lineTo(cx+w*0.10,cy);c.stroke();
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('超导体',cx-w*0.22,cy+20);c.fillText('绝缘层',cx,cy+20);c.fillText('超导体',cx+w*0.22,cy+20);
+    c.fillStyle='#d2a8ff';c.font='bold 7px sans-serif';c.fillText('I=Ic sinφ',cx,cy-18);
+  },
+  hydrogenWave(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#58a6ff';c.beginPath();c.arc(cx,cy,3,0,Math.PI*2);c.fill();
+    for(let i=0;i<60;i++){
+      var r=Math.random()*w*0.35;
+      var a=Math.random()*Math.PI*2;
+      var px=cx+r*Math.cos(a),py=cy+r*Math.sin(a);
+      var prob=Math.exp(-2*r/(w*0.15));
+      if(Math.random()<prob){
+        c.fillStyle='rgba(88,166,255,'+(0.3+prob*0.5)+')';
+        c.beginPath();c.arc(px,py,1.5,0,Math.PI*2);c.fill();
+      }
+    }
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('1s',cx,cy+30);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('ψ₁ₛ',cx,cy-25);
+  },
+  quantumEntangle2(c,w,h){
+    const cx=w/2,cy=h/2;
+    c.fillStyle='#0d1117';c.fillRect(0,0,w,h);
+    c.fillStyle='#d2a8ff';c.beginPath();c.arc(cx,cy,12,0,Math.PI*2);c.fill();
+    c.strokeStyle='#58a6ff';c.lineWidth=1.5;c.beginPath();c.moveTo(cx-12,cy);c.lineTo(cx-w*0.30,cy);c.stroke();
+    c.strokeStyle='#f85149';c.lineWidth=1.5;c.beginPath();c.moveTo(cx+12,cy);c.lineTo(cx+w*0.30,cy);c.stroke();
+    c.fillStyle='#58a6ff';c.beginPath();c.arc(cx-w*0.30,cy,6,0,Math.PI*2);c.fill();
+    c.fillStyle='#f85149';c.beginPath();c.arc(cx+w*0.30,cy,6,0,Math.PI*2);c.fill();
+    c.strokeStyle='#d2a8ff';c.lineWidth=1;c.setLineDash([3,3]);
+    c.beginPath();c.moveTo(cx-w*0.20,cy);c.lineTo(cx+w*0.20,cy);c.stroke();c.setLineDash([]);
+    c.fillStyle='#c9d1d9';c.font='7px sans-serif';c.textAlign='center';
+    c.fillText('|Ψ⁺⟩',cx,cy-18);
+    c.fillStyle='#3fb950';c.font='bold 7px sans-serif';c.fillText('EPR',cx,cy+25);
+  }
+};
+
+const experiments = {
+  mechanics: {
+    name: '力学', icon: '⚙️', color: '#58a6ff',
+    items: [
+      { title:'抛体运动', desc:'抛物线轨迹、初速度与角度', file:'mechanics_projectile.html', pv:'projectile' },
+      { title:'单摆与双摆', desc:'简谐振动与混沌行为', file:'mechanics_pendulum.html', pv:'pendulum' },
+      { title:'碰撞与动量守恒', desc:'弹性与非弹性碰撞', file:'mechanics_collision.html', pv:'collision' },
+      { title:'天体轨道与开普勒定律', desc:'行星运动的三大定律', file:'mechanics_orbit.html', pv:'orbit' },
+      { title:'牛顿第二定律探究实验室', desc:'力与加速度的关系', file:'mechanics_newton_second.html', pv:'newtonSecondLab' },
+      { title:'狭义相对论', desc:'时间膨胀与长度收缩', file:'mechanics_relativity.html', pv:'specialRelativity' },
+      { title:'不确定度', desc:'测量误差与不确定度分析', file:'mechanics_uncertainty.html', pv:'uncertainty' },
+      { title:'万有引力', desc:'牛顿万有引力定律', file:'mechanics_gravity.html', pv:'universalGravity' },
+      { title:'科里奥利力', desc:'旋转参考系中的惯性力', file:'mechanics_coriolis.html', pv:'coriolis' },
+      { title:'轨道卫星', desc:'人造卫星轨道运动', file:'mechanics_satellite.html', pv:'orbitalSatellite' },
+      { title:'三体运动', desc:'三个天体的复杂运动', file:'mechanics_three_body.html', pv:'threeBody' },
+      { title:'混沌摆', desc:'双摆的混沌运动', file:'mechanics_chaotic_pendulum.html', pv:'chaoticPendulum' },
+      { title:'刚体转动', desc:'角动量与转动惯量', file:'mechanics_rigid_body.html', pv:'rigidBody' },
+      { title:'弹簧振子', desc:'简谐振动与周期', file:'mechanics_spring_oscillator.html', pv:'springOscillator' },
+      { title:'表面张力', desc:'液体表面张力现象', file:'mechanics_surface_tension.html', pv:'surfaceTension' },
+      { title:'斜抛运动', desc:'抛体运动轨迹', file:'mechanics_projectile.html', pv:'projectile' },
+      { title:'抗磁悬浮', desc:'抗磁材料的磁悬浮', file:'mechanics_diamagnetic_levitation.html', pv:'diamagneticLev' },
+      { title:'传送带与摩擦力', desc:'摩擦力与相对运动', file:'mechanics_conveyor_belt.html', pv:'conveyorBelt' },
+      { title:'刚性轻杆双球滑杆系统', desc:'动量守恒与碰撞', file:'mechanics_double_ball.html', pv:'doubleBallSlide' },
+      { title:'汽车碰撞', desc:'弹性与非弹性碰撞', file:'mechanics_car_collision.html', pv:'carCollision' },
+      { title:'高尔顿板、机械波和动量守恒实验', desc:'统计分布与碰撞', file:'mechanics_galton_board.html', pv:'galtonBoard' },
+      { title:'结合多普勒效应与自由落体运动', desc:'声波与运动结合', file:'mechanics_doppler_freefall.html', pv:'dopplerFreeFall' },
+      { title:'滚筒法测量手机的转动惯量', desc:'转动惯量测量', file:'mechanics_rotating_drum.html', pv:'rotatingDrum' },
+    ]
+  },
+  waves: {
+    name: '振动与波', icon: '〰️', color: '#d2a8ff',
+    items: [
+      { title:'阻尼振动与共振', desc:'受迫振动幅频特性曲线', file:'waves_oscillator.html', pv:'oscillator' },
+      { title:'弦上驻波', desc:'两端固定弦的振动模式', file:'waves_string.html', pv:'standingWave' },
+      { title:'克拉尼板', desc:'金属板振动的驻波图案', file:'waves_chladni.html', pv:'chladni' },
+      { title:'弹簧振子', desc:'简谐振动与周期', file:'waves_spring_oscillator.html', pv:'springOsc' },
+      { title:'乐音', desc:'声波频率与音色', file:'waves_musical_sound.html', pv:'musicalSound' },
+      { title:'碳纳米管扬声器', desc:'纳米材料的声发射', file:'waves_carbon_nano_speaker.html', pv:'carbonNanoSpeaker' },
+      { title:'波导管', desc:'矩形波导与电磁波传输', file:'waves_waveguide.html', pv:'waveguideWave' },
+      { title:'多普勒效应', desc:'运动声源的频移现象', file:'waves_doppler.html', pv:'dopplerEffect' },
+      { title:'超声波位移传感器测速原理', desc:'测距与测速应用', file:'waves_ultrasonic_sensor.html', pv:'ultrasonicSensor' },
+      { title:'高尔顿板、机械波和动量守恒实验', desc:'振动与碰撞的结合', file:'waves_galton_board.html', pv:'galtonBoard' },
+      { title:'弓手悖论仿真', desc:'箭矢弯曲与飞行轨迹', file:'waves_archer_paradox.html', pv:'archerParadox' },
+      { title:'相控阵雷达', desc:'阵列天线与波束形成', file:'waves_phased_array.html', pv:'phasedArray' },
+      { title:'结合多普勒效应与自由落体运动', desc:'下落声源的频移', file:'waves_doppler_freefall.html', pv:'dopplerFreeFall' },
+      { title:'微波阻抗变换器', desc:'λ/4传输线阻抗匹配', file:'waves_microwave_impedance.html', pv:'microwaveImpedance' },
+      { title:'波的叠加与驻波模拟器', desc:'干涉与驻波形成', file:'waves_superposition.html', pv:'waveSuperposition' },
+    ]
+  },
+  electromagnetism: {
+    name: '电磁学', icon: '🧲', color: '#f78166',
+    items: [
+      { title:'静电场与电场线', desc:'点电荷和等势面可视化', file:'em_fields.html', pv:'efield' },
+      { title:'洛伦兹力运动', desc:'带电粒子在磁场中偏转', file:'em_lorentz.html', pv:'lorentz' },
+      { title:'RLC串联谐振电路', desc:'电感-电容-电阻电路分析', file:'em_rlc.html', pv:'rlc' },
+      { title:'锂电池', desc:'充电/放电与离子迁移', file:'em_lithium_battery.html', pv:'battery' },
+      { title:'加速器与重离子治疗', desc:'回旋加速器及癌症治疗应用', file:'em_accelerator.html', pv:'accelerator' },
+      { title:'多点电荷电场分布', desc:'偶极子、四极子电位分布', file:'em_multiple_charges.html', pv:'multicharge' },
+      { title:'带电粒子运动', desc:'电场与磁场中的粒子轨迹', file:'em_particle_motion.html', pv:'particle' },
+      { title:'四点法测电阻', desc:'开尔文电桥消除接触电阻', file:'em_four_point_resistance.html', pv:'fourpoint' },
+      { title:'亥姆霍兹线圈', desc:'同轴线圈产生均匀磁场', file:'em_helmholtz_coil.html', pv:'helmholtz' },
+      { title:'质谱仪', desc:'磁场分离不同质荷比离子', file:'em_mass_spectrometer.html', pv:'spectrometer' },
+      { title:'涡流阻尼管', desc:'金属盘在磁场中下落阻尼', file:'em_eddy_current.html', pv:'eddy' },
+      { title:'RLC振荡电路', desc:'自由振荡与阻尼谐振', file:'em_rlc_oscillator.html', pv:'rlc' },
+      { title:'第二类超导体', desc:'混合态磁通涡旋晶格', file:'em_superconductor_type2.html', pv:'superconductor' },
+      { title:'超导电流引线', desc:'高温超导线材电流传输', file:'em_superconductor_lead.html', pv:'superconductor' },
+      { title:'波导管', desc:'矩形波导TE₁₀模与截止频率', file:'em_waveguide.html', pv:'waveguide' },
+      { title:'趋肤效应', desc:'交流电流表面衰减深度', file:'em_skin_effect.html', pv:'skin' },
+      { title:'核磁共振K空间成像', desc:'IFFT从频率域重建图像', file:'em_mri_kspace.html', pv:'mri' },
+      { title:'超导约瑟夫森结', desc:'库珀对隧穿与交直流效应', file:'em_josephson_junction.html', pv:'josephson' },
+      { title:'半导体', desc:'PN结能带图与载流子输运', file:'em_semiconductor.html', pv:'semiconductor' },
+      { title:'锁相放大器', desc:'相敏检测提取微弱信号', file:'em_lock_in_amplifier.html', pv:'lockin' },
+      { title:'激光尾波加速', desc:'等离子体中的电子加速', file:'em_laser_wakefield.html', pv:'laser' },
+      { title:'MRI核磁共振原理', desc:'自旋进动与T1/T2弛豫', file:'em_mri_principle.html', pv:'mriPrinciple' },
+      { title:'电子运动', desc:'电场中的电子轨迹与漂移', file:'em_electron_motion.html', pv:'electron' },
+      { title:'正电子发射断层扫描(PET)', desc:'核医学成像与湮灭辐射', file:'em_pet_scan.html', pv:'pet' },
+      { title:'磁约束核聚变', desc:'托卡马克与等离子体约束', file:'em_nuclear_fusion.html', pv:'fusion' },
+      { title:'抗磁悬浮', desc:'超导体完全抗磁性', file:'em_diamagnetic_levitation.html', pv:'diamagnetic' },
+      { title:'磁控矩阵', desc:'磁控管与电子回旋运动', file:'em_magnetic_matrix.html', pv:'magneticMatrix' },
+      { title:'磁偶极子力矩', desc:'磁偶极子在磁场中的运动', file:'em_dipole_torque.html', pv:'dipole' },
+      { title:'法拉第感应', desc:'电磁感应定律模拟', file:'em_faraday_induction.html', pv:'faraday' },
+      { title:'安培力', desc:'载流导线在磁场中受力', file:'em_ampere_force.html', pv:'ampere' },
+      { title:'毕奥-萨伐尔', desc:'载流线圈的磁场分布', file:'em_biot_savart.html', pv:'biotsavart' },
+      { title:'电感', desc:'RL电路与互感效应', file:'em_inductance.html', pv:'inductance' },
+      { title:'位移电流', desc:'麦克斯韦-安培定律', file:'em_displacement_current.html', pv:'displacement' },
+      { title:'动生电动势', desc:'导体运动产生的感应电动势', file:'em_motional_emf.html', pv:'motionalEmf' },
+      { title:'平行板电容', desc:'电容器电场分布', file:'em_parallel_plate.html', pv:'capacitor' },
+      { title:'磁镜', desc:'磁场约束等离子体', file:'em_magnetic_mirror.html', pv:'magneticMirror' },
+      { title:'太阳能光伏电池工作原理', desc:'光生伏特效应与发电', file:'em_solar_cell.html', pv:'solarCell' },
+      { title:'高中物理电路实验室', desc:'电路元件与测量', file:'em_circuit_lab.html', pv:'circuitLab' },
+      { title:'带电粒子在磁场中的运动', desc:'洛伦兹力与圆周运动', file:'em_particle_magnetic.html', pv:'particleMagnetic' },
+      { title:'回旋加速器', desc:'磁场加速带电粒子', file:'em_cyclotron.html', pv:'cyclotron' },
+      { title:'电磁感应实验', desc:'法拉第定律与感应电流', file:'em_electromagnetic_induction.html', pv:'electromagneticInduction' },
+      { title:'3D仿真带电粒子在复合场中的运动', desc:'电场与磁场叠加效应', file:'em_composite_field.html', pv:'compositeField' },
+      { title:'相控阵雷达', desc:'阵列天线与波束形成', file:'em_phased_array.html', pv:'phasedArray' },
+      { title:'电感计算实验', desc:'电感参数计算与测量', file:'em_inductance_calc.html', pv:'inductanceCalc' },
+      { title:'微波阻抗变换器', desc:'匹配网络与阻抗变换', file:'em_microwave_trans.html', pv:'microwaveTrans' },
+    ]
+  },
+  thermo: {
+    name: '热学', icon: '🌡️', color: '#ffa657',
+    items: [
+      { title:'理想气体分子运动', desc:'分子动理论、速率分布', file:'thermo_gas.html', pv:'gas' },
+      { title:'布朗运动与扩散', desc:'随机行走与扩散过程', file:'thermo_diffusion.html', pv:'brownian' },
+      { title:'热力学理想气体', desc:'PV=nRT状态方程、分子动力学', file:'thermo_ideal_gas.html', pv:'idealGas' },
+      { title:'平面热传导', desc:'二维热传导方程、傅里叶定律', file:'thermo_heat_conduction.html', pv:'heatConduction' },
+      { title:'卡诺循环', desc:'理想热机、PV图与TS图、卡诺效率', file:'thermo_carnot_cycle.html', pv:'carnotCycle' },
+      { title:'超导电流引线', desc:'热传导与焦耳热耦合、超导vs铜对比', file:'thermo_superconductor_leads.html', pv:'superconductorLeads' },
+    ]
+  },
+  optics: {
+    name: '光学', icon: '💡', color: '#3fb950',
+    items: [
+      { title:'杨氏双缝干涉', desc:'光波干涉条纹分布', file:'optics_young.html', pv:'young' },
+      { title:'凸透镜成像', desc:'薄透镜成像公式与光路', file:'optics_lens.html', pv:'lens' },
+      { title:'偏振式3D电影', desc:'偏振光与3D成像原理', file:'optics_3d_movie.html', pv:'polarization3D' },
+      { title:'光的衍射', desc:'单缝与多缝衍射', file:'optics_diffraction.html', pv:'diffraction' },
+      { title:'迈克尔逊干涉仪', desc:'分振幅干涉与激光干涉', file:'optics_michelson.html', pv:'michelson' },
+      { title:'量子纠缠', desc:'贝尔不等式与纠缠态', file:'optics_quantum_entangle.html', pv:'quantumEntangle' },
+      { title:'激光原理', desc:'受激辐射与谐振腔', file:'optics_laser.html', pv:'laserPrinciple' },
+      { title:'光纤', desc:'全反射与光纤通信', file:'optics_fiber.html', pv:'fiber' },
+      { title:'量子擦除', desc:'双缝干涉与路径信息', file:'optics_quantum_eraser.html', pv:'quantumEraser' },
+      { title:'光的干涉', desc:'分波前与分振幅干涉', file:'optics_interference.html', pv:'interference' },
+      { title:'迈克尔逊干涉仪 空间光场仿真', desc:'干涉场空间分布', file:'optics_michelson_field.html', pv:'michelsonField' },
+      { title:'杨氏双缝干涉仿真实验', desc:'双缝干涉完整仿真', file:'optics_young_sim.html', pv:'youngSim' },
+      { title:'牛顿环', desc:'等厚干涉与曲率半径', file:'optics_newton_ring.html', pv:'newtonRing' },
+      { title:'劈尖干涉', desc:'空气劈尖等厚条纹', file:'optics_wedge.html', pv:'wedge' },
+      { title:'相干阵激光', desc:'多束激光相干合成', file:'optics_laser_array.html', pv:'laserArray' },
+      { title:'核钟VUV激光器', desc:'连续波真空紫外激光', file:'optics_nuclear_clock.html', pv:'nuclearClock' },
+      { title:'薄膜干涉', desc:'介质膜反射与透射', file:'optics_thin_film.html', pv:'thinFilm' },
+      { title:'光栅衍射', desc:'多缝衍射与分辨本领', file:'optics_grating.html', pv:'grating' },
+      { title:'李萨如图', desc:'正交简谐振动合成', file:'optics_lissajous.html', pv:'lissajous' },
+      { title:'圆孔衍射', desc:'艾里斑与衍射极限', file:'optics_circular.html', pv:'circular' },
+    ]
+  },
+  modern: {
+    name: '近现代与天体物理', icon: '🌌', color: '#f0c000',
+    items: [
+      { title:'量子波包与隧穿', desc:'含时薛定谔方程、隧穿效应', file:'quantum_wave_packet.html', pv:'quantum' },
+      { title:'狭义相对论时间膨胀', desc:'钟慢效应与洛伦兹变换', file:'relativity_timedilation.html', pv:'relativity' },
+      { title:'暗物质宇宙设计', desc:'星系旋转曲线与暗物质分布', file:'modern_dark_matter.html', pv:'darkMatter' },
+      { title:'科里奥利力', desc:'旋转参考系中的惯性力', file:'mechanics_coriolis.html', pv:'coriolis' },
+      { title:'轨道卫星', desc:'人造卫星轨道运动', file:'mechanics_satellite.html', pv:'orbitalSatellite' },
+      { title:'三体运动', desc:'三个天体的复杂运动', file:'mechanics_three_body.html', pv:'threeBody' },
+      { title:'星际测距', desc:'三角视差法测量恒星距离', file:'modern_stellar_parallax.html', pv:'stellarParallax' },
+      { title:'缪子望远镜', desc:'宇宙射线缪子探测', file:'modern_muon_telescope.html', pv:'muonTelescope' },
+      { title:'宇宙射线', desc:'高能粒子与大气相互作用', file:'modern_cosmic_rays.html', pv:'cosmicRays' },
+      { title:'星系旋转曲线', desc:'银河系质量分布与暗物质', file:'modern_galaxy_rotation.html', pv:'galaxyRotation' },
+      { title:'引力透镜', desc:'引力弯曲光线', file:'modern_gravitational_lens.html', pv:'gravitationalLens' },
+      { title:'宇宙微波背景', desc:'宇宙大爆炸遗迹辐射', file:'modern_cosmic_microwave.html', pv:'cosmicMicrowave' },
+      { title:'黑洞', desc:'事件视界与引力坍缩', file:'modern_black_hole.html', pv:'blackHole' },
+      { title:'导航卫星时间修正', desc:'GPS相对论时间修正', file:'modern_gps_time.html', pv:'gpsTimeCorrection' },
+      { title:'引力弹弓', desc:'天体引力辅助加速', file:'modern_gravity_slingshot.html', pv:'gravitySlingshot' },
+    ]
+  },
+  quantum: {
+    name: '量子与核物理', icon: '⚛️', color: '#d2a8ff',
+    items: [
+      { title:'加速器与重离子治疗', desc:'回旋加速器与粒子治疗', file:'quantum_accelerator.html', pv:'accelerator' },
+      { title:'量子计算', desc:'量子比特与量子门', file:'quantum_computing.html', pv:'quantumComputing' },
+      { title:'带电粒子运动', desc:'电磁场中的带电粒子', file:'quantum_charged_particle.html', pv:'chargedParticle' },
+      { title:'质谱仪', desc:'质量分析与同位素分离', file:'quantum_mass_spectrometer.html', pv:'massSpectrometer' },
+      { title:'核磁共振K空间成像', desc:'MRI与K空间采样', file:'quantum_mri_kspace.html', pv:'mriKspace' },
+      { title:'超导约瑟夫森结', desc:'超导量子干涉', file:'quantum_josephson.html', pv:'josephson' },
+      { title:'氢原子波函数', desc:'薛定谔方程与电子云', file:'quantum_hydrogen.html', pv:'hydrogenWave' },
+      { title:'量子纠缠', desc:'贝尔不等式与纠缠态', file:'quantum_entangle.html', pv:'quantumEntangle2' },
+    ]
+  },
+
+};
+
+const catBar = document.getElementById('categoryBar');
+const expList = document.getElementById('expList');
+const simView = document.getElementById('simView');
+const simFrame = document.getElementById('simFrame');
+const simTitle = document.getElementById('simTitle');
+const backBtn = document.getElementById('backBtn');
+const topBadge = document.getElementById('topBadge');
+const totalCountEl = document.getElementById('totalCount');
+
+let totalExperiments = 0;
+for (const key in experiments) { totalExperiments += experiments[key].items.length; }
+totalCountEl.textContent = totalExperiments;
+
+let currentCat = 'mechanics';
+let currentPage = 1;
+const PAGE_SIZE = 16;
+const pagerEl = document.getElementById('pager');
+
+function switchCategory(catKey) {
+  currentCat = catKey;
+  currentPage = 1;
+  const cat = experiments[catKey];
+  if (!cat) return;
+  catBar.querySelectorAll('.cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === catKey);
+  });
+  topBadge.textContent = cat.name;
+  pagerEl.setAttribute('data-cat', catKey);
+  renderCards();
+}
+
+function renderCards() {
+  const catKey = pagerEl.getAttribute('data-cat') || currentCat;
+  const cat = experiments[catKey];
+  if (!cat) return;
+  currentCat = catKey;
+
+  const items = cat.items;
+  const total = items.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage < 1) currentPage = 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  const page = currentPage;
+
+  catBar.querySelectorAll('.cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === catKey);
+  });
+  topBadge.textContent = cat.name;
+
+  const start = (page - 1) * PAGE_SIZE;
+  const pageItems = items.slice(start, start + PAGE_SIZE);
+
+  expList.innerHTML = '';
+  pageItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'exp-card';
+    const cvs = document.createElement('canvas');
+    cvs.width = 320; cvs.height = 200;
+    card.appendChild(cvs);
+    const info = document.createElement('div');
+    info.className = 'card-info';
+    info.innerHTML = `<div class="card-title">${item.title}</div><div class="card-desc">${item.desc}</div>`;
+    card.appendChild(info);
+    card.addEventListener('mouseenter', () => { card.style.borderColor = cat.color + '88'; });
+    card.addEventListener('mouseleave', () => { card.style.borderColor = ''; });
+    card.addEventListener('click', () => openSim(item));
+    expList.appendChild(card);
+    try {
+      const ctx = cvs.getContext('2d');
+      ctx.fillStyle = '#0d1117';
+      ctx.fillRect(0, 0, 320, 200);
+      if (PV[item.pv]) PV[item.pv](ctx, 320, 200);
+    } catch(e) { console.warn('PV render error:', item.pv, e); }
+  });
+
+  renderPager(page, totalPages, total);
+}
+
+function renderPager(page, totalPages, total) {
+  const catKey = pagerEl.getAttribute('data-cat') || currentCat;
+  pagerEl.innerHTML = '';
+  if (totalPages <= 1) {
+    pagerEl.innerHTML = `<span class="pg-info">共 ${total} 个实验</span>`;
+    return;
+  }
+
+  function goPage(p) {
+    currentPage = p;
+    renderCards();
+  }
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'pg-btn'; prevBtn.textContent = '‹';
+  prevBtn.disabled = page <= 1;
+  prevBtn.addEventListener('click', (e) => { e.stopPropagation(); goPage(page - 1); });
+  pagerEl.appendChild(prevBtn);
+
+  for (let p = 1; p <= totalPages; p++) {
+    const btn = document.createElement('button');
+    btn.className = 'pg-btn' + (p === page ? ' active' : '');
+    btn.textContent = p;
+    btn.addEventListener('click', (e) => { e.stopPropagation(); goPage(p); });
+    pagerEl.appendChild(btn);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'pg-btn'; nextBtn.textContent = '›';
+  nextBtn.disabled = page >= totalPages;
+  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); goPage(page + 1); });
+  pagerEl.appendChild(nextBtn);
+
+  const info = document.createElement('span');
+  info.className = 'pg-info';
+  info.textContent = `${total} 个实验 · 第 ${page}/${totalPages} 页`;
+  pagerEl.appendChild(info);
+}
+
+function openSim(item) {
+  simTitle.textContent = item.title;
+  simFrame.src = item.file;
+  simView.classList.add('active');
+}
+
+function backToList() {
+  simView.classList.remove('active');
+  simFrame.src = '';
+}
+
+backBtn.addEventListener('click', backToList);
+document.addEventListener('keydown', (e) => {
+  if (simView.classList.contains('active') && e.key === 'Escape') backToList();
+});
+
+catBar.addEventListener('click', (e) => {
+  const tab = e.target.closest('.cat-tab');
+  if (!tab) return;
+  switchCategory(tab.dataset.cat);
+});
+
+pagerEl.setAttribute('data-cat', 'mechanics');
+switchCategory('mechanics');
+</script>
+</body>
+</html>

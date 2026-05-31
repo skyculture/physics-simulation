@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量子纠缠 - 量子与核物理</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
+  .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
+  .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
+  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
+  .back-link:hover { background:#1f2937; }
+  .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
+  .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
+  canvas { display:block; border-radius:4px; background:#0d1117; }
+  .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
+  .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
+  .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; }
+  .control-row label { font-size:0.82rem; color:var(--text); white-space:nowrap; }
+  .control-row input[type="range"] { flex:1; accent-color:var(--accent4); }
+  .control-row .val { font-size:0.78rem; color:var(--accent4); min-width:36px; text-align:right; font-weight:600; }
+  .btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
+  .btn:hover { background:#30363d; }
+  .btn.primary { border-color:var(--accent4); color:var(--accent4); }
+  .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
+  .stat-item:last-child { border-bottom:none; }
+  .stat-label { color:#8b949e; }
+  .stat-value { color:var(--accent4); font-weight:600; }
+  @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>🔗 量子纠缠与贝尔不等式</h1>
+    <div class="subtitle">量子力学 — EPR佯谬、贝尔态制备与量子非定域性检验</div>
+  </div>
+
+</div>
+<div class="main-container">
+  <div class="canvas-panel">
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <div class="side-panel">
+    <div class="panel-box">
+      <h3>⚙️ 纠缠态设置</h3>
+      <div class="control-row">
+        <label>Alice 测量角 θ_A (°)</label>
+        <input type="range" id="thetaA" min="0" max="360" step="5" value="0">
+        <span class="val" id="valThetaA">0°</span>
+      </div>
+      <div class="control-row">
+        <label>Bob 测量角 θ_B (°)</label>
+        <input type="range" id="thetaB" min="0" max="360" step="5" value="45">
+        <span class="val" id="valThetaB">45°</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnMeasure">📏 单次测量</button>
+        <button class="btn" id="btnMeasure100">🔬 测量100次</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnBell">📊 贝尔不等式测试</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btnReset">↺ 重置统计</button>
+      </div>
+    </div>
+    <div class="panel-box">
+      <h3>📊 测量结果</h3>
+      <div class="stat-item"><span class="stat-label">纠缠态</span><span class="stat-value" id="statState">|Φ⁺⟩</span></div>
+      <div class="stat-item"><span class="stat-label">Alice 结果</span><span class="stat-value" id="statAlice">—</span></div>
+      <div class="stat-item"><span class="stat-label">Bob 结果</span><span class="stat-value" id="statBob">—</span></div>
+      <div class="stat-item"><span class="stat-label">关联 ⟨AB⟩</span><span class="stat-value" id="statCorr">—</span></div>
+      <div class="stat-item"><span class="stat-label">总测量次数</span><span class="stat-value" id="statCount">0</span></div>
+      <div class="stat-item"><span class="stat-label">一致率</span><span class="stat-value" id="statMatch">—</span></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const canvas=document.getElementById('simCanvas');
+  const ctx=canvas.getContext('2d');
+  let W=680,H=500;
+  function resize(){const dpr=window.devicePixelRatio||1;canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+
+  let thetaA=0,thetaB=45;
+  let aliceResult=null,bobResult=null;
+  let measurementCount=0,matchCount=0;
+  let correlationSum=0;
+
+  function entangledMeasure(thetaAdeg,thetaBdeg){
+    const dtheta=(thetaBdeg-thetaAdeg)*Math.PI/180;
+    const pSame=Math.sin(dtheta/2)*Math.sin(dtheta/2);
+    const aliceUp=Math.random()<0.5;
+    const bobUp=Math.random()<pSame?!aliceUp:aliceUp;
+    return {alice:aliceUp?1:-1,bob:bobUp?1:-1};
+  }
+
+  function singleMeasure(){
+    const result=entangledMeasure(thetaA,thetaB);
+    aliceResult=result.alice;bobResult=result.bob;
+    measurementCount++;
+    if(result.alice===result.bob)matchCount++;
+    correlationSum+=result.alice*result.bob;
+    updateStats();
+    draw();
+  }
+
+  function measure100(){
+    for(let i=0;i<100;i++)singleMeasure();
+  }
+
+  function updateStats(){
+    document.getElementById('statAlice').textContent=aliceResult===1?'↑ (|0⟩)':aliceResult===-1?'↓ (|1⟩)':'—';
+    document.getElementById('statBob').textContent=bobResult===1?'↑ (|0⟩)':bobResult===-1?'↓ (|1⟩)':'—';
+    document.getElementById('statCount').textContent=measurementCount;
+    if(measurementCount>0){
+      document.getElementById('statCorr').textContent=(correlationSum/measurementCount).toFixed(4);
+      document.getElementById('statMatch').textContent=(matchCount/measurementCount*100).toFixed(1)+'%';
+    }
+  }
+
+  function bellTest(){
+    const angles=[0,45,90,135];
+    const pairs=[[0,45],[0,135],[90,45],[90,135]];
+    let S=0;
+    pairs.forEach(([a,b],i)=>{
+      let E=0;
+      for(let j=0;j<500;j++){
+        const r=entangledMeasure(a,b);
+        E+=r.alice*r.bob;
+      }
+      E/=500;
+      S+=(i<2?E:-E);
+    });
+    document.getElementById('statState').textContent='|Φ⁺⟩ 贝尔测试';
+    document.getElementById('statAlice').textContent='测试完成';
+    document.getElementById('statBob').textContent='';
+    document.getElementById('statCorr').textContent='S='+S.toFixed(3);
+    if(S>2)document.getElementById('statMatch').textContent='S>2 ✓ 违反Bell不等式!';
+    else if(Math.abs(S-2)<0.05)document.getElementById('statMatch').textContent='S≈2 ≈局域极限';
+    else document.getElementById('statMatch').textContent='S='+S.toFixed(3);
+    draw();
+  }
+
+  function draw(){
+    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    const cx=W/2,cy=H/2-20;
+
+    ctx.fillStyle='#d2a8ff';ctx.beginPath();ctx.arc(cx,cy,16,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('|Φ⁺⟩',cx,cy+5);
+
+    ctx.strokeStyle='#d2a8ff';ctx.lineWidth=2;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(cx-16,cy);ctx.lineTo(cx-100,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+16,cy);ctx.lineTo(cx+100,cy);ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle='#58a6ff';ctx.beginPath();ctx.arc(cx-130,cy,22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('Alice',cx-130,cy+6);
+    ctx.fillStyle='#f78166';ctx.beginPath();ctx.arc(cx+130,cy,22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.fillText('Bob',cx+130,cy+6);
+
+    if(aliceResult!==null){
+      const ax=cx-130,ay=cy-(aliceResult===1?-35:35);
+      ctx.strokeStyle='#d2a8ff';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(cx-108,cy);ctx.lineTo(ax,ay);ctx.stroke();
+      ctx.fillStyle=aliceResult===1?'#3fb950':'#f78166';
+      ctx.beginPath();ctx.arc(ax,ay-10,7,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='11px sans-serif';ctx.textAlign='center';
+      ctx.fillText(aliceResult===1?'↑':'↓',ax,ay-14);
+      ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';
+      ctx.fillText('θ='+thetaA+'°',ax,ay-28);
+    }
+
+    if(bobResult!==null){
+      const bx=cx+130,by=cy-(bobResult===1?-35:35);
+      ctx.strokeStyle='#d2a8ff';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(cx+108,cy);ctx.lineTo(bx,by);ctx.stroke();
+      ctx.fillStyle=bobResult===1?'#3fb950':'#f78166';
+      ctx.beginPath();ctx.arc(bx,by-10,7,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='11px sans-serif';ctx.textAlign='center';
+      ctx.fillText(bobResult===1?'↑':'↓',bx,by-14);
+      ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';
+      ctx.fillText('θ='+thetaB+'°',bx,by-28);
+    }
+
+    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('EPR 纠缠对: 自旋单态',cx,cy+40);
+    ctx.fillText('Δθ = |θ_B - θ_A| = '+Math.abs(thetaB-thetaA)+'°',cx,cy+56);
+
+    ctx.strokeStyle='#30363d';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(60,H-80);ctx.lineTo(W-60,H-80);ctx.stroke();
+
+    ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';ctx.textAlign='center';
+    ctx.fillText('P(一致) = sin²(Δθ/2)',cx,H-60);
+    ctx.fillText('局域隐变量理论: |S| ≤ 2   |   量子力学: |S| ≤ 2√2 ≈ 2.828',cx,H-40);
+  }
+
+  document.getElementById('thetaA').addEventListener('input',e=>{thetaA=parseInt(e.target.value);document.getElementById('valThetaA').textContent=thetaA+'°';});
+  document.getElementById('thetaB').addEventListener('input',e=>{thetaB=parseInt(e.target.value);document.getElementById('valThetaB').textContent=thetaB+'°';});
+
+  document.getElementById('btnMeasure').addEventListener('click',singleMeasure);
+  document.getElementById('btnMeasure100').addEventListener('click',measure100);
+  document.getElementById('btnBell').addEventListener('click',bellTest);
+
+  document.getElementById('btnReset').addEventListener('click',()=>{
+    aliceResult=null;bobResult=null;
+    measurementCount=0;matchCount=0;correlationSum=0;
+    document.getElementById('statState').textContent='|Φ⁺⟩';
+    document.getElementById('statAlice').textContent='—';
+    document.getElementById('statBob').textContent='—';
+    document.getElementById('statCorr').textContent='—';
+    document.getElementById('statCount').textContent='0';
+    document.getElementById('statMatch').textContent='—';
+    draw();
+  });
+
+  function init(){resize();draw();}
+  window.addEventListener('resize',()=>{resize();draw();});
+  init();
+})();
+</script>
+</body>
+</html>
