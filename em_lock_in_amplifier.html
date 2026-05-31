@@ -54,7 +54,7 @@ h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 </div>
 <script>
 const canvas=document.getElementById('c');const ctx=canvas.getContext('2d');
-function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth||400,h=canvas.clientHeight||300;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
 window.addEventListener('resize',resize);
 let inited=false;
 const p1=document.getElementById('p1'),p1n=document.getElementById('p1n');

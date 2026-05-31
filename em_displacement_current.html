@@ -30,7 +30,7 @@ h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 </div></div></main></div>
 <script>
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
-function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth,h=canvas.clientHeight;if(w&&h){canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}}
+function resize(){const dpr=window.devicePixelRatio||1;const w=canvas.clientWidth||400,h=canvas.clientHeight||300;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
 window.addEventListener('resize',resize);let inited=false;
 const p1=document.getElementById('p1'),p1n=document.getElementById('p1n'),p2=document.getElementById('p2'),p2n=document.getElementById('p2n'),p3=document.getElementById('p3'),p3n=document.getElementById('p3n');
 function link(a,b){a.oninput=()=>{b.value=a.value};b.oninput=()=>{a.value=b.value}}

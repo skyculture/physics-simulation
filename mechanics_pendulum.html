@@ -606,8 +606,10 @@ let _cw=600,_ch=400;
 function getW(){return canvas.clientWidth||_cw;}
 function getH(){return canvas.clientHeight||_ch;}
 function resizeCanvas(){
-  const cw=canvas.clientWidth,ch=canvas.clientHeight;
-  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
+  _cw=cw;_ch=ch;
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
@@ -618,8 +620,10 @@ let _cw=600,_ch=400;
 function getW(){return canvas.clientWidth||_cw;}
 function getH(){return canvas.clientHeight||_ch;}
 function resizeCanvas(){
-  const cw=canvas.clientWidth,ch=canvas.clientHeight;
-  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
+  _cw=cw;_ch=ch;
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
@@ -630,8 +634,10 @@ let _cw=600,_ch=400;
 function getW(){return canvas.clientWidth||_cw;}
 function getH(){return canvas.clientHeight||_ch;}
 function resizeCanvas(){
-  const cw=canvas.clientWidth,ch=canvas.clientHeight;
-  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
+  _cw=cw;_ch=ch;
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
@@ -642,8 +648,10 @@ let _cw=600,_ch=400;
 function getW(){return canvas.clientWidth||_cw;}
 function getH(){return canvas.clientHeight||_ch;}
 function resizeCanvas(){
-  const cw=canvas.clientWidth,ch=canvas.clientHeight;
-  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
+  _cw=cw;_ch=ch;
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
