@@ -115,7 +115,7 @@ document.getElementById('t0').addEventListener('input', e => { document.getEleme
 document.getElementById('L0').addEventListener('input', e => { document.getElementById('L0Val').value = e.target.value; });
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;

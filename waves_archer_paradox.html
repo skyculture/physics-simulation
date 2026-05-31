@@ -237,7 +237,7 @@ document.getElementById('shootBtn').addEventListener('click', shoot);
 document.getElementById('resetBtn').addEventListener('click', reset);
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;

@@ -161,7 +161,7 @@ document.getElementById('startBtn').addEventListener('click', start);
 document.getElementById('resetBtn').addEventListener('click', reset);
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 reset();
 
 document.addEventListener('keydown',(e)=>{

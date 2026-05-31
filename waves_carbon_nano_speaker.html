@@ -163,7 +163,7 @@ document.getElementById('playBtn').addEventListener('click', playSound);
 document.getElementById('stopBtn').addEventListener('click', stopSound);
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;

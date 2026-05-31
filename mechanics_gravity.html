@@ -120,7 +120,7 @@ document.getElementById('mass2').addEventListener('input', e => { document.getEl
 document.getElementById('distance').addEventListener('input', e => { document.getElementById('distanceVal').value = e.target.value; });
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;

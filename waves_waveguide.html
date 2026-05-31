@@ -138,7 +138,7 @@ document.getElementById('speed').addEventListener('input', e => {
 });
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;

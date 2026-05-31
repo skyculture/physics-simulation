@@ -223,7 +223,7 @@ document.getElementById('aimDist').addEventListener('input', e => {
 document.getElementById('resetBtn').addEventListener('click', reset);
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 reset();
 
 let _paused=false;

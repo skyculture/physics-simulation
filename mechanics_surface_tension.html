@@ -135,7 +135,7 @@ document.getElementById('rho').addEventListener('input', e => { document.getElem
 document.getElementById('resetBtn').addEventListener('click', () => { draw(); });
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;

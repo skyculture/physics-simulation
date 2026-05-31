@@ -119,7 +119,7 @@ document.getElementById('error').addEventListener('input', e => { document.getEl
 document.getElementById('trueVal').addEventListener('input', e => { document.getElementById('trueValVal').value = e.target.value; });
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;

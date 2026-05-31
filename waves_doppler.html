@@ -268,7 +268,7 @@ document.getElementById('srcFreq').addEventListener('input', e => {
 document.getElementById('resetBtn').addEventListener('click', reset);
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 reset();
 draw();
 
