@@ -106,7 +106,7 @@ function draw() {
   ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`波2: A=${amp2}, f=${freq2}, φ=${(phaseDiff * 180 / Math.PI).toFixed(0)}°`, xStart, waveMid1 - waveAmp - fs * 0.5);
 
-  ctx.strokeStyle = '#0E61AC';
+  ctx.strokeStyle = '#f0883e';
   ctx.lineWidth = 3;
   ctx.beginPath();
   for (let px = 0; px <= waveWidth; px += 2) {
@@ -118,7 +118,7 @@ function draw() {
     else ctx.lineTo(x, y);
   }
   ctx.stroke();
-  ctx.fillStyle = '#0E61AC';
+  ctx.fillStyle = '#f0883e';
   ctx.fillText(`叠加波: A_max=${(amp1 + amp2).toFixed(1)}`, xStart, waveMid2 - waveAmp * 2 - fs * 0.5);
 
   const beatFreq = Math.abs(freq1 - freq2);

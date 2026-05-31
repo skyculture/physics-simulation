@@ -239,12 +239,12 @@ function drawFilm(){
 
   ctxF.strokeStyle='#0E61AC';ctxF.lineWidth=2;
   ctxF.beginPath();ctxF.moveTo(ml,layer2Top);ctxF.lineTo(ml+pw,layer2Top);ctxF.stroke();
-  ctxF.strokeStyle='#0E61AC';ctxF.lineWidth=2;
+  ctxF.strokeStyle='#2A7CC7';ctxF.lineWidth=2;
   ctxF.beginPath();ctxF.moveTo(ml,layer3Top);ctxF.lineTo(ml+pw,layer3Top);ctxF.stroke();
 
   ctxF.fillStyle='#0E61AC';ctxF.font='13px sans-serif';ctxF.textAlign='left';
   ctxF.fillText('n₁ = '+n1.toFixed(2)+' (空气)',ml+8,layer1Top+(layer1Bot-layer1Top)/2+5);
-  ctxF.fillStyle='#0E61AC';
+  ctxF.fillStyle='#2A7CC7';
   ctxF.fillText('n₂ = '+n2.toFixed(2)+' (薄膜)',ml+8,layer2Top+(layer2Bot-layer2Top)/2+5);
   ctxF.fillStyle='#5A6370';
   ctxF.fillText('n₃ = '+n3.toFixed(2)+' (基底)',ml+8,layer3Top+(layer3Bot-layer3Top)/2+5);
@@ -276,9 +276,9 @@ function drawFilm(){
   var hitY2=layer3Top;
   var filmH=hitY2-hitY1;
   var refractX1=hitX+filmH*Math.tan(theta2);
-  ctxF.strokeStyle='#0E61AC';ctxF.lineWidth=2;
+  ctxF.strokeStyle='#2A7CC7';ctxF.lineWidth=2;
   ctxF.beginPath();ctxF.moveTo(hitX,hitY1);ctxF.lineTo(refractX1,hitY2);ctxF.stroke();
-  drawArrowHead(ctxF,hitX,hitY1,refractX1,hitY2,8,'#0E61AC');
+  drawArrowHead(ctxF,hitX,hitY1,refractX1,hitY2,8,'#2A7CC7');
 
   var ref2X=refractX1+rayLen1*0.6*Math.sin(theta2);
   var ref2Y=hitY1-rayLen1*0.6*Math.cos(theta2);
