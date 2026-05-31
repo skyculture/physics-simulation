@@ -14,8 +14,13 @@
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
   .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  .ctrl-group button { padding:4px 10px; background:var(--accent); color:#FAF2E0; border:none; border-radius:4px; cursor:pointer; }
+  .ctrl-group button { padding:7px 14px; border:1px solid #D4C9B8; border-radius:6px; background:#FFFFFF; color:#1A1A1A; cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; } .ctrl-group button:hover { background:#FFF7EB; border-color:#0E61AC; }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -34,19 +39,24 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 let animationId = null;
 let t = 0;
 let audioContext = null;
 let oscillator1 = null, oscillator2 = null, oscillator3 = null, oscillator4 = null;
 let gain1 = null, gain2 = null, gain3 = null, gain4 = null;
 
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (w && h) { canvas.width = w; canvas.height = h; }
-}
-
 function draw() {
-  const w = canvas.width, h = canvas.height;
+  const w = getW(), h = getH();
   const S = Math.min(w, h);
   const cx = w / 2, cy = h / 2;
   const f1 = parseFloat(document.getElementById('freq1').value);
@@ -187,9 +197,20 @@ document.getElementById('amp4').addEventListener('input', e => {
 document.getElementById('playBtn').addEventListener('click', playSound);
 document.getElementById('stopBtn').addEventListener('click', stopSound);
 
-resize();
+resizeCanvas();
 window.addEventListener('resize', resize);
 draw();
+
+let _paused=false;
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>

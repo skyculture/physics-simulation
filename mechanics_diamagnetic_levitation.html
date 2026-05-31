@@ -17,6 +17,11 @@
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -36,17 +41,22 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 let animationId;
 let time = 0;
 
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if(w && h) { canvas.width = w; canvas.height = h; }
-}
-
 function draw() {
   ctx.fillStyle = '#FAF2E0';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, getW(), getH());
 
   const B = parseFloat(document.getElementById('bField').value);
   const chi = parseFloat(document.getElementById('chi').value);
@@ -60,29 +70,29 @@ function draw() {
   const F_gravity = rho * V * g;
   const equilibrium = F_mag >= F_gravity;
 
-  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const cx = getW() / 2, cy = getH() / 2;
 
   ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(cx, cy + canvas.height * 0.15, canvas.height * 0.2, 0, Math.PI * 2);
+  ctx.arc(cx, cy + getH() * 0.15, getH() * 0.2, 0, Math.PI * 2);
   ctx.stroke();
 
   ctx.fillStyle = 'rgba(42,124,199,0.1)';
   ctx.beginPath();
-  ctx.arc(cx, cy + canvas.height * 0.15, canvas.height * 0.2, 0, Math.PI * 2);
+  ctx.arc(cx, cy + getH() * 0.15, getH() * 0.2, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.strokeStyle = 'rgba(14,97,172,0.3)';
   ctx.lineWidth = 1;
   for(let i = -3; i <= 3; i++) {
     ctx.beginPath();
-    ctx.moveTo(cx + i * canvas.width * 0.08, cy + canvas.height * 0.15 - canvas.height * 0.2);
-    ctx.lineTo(cx + i * canvas.width * 0.08, cy + canvas.height * 0.15 + canvas.height * 0.2);
+    ctx.moveTo(cx + i * getW() * 0.08, cy + getH() * 0.15 - getH() * 0.2);
+    ctx.lineTo(cx + i * getW() * 0.08, cy + getH() * 0.15 + getH() * 0.2);
     ctx.stroke();
   }
 
-  const levitateY = equilibrium ? cy - canvas.height * 0.15 : cy + canvas.height * 0.05;
+  const levitateY = equilibrium ? cy - getH() * 0.15 : cy + getH() * 0.05;
   ctx.fillStyle = '#0E61AC';
   ctx.beginPath();
   ctx.arc(cx, levitateY, 15, 0, Math.PI * 2);
@@ -122,7 +132,7 @@ function draw() {
 
   ctx.fillStyle = equilibrium ? '#0E61AC' : '#2A7CC7';
   ctx.font = 'bold 14px sans-serif';
-  ctx.fillText(equilibrium ? '✓ 悬浮成功' : '✗ 悬浮失败', cx - 60, canvas.height - 20);
+  ctx.fillText(equilibrium ? '✓ 悬浮成功' : '✗ 悬浮失败', cx - 60, getH() - 20);
 
   time++;
   animationId = requestAnimationFrame(draw);
@@ -133,9 +143,20 @@ document.getElementById('chi').addEventListener('input', e => { document.getElem
 document.getElementById('volume').addEventListener('input', e => { document.getElementById('volumeVal').value = e.target.value; });
 document.getElementById('resetBtn').addEventListener('click', () => { draw(); });
 
-resize();
+resizeCanvas();
 window.addEventListener('resize', resize);
 draw();
+
+let _paused=false;
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>

@@ -17,6 +17,11 @@
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -36,6 +41,16 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 let slots = [];
 let balls = [];
 let pegs = [];
@@ -60,7 +75,7 @@ function initSlots() {
 }
 
 function buildPegs() {
-  const w = canvas.width, h = canvas.height;
+  const w = getW(), h = getH();
   const rows = parseInt(document.getElementById('rows').value);
   const S = Math.min(w, h);
   const pegTop = h * 0.08;
@@ -82,8 +97,8 @@ function dropBalls() {
   const count = parseInt(document.getElementById('count').value);
   const rows = parseInt(document.getElementById('rows').value);
   const prob = parseFloat(document.getElementById('prob').value);
-  const w = canvas.width;
-  const S = Math.min(w, canvas.height);
+  const w = getW();
+  const S = Math.min(w, getH());
   const ballR = S * 0.008;
 
   for(let i = 0; i < count; i++) {
@@ -93,7 +108,7 @@ function dropBalls() {
     }
     balls.push({
       x: w / 2 + (Math.random() - 0.5) * 4,
-      y: canvas.height * 0.03,
+      y: getH() * 0.03,
       vx: 0,
       vy: 0,
       r: ballR,
@@ -110,7 +125,7 @@ function dropBalls() {
 }
 
 function updatePhysics() {
-  const w = canvas.width, h = canvas.height;
+  const w = getW(), h = getH();
   const rows = parseInt(document.getElementById('rows').value);
   const S = Math.min(w, h);
   const slotTop = h * 0.62;
@@ -177,7 +192,7 @@ function updatePhysics() {
 }
 
 function render() {
-  const w = canvas.width, h = canvas.height;
+  const w = getW(), h = getH();
   if(!w || !h) return;
   const S = Math.min(w, h);
   const rows = parseInt(document.getElementById('rows').value);
@@ -268,9 +283,19 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   render();
 });
 
-resize();
+resizeCanvas();
 window.addEventListener('resize', resize);
 initSlots();
+
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>

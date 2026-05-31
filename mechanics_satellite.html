@@ -17,6 +17,11 @@
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -36,6 +41,16 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 let animationId;
 let sat = {};
 let trail = [];
@@ -45,11 +60,6 @@ const R_EARTH = 6.371e6;
 const SUB_STEPS = 8;
 const DT = 50;
 let maxTrailR = 0;
-
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if(w && h) { canvas.width = w; canvas.height = h; }
-}
 
 function reset() {
   if(animationId) cancelAnimationFrame(animationId);
@@ -93,7 +103,7 @@ function worldToScreen(wx, wy, cx, cy, scale) {
 }
 
 function draw() {
-  const w = canvas.width, h = canvas.height;
+  const w = getW(), h = getH();
   if(!w || !h) return;
   const S = Math.min(w, h);
   const cx = w / 2, cy = h / 2;
@@ -204,9 +214,20 @@ document.getElementById('vRatio').addEventListener('input', e => { document.getE
 document.getElementById('launchAngle').addEventListener('input', e => { document.getElementById('launchAngleVal').textContent = e.target.value; });
 document.getElementById('resetBtn').addEventListener('click', reset);
 
-resize();
+resizeCanvas();
 window.addEventListener('resize', resize);
 reset();
+
+let _paused=false;
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>

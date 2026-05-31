@@ -17,6 +17,11 @@
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -36,6 +41,16 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 let animationId;
 let bodies = [];
 let trails = [[], [], []];
@@ -51,8 +66,8 @@ function resize() {
 }
 
 function init() {
-  const cx = canvas.width / 2, cy = canvas.height / 2;
-  const scale = Math.min(canvas.width, canvas.height) * 0.15;
+  const cx = getW() / 2, cy = getH() / 2;
+  const scale = Math.min(getW(), getH()) * 0.15;
   const m1 = parseFloat(document.getElementById('m1').value);
   const m2 = parseFloat(document.getElementById('m2').value);
   const m3 = parseFloat(document.getElementById('m3').value);
@@ -137,7 +152,7 @@ function computeEnergy() {
 
 function draw() {
   ctx.fillStyle = '#FAF2E0';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, getW(), getH());
 
   bodies[0].m = parseFloat(document.getElementById('m1').value);
   bodies[1].m = parseFloat(document.getElementById('m2').value);
@@ -184,9 +199,9 @@ function draw() {
   const E = computeEnergy();
   ctx.fillStyle = '#5A6370';
   ctx.font = '12px sans-serif';
-  ctx.fillText(`质量: m₁=${bodies[0].m.toFixed(1)}  m₂=${bodies[1].m.toFixed(1)}  m₃=${bodies[2].m.toFixed(1)}`, canvas.width * 0.05, canvas.height * 0.06);
+  ctx.fillText(`质量: m₁=${bodies[0].m.toFixed(1)}  m₂=${bodies[1].m.toFixed(1)}  m₃=${bodies[2].m.toFixed(1)}`, getW() * 0.05, getH() * 0.06);
   ctx.fillStyle = '#0E61AC';
-  ctx.fillText(`总能量 E = ${E.toFixed(1)} (守恒量)`, canvas.width * 0.05, canvas.height * 0.06 + 20);
+  ctx.fillText(`总能量 E = ${E.toFixed(1)} (守恒量)`, getW() * 0.05, getH() * 0.06 + 20);
 
   animationId = requestAnimationFrame(draw);
 }
@@ -202,8 +217,19 @@ document.getElementById('m2').addEventListener('input', e => { document.getEleme
 document.getElementById('m3').addEventListener('input', e => { document.getElementById('m3Val').value = e.target.value; });
 document.getElementById('resetBtn').addEventListener('click', reset);
 
-resize();
+resizeCanvas();
 window.addEventListener('resize', resize);
+
+let _paused=false;
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>

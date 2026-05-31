@@ -17,6 +17,11 @@
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -37,15 +42,20 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 let animationId;
 let x1 = -150, x2 = 100, v1 = 0, v2 = 0;
 let isRunning = false;
 let collided = false;
-
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if(w && h) { canvas.width = w; canvas.height = h; }
-}
 
 function reset() {
   x1 = -150;
@@ -93,7 +103,7 @@ function drawCar(px, cy, carW, carH, bodyColor, windowColor) {
 
 function draw() {
   ctx.fillStyle = '#FAF2E0';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, getW(), getH());
 
   const m1 = parseFloat(document.getElementById('m1').value);
   const m2 = parseFloat(document.getElementById('m2').value);
@@ -111,7 +121,7 @@ function draw() {
     x2 += v2 * 3;
   }
 
-  const W = canvas.width, H = canvas.height;
+  const W = getW(), H = getH();
   const S = Math.min(W, H);
   const cx = W / 2, cy = H / 2;
   const scale = S * 0.0025;
@@ -171,9 +181,19 @@ document.getElementById('e').addEventListener('input', e => { document.getElemen
 document.getElementById('startBtn').addEventListener('click', start);
 document.getElementById('resetBtn').addEventListener('click', reset);
 
-resize();
+resizeCanvas();
 window.addEventListener('resize', resize);
 reset();
+
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>

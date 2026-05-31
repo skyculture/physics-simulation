@@ -16,9 +16,14 @@
   .ctrl-group label { color:#5A6370; white-space:nowrap; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  .ctrl-group button { padding:5px 14px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer; font-size:1em; }
+  .ctrl-group button { padding:7px 14px; border:1px solid #D4C9B8; border-radius:6px; background:#FFFFFF; color:#1A1A1A; cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; } .ctrl-group button:hover { background:#FFF7EB; border-color:#0E61AC; }
   .ctrl-group button:hover { background:var(--border); }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -38,6 +43,16 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 const G = 9.8;
 const DT = 1 / 60;
 const SLOPE_LEN = 10;
@@ -48,11 +63,6 @@ let v = 0;
 let a = 0;
 let simTime = 0;
 let isRunning = false;
-
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (w && h) { canvas.width = w; canvas.height = h; }
-}
 
 function getParams() {
   const m = parseFloat(document.getElementById('mass').value) || 2;
@@ -116,13 +126,13 @@ function draw() {
   }
 
   ctx.fillStyle = '#FAF2E0';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, getW(), getH());
 
-  var startX = canvas.width * 0.1;
-  var startY = canvas.height * 0.85;
+  var startX = getW() * 0.1;
+  var startY = getH() * 0.85;
 
-  var maxDx = canvas.width * 0.85 - startX;
-  var maxDy = startY - canvas.height * 0.05;
+  var maxDx = getW() * 0.85 - startX;
+  var maxDy = startY - getH() * 0.05;
   var slopeCanvasLen = angle > 0.001
     ? Math.min(maxDx / Math.cos(angle), maxDy / Math.sin(angle))
     : maxDx;
@@ -237,8 +247,8 @@ function draw() {
   }
 
   var netForce = F - gravComp;
-  var infoX = canvas.width * 0.02;
-  var infoY = canvas.height * 0.06;
+  var infoX = getW() * 0.02;
+  var infoY = getH() * 0.06;
   var lh = 20;
 
   ctx.font = '13px sans-serif';
@@ -264,8 +274,8 @@ function draw() {
 
   ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 13px sans-serif';
-  var formulaY = canvas.height * 0.96;
-  ctx.fillText('a = (F - mgsinθ)/m = (' + F + ' - ' + m + '×9.8×sin' + angleDeg + '°)/' + m + ' = ' + a.toFixed(3) + ' m/s²', canvas.width * 0.2, formulaY);
+  var formulaY = getH() * 0.96;
+  ctx.fillText('a = (F - mgsinθ)/m = (' + F + ' - ' + m + '×9.8×sin' + angleDeg + '°)/' + m + ' = ' + a.toFixed(3) + ' m/s²', getW() * 0.2, formulaY);
 
   if (isRunning) {
     animationId = requestAnimationFrame(draw);
@@ -320,9 +330,19 @@ document.getElementById('angleVal').addEventListener('input', function(e) {
 document.getElementById('startBtn').addEventListener('click', start);
 document.getElementById('resetBtn').addEventListener('click', reset);
 
-resize();
-window.addEventListener('resize', function() { resize(); draw(); });
+resizeCanvas();
+window.addEventListener('resize', function() { resizeCanvas(); draw(); });
 reset();
+
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>

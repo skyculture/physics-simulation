@@ -17,6 +17,11 @@
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
   #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
+@media (max-width:900px) {
+  #container,#content{flex-direction:column;}
+  #controls{flex-wrap:wrap;}
+  canvas{min-height:300px;}
+}
 </style>
 </head>
 <body>
@@ -35,17 +40,22 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+let _cw=600,_ch=400;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch){_cw=cw;_ch=ch;canvas.width=cw*dpr;canvas.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
 let animationId;
 let time = 0;
 
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if(w && h) { canvas.width = w; canvas.height = h; }
-}
-
 function draw() {
   ctx.fillStyle = '#FAF2E0';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0,0,getW(),getH());
   
   const M = parseFloat(document.getElementById('mass1').value);
   const m = parseFloat(document.getElementById('mass2').value);
@@ -54,24 +64,24 @@ function draw() {
   const G = 6.674e-11;
   const F = G * M * m / (r * r);
   
-  const cx = canvas.width/2, cy = canvas.height/2;
+  const cx = getW()/2, cy = getH()/2;
   
   ctx.fillStyle = '#2A7CC7';
   const bigRadius = Math.sqrt(M / 1e24) * 15;
   ctx.beginPath();
-  ctx.arc(cx, cy, Math.min(bigRadius, canvas.height*0.25), 0, Math.PI*2);
+  ctx.arc(cx, cy, Math.min(bigRadius, getH()*0.25), 0, Math.PI*2);
   ctx.fill();
   
   ctx.strokeStyle = 'rgba(14,97,172,0.3)';
   ctx.lineWidth = 1;
   for(let i=1;i<=4;i++) {
     ctx.beginPath();
-    ctx.arc(cx, cy, canvas.height*0.25 + i*canvas.height*0.05, 0, Math.PI*2);
+    ctx.arc(cx, cy, getH()*0.25 + i*getH()*0.05, 0, Math.PI*2);
     ctx.stroke();
   }
   
   const smallRadius = Math.sqrt(m / 1e22) * 5;
-  const orbitR = canvas.width * 0.35;
+  const orbitR = getW() * 0.35;
   const angle = time * 0.005;
   const moonX = cx + orbitR * Math.cos(angle);
   const moonY = cy + orbitR * Math.sin(angle) * 0.3;
@@ -91,13 +101,13 @@ function draw() {
   
   ctx.fillStyle = '#5A6370';
   ctx.font = '12px sans-serif';
-  ctx.fillText(`地球质量 M = ${(M/1e24).toFixed(2)} × 10²⁴ kg`, canvas.width*0.05, canvas.height*0.1);
-  ctx.fillText(`月球质量 m = ${(m/1e22).toFixed(2)} × 10²² kg`, canvas.width*0.05, canvas.height*0.1+20);
-  ctx.fillText(`距离 r = ${(r/1e8).toFixed(2)} × 10⁸ m`, canvas.width*0.05, canvas.height*0.1+40);
+  ctx.fillText(`地球质量 M = ${(M/1e24).toFixed(2)} × 10²⁴ kg`, getW()*0.05, getH()*0.1);
+  ctx.fillText(`月球质量 m = ${(m/1e22).toFixed(2)} × 10²² kg`, getW()*0.05, getH()*0.1+20);
+  ctx.fillText(`距离 r = ${(r/1e8).toFixed(2)} × 10⁸ m`, getW()*0.05, getH()*0.1+40);
   
   ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 14px sans-serif';
-  ctx.fillText(`引力 F = ${(F/1e20).toFixed(3)} × 10²⁰ N`, cx-80, canvas.height*0.9);
+  ctx.fillText(`引力 F = ${(F/1e20).toFixed(3)} × 10²⁰ N`, cx-80, getH()*0.9);
   
   time++;
   animationId = requestAnimationFrame(draw);
@@ -107,9 +117,20 @@ document.getElementById('mass1').addEventListener('input', e => { document.getEl
 document.getElementById('mass2').addEventListener('input', e => { document.getElementById('mass2Val').value = e.target.value; });
 document.getElementById('distance').addEventListener('input', e => { document.getElementById('distanceVal').value = e.target.value; });
 
-resize();
+resizeCanvas();
 window.addEventListener('resize', resize);
 draw();
+
+let _paused=false;
+document.addEventListener('keydown',(e)=>{
+  if(e.code==='Space'){e.preventDefault();
+    _paused=!_paused;
+    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
+    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
+    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
+  }
+  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
+});
 </script>
 </body>
 </html>
