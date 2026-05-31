@@ -70,17 +70,15 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-let running = true, animId = null;
+let animId = null;
 
 const dpr = window.devicePixelRatio || 1;
 function resizeCanvas() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (w && h) { canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  const cw = canvas.clientWidth, ch = canvas.clientHeight;
+  if (cw && ch) { canvas.width = cw * dpr; canvas.height = ch * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 }
 resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-let animationId;
+window.addEventListener('resize', () => { resizeCanvas(); });
 
 let V = 10000;
 let B = 0.5;
@@ -88,6 +86,10 @@ let A = 28;
 let Z = 1;
 let particles = [];
 let trails = [];
+let running = true;
+
+function getH() { return canvas.clientHeight || 400; }
+function getW() { return canvas.clientWidth || 600; }
 
 function createParticle() {
   const m = A * 1.67e-27;
@@ -96,7 +98,7 @@ function createParticle() {
   
   return {
     x: 50,
-    y: canvas.height / 2,
+    y: getH() / 2,
     vx: v,
     vy: 0,
     mass: m,
@@ -107,8 +109,9 @@ function createParticle() {
 }
 
 function draw() {
+  const ch = getH(), cw = getW();
   ctx.fillStyle = '#FFF7EB';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, cw, ch);
   
   // 加速区域
   ctx.fillStyle = '#1e3a5f';
@@ -151,7 +154,7 @@ function draw() {
   }
   
   // 探测器
-  const detY = canvas.height - 30;
+  const detY = ch - 30;
   ctx.fillStyle = '#4a5568';
   ctx.fillRect(150, detY, 350, 20);
   
@@ -218,7 +221,7 @@ function update() {
     p.trail.push({ x: p.x, y: p.y });
     
     // 检测到达探测器
-    if (p.y > canvas.height - 40 && p.y < canvas.height - 20) {
+    if (p.y > ch - 40 && p.y < ch - 20) {
       trails.push(p.trail);
       particles = [];
     }
@@ -226,9 +229,10 @@ function update() {
 }
 
 function animate() {
+  if (!running) return;
   update();
   draw();
-  animationId = requestAnimationFrame(animate);
+  animId = requestAnimationFrame(animate);
 }
 
 function updateInfo() {
@@ -240,7 +244,7 @@ function updateInfo() {
   
   document.getElementById('speed').textContent = (v / 1000).toFixed(1) + ' km/s';
   document.getElementById('radius').textContent = (r * 100).toFixed(2) + ' cm';
-  document.getElementById('position').textContent = ((r * 200) + 150 - canvas.height/2).toFixed(1) + ' cm';
+  document.getElementById('position').textContent = ((r * 200) + 150 - getH()/2).toFixed(1) + ' cm';
   document.getElementById('mz').textContent = mz.toFixed(1) + ' u/e';
 }
 
@@ -270,6 +274,7 @@ document.getElementById('charge').addEventListener('input', (e) => {
 
 document.getElementById('startBtn').addEventListener('click', () => {
   particles = [createParticle()];
+  running = true;
   updateInfo();
 });
 
@@ -279,7 +284,7 @@ animate();
 
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); running = !running; if (running) animate(); }
-  if (e.code === 'KeyR') { e.preventDefault(); /* reset logic in reset() if available */ if (typeof reset === 'function') reset(); }
+  if (e.code === 'KeyR') { e.preventDefault(); particles = []; trails = []; updateInfo(); }
 });
 
 </script>
