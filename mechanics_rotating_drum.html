@@ -58,8 +58,8 @@ window.addEventListener('resize',resizeCanvas);
 let animationId = null;
 let physDist = 0, physVel = 0;
 let isRolling = false;
-
-function drawScene(dt, v) {
+let prevTime = 0;
+const SLOPE_LENGTH_M = 5;
 
 function reset() {
   physDist = 0; physVel = 0;
