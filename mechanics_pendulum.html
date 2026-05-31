@@ -11,7 +11,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
@@ -32,31 +32,31 @@ body {
 
 .header-left h1 {
   font-size: 1.6rem;
-  color: #58a6ff;
+  color: #0E61AC;
   margin-bottom: 2px;
 }
 
 .header-left .subtitle {
   font-size: 0.85rem;
-  color: #8b949e;
+  color: #5A6370;
   line-height: 1.5;
   max-width: 600px;
 }
 
 .back-link {
-  color: #58a6ff;
+  color: #0E61AC;
   text-decoration: none;
   font-size: 0.9rem;
   padding: 6px 14px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
   transition: background 0.2s, border-color 0.2s;
   white-space: nowrap;
 }
 
 .back-link:hover {
-  background: #1f2937;
-  border-color: #58a6ff;
+  background: #FFF7EB;
+  border-color: #0E61AC;
 }
 
 /* 主体布局 - 双列 */
@@ -71,7 +71,7 @@ body {
 
 .panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px;
   display: flex;
@@ -82,20 +82,20 @@ body {
 .panel-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #58a6ff;
+  color: #0E61AC;
   margin-bottom: 6px;
   text-align: center;
 }
 
 .panel canvas {
   border-radius: 4px;
-  background: #0d1117;
+  background: #FAF2E0;
   display: block;
 }
 
 .graph-label {
   font-size: 0.75rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 4px;
   text-align: center;
 }
@@ -109,7 +109,7 @@ body {
 
 .controls-panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px 18px;
 }
@@ -128,7 +128,7 @@ body {
 
 .control-group label {
   font-size: 0.78rem;
-  color: #8b949e;
+  color: #5A6370;
   white-space: nowrap;
 }
 
@@ -141,7 +141,7 @@ body {
 .control-group input[type="range"] {
   flex: 1;
   min-width: 60px;
-  accent-color: #58a6ff;
+  accent-color: #0E61AC;
 }
 
 .control-group .value-display {
@@ -164,31 +164,31 @@ body {
 
 .btn {
   padding: 7px 18px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
   font-family: inherit;
   transition: background 0.15s, border-color 0.15s;
   color: #c9d1d9;
-  background: #21262d;
+  background: #FFFFFF;
 }
 
-.btn:hover { background: #30363d; }
+.btn:hover { background: #D4C9B8; }
 
-.btn-start { border-color: #3fb950; color: #3fb950; }
+.btn-start { border-color: #0E61AC; color: #0E61AC; }
 .btn-start:hover { background: #1a3a2a; }
 
-.btn-pause { border-color: #f78166; color: #f78166; }
+.btn-pause { border-color: #2A7CC7; color: #2A7CC7; }
 .btn-pause:hover { background: #3a201a; }
 
-.btn-reset { border-color: #8b949e; color: #8b949e; }
+.btn-reset { border-color: #5A6370; color: #5A6370; }
 .btn-reset:hover { background: #2a2d33; }
 
 .energy-display {
   margin-left: auto;
   font-size: 0.82rem;
-  color: #8b949e;
+  color: #5A6370;
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
@@ -198,8 +198,8 @@ body {
   white-space: nowrap;
 }
 
-.energy-val { color: #3fb950; font-weight: 600; }
-.energy-err { color: #f78166; }
+.energy-val { color: #0E61AC; font-weight: 600; }
+.energy-err { color: #2A7CC7; }
 
 /* 响应式 */
 @media (max-width: 800px) {
@@ -246,14 +246,14 @@ body {
   <div class="controls-panel">
     <div class="controls-grid">
       <div class="control-group">
-        <label>L₁ 摆长1 (m) <span style="color:#58a6ff">共用</span></label>
+        <label>L₁ 摆长1 (m) <span style="color:#0E61AC">共用</span></label>
         <div class="input-row">
           <input type="range" id="ctrlL1" min="0.3" max="3.0" step="0.01" value="1.50">
           <span class="value-display" id="valL1">1.50</span>
         </div>
       </div>
       <div class="control-group">
-        <label>L₂ 摆长2 (m) <span style="color:#f78166">仅双摆</span></label>
+        <label>L₂ 摆长2 (m) <span style="color:#2A7CC7">仅双摆</span></label>
         <div class="input-row">
           <input type="range" id="ctrlL2" min="0.3" max="3.0" step="0.01" value="1.00">
           <span class="value-display" id="valL2">1.00</span>
@@ -633,7 +633,7 @@ function drawSimplePendulum() {
   const bobY = pivotY + scale * L * Math.cos(θ);
 
   // 绘制平衡位置虚线
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1;
   ctx.setLineDash([4, 6]);
   ctx.beginPath();
@@ -643,7 +643,7 @@ function drawSimplePendulum() {
   ctx.setLineDash([]);
 
   // 绘制摆线
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(pivotX, pivotY);
@@ -660,7 +660,7 @@ function drawSimplePendulum() {
   const bobRadius = Math.max(10, Math.min(20, 8 + params.m * 5));
   const grad = ctx.createRadialGradient(bobX - 3, bobY - 3, bobRadius * 0.2, bobX, bobY, bobRadius);
   grad.addColorStop(0, '#ffffff');
-  grad.addColorStop(0.4, '#58a6ff');
+  grad.addColorStop(0.4, '#0E61AC');
   grad.addColorStop(1, '#1f4370');
   ctx.fillStyle = grad;
   ctx.beginPath();
@@ -668,9 +668,9 @@ function drawSimplePendulum() {
   ctx.fill();
 
   // 摆球光晕
-  ctx.shadowColor = '#58a6ff';
+  ctx.shadowColor = '#0E61AC';
   ctx.shadowBlur = 12;
-  ctx.strokeStyle = 'rgba(88,166,255,0.25)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.25)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(bobX, bobY, bobRadius + 2, 0, 2 * Math.PI);
@@ -678,14 +678,14 @@ function drawSimplePendulum() {
   ctx.shadowBlur = 0;
 
   // 显示当前角度和周期信息
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '13px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'left';
   const T0 = simplePeriodTheory(params.L1, params.g);
   ctx.fillText(`θ = ${radToDeg(θ).toFixed(1)}°`, 10, h - 30);
   ctx.fillText(`理论周期 T₀ = ${T0.toFixed(2)} s`, 10, h - 12);
   if (simpleMeasuredPeriod > 0 && Math.abs(params.theta0) < degToRad(15)) {
-    ctx.fillStyle = '#3fb950';
+    ctx.fillStyle = '#0E61AC';
     ctx.fillText(`实测周期 T = ${simpleMeasuredPeriod.toFixed(3)} s`, 190, h - 12);
   }
 }
@@ -702,7 +702,7 @@ function drawSimpleGraph() {
   const plotH = h - margin.top - margin.bottom;
 
   // 坐标轴
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1;
   ctx.beginPath();
   // Y轴
@@ -715,11 +715,11 @@ function drawSimpleGraph() {
   ctx.stroke();
 
   // 边框
-  ctx.strokeStyle = '#21262d';
+  ctx.strokeStyle = '#FFFFFF';
   ctx.strokeRect(margin.left, margin.top, plotW, plotH);
 
   // Y轴标签
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px monospace';
   ctx.textAlign = 'right';
   const maxDeg = 180;
@@ -744,7 +744,7 @@ function drawSimpleGraph() {
   // 绘制理论周期标线（小角度近似）
   if (Math.abs(params.theta0) < degToRad(30)) {
     const T0 = simplePeriodTheory(params.L1, params.g);
-    ctx.strokeStyle = 'rgba(88,166,255,0.18)';
+    ctx.strokeStyle = 'rgba(14,97,172,0.18)';
     ctx.lineWidth = 1;
     ctx.setLineDash([2, 4]);
     for (let i = 1; i * T0 <= timeWindow; i++) {
@@ -760,7 +760,7 @@ function drawSimpleGraph() {
   // 绘制角度曲线
   const history = simpleAngleHistory.toArray();
   if (history.length > 1) {
-    ctx.strokeStyle = '#58a6ff';
+    ctx.strokeStyle = '#0E61AC';
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     let firstPoint = true;
@@ -779,7 +779,7 @@ function drawSimpleGraph() {
   ctx.restore();
 
   // 标题
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('角度-时间图 (最近10秒)', w / 2, margin.top - 4);
@@ -826,7 +826,7 @@ function drawDoublePendulum() {
   }
 
   // --- 绘制第一根杆 ---
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(pivotX, pivotY);
@@ -834,7 +834,7 @@ function drawDoublePendulum() {
   ctx.stroke();
 
   // --- 绘制第二根杆 ---
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(bob1X, bob1Y);
@@ -851,7 +851,7 @@ function drawDoublePendulum() {
   const r1 = Math.max(8, Math.min(16, 7 + params.m * 4));
   const grad1 = ctx.createRadialGradient(bob1X - 2, bob1Y - 2, r1 * 0.2, bob1X, bob1Y, r1);
   grad1.addColorStop(0, '#ffffff');
-  grad1.addColorStop(0.4, '#f78166');
+  grad1.addColorStop(0.4, '#2A7CC7');
   grad1.addColorStop(1, '#6b3020');
   ctx.fillStyle = grad1;
   ctx.beginPath();
@@ -862,7 +862,7 @@ function drawDoublePendulum() {
   const r2 = Math.max(8, Math.min(16, 7 + params.m * 4));
   const grad2 = ctx.createRadialGradient(bob2X - 2, bob2Y - 2, r2 * 0.2, bob2X, bob2Y, r2);
   grad2.addColorStop(0, '#ffffff');
-  grad2.addColorStop(0.4, '#3fb950');
+  grad2.addColorStop(0.4, '#0E61AC');
   grad2.addColorStop(1, '#1a4020');
   ctx.fillStyle = grad2;
   ctx.beginPath();
@@ -870,9 +870,9 @@ function drawDoublePendulum() {
   ctx.fill();
 
   // 末端光晕（混沌视觉强调）
-  ctx.shadowColor = '#3fb950';
+  ctx.shadowColor = '#0E61AC';
   ctx.shadowBlur = 14;
-  ctx.strokeStyle = 'rgba(63,185,80,0.3)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.3)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(bob2X, bob2Y, r2 + 2, 0, 2 * Math.PI);
@@ -880,7 +880,7 @@ function drawDoublePendulum() {
   ctx.shadowBlur = 0;
 
   // 信息文字
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '13px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(`θ₁ = ${radToDeg(doubleState[0]).toFixed(1)}°`, 10, h - 30);
@@ -901,7 +901,7 @@ function drawDoublePhase() {
   const plotH = h - margin.top - margin.bottom;
 
   // 坐标轴
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1;
   ctx.beginPath();
   // 垂直轴 (θ₂)
@@ -913,11 +913,11 @@ function drawDoublePhase() {
   ctx.stroke();
 
   // 边框
-  ctx.strokeStyle = '#21262d';
+  ctx.strokeStyle = '#FFFFFF';
   ctx.strokeRect(margin.left, margin.top, plotW, plotH);
 
   // 轴标签
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('π', margin.left + plotW, margin.top + plotH / 2 + 3);
@@ -943,7 +943,7 @@ function drawDoublePhase() {
     const alpha = 0.08 + 0.35 * (i / phaseData.length);
     const x = toX(phaseData[i].θ1);
     const y = toY(phaseData[i].θ2);
-    ctx.fillStyle = `rgba(63,185,80,${alpha})`;
+    ctx.fillStyle = `rgba(14,97,172,${alpha})`;
     ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
   }
 
@@ -956,7 +956,7 @@ function drawDoublePhase() {
   ctx.beginPath();
   ctx.arc(cx, cy, 3.5, 0, 2 * Math.PI);
   ctx.fill();
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
@@ -965,7 +965,7 @@ function drawDoublePhase() {
   ctx.restore();
 
   // 轴标题
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('相图: θ₁ vs θ₂  (归一化 [-π, π])', w / 2, margin.top - 4);
@@ -1090,8 +1090,8 @@ function updateEnergyDisplay() {
   // 能量偏差着色
   const eSimpleCurrEl = document.getElementById('eSimpleCurr');
   const eDoubleCurrEl = document.getElementById('eDoubleCurr');
-  eSimpleCurrEl.style.color = simpleErr < 0.1 ? '#3fb950' : simpleErr < 1 ? '#d29922' : '#f78166';
-  eDoubleCurrEl.style.color = doubleErr < 0.1 ? '#3fb950' : doubleErr < 1 ? '#d29922' : '#f78166';
+  eSimpleCurrEl.style.color = simpleErr < 0.1 ? '#0E61AC' : simpleErr < 1 ? '#d29922' : '#2A7CC7';
+  eDoubleCurrEl.style.color = doubleErr < 0.1 ? '#0E61AC' : doubleErr < 1 ? '#d29922' : '#2A7CC7';
 }
 
 // ==================== 重置函数 ====================

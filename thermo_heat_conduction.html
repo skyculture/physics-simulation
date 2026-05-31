@@ -7,51 +7,51 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  background: #0d1117; color: #c9d1d9;
+  background: #FAF2E0; color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px;
 }
 .header {
   width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center;
-  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 24px;
+  background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 14px 24px;
 }
-.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #ffa657; line-height: 1.2; }
-.header-left .subtitle { font-size: 0.82rem; color: #8b949e; margin-top: 2px; }
+.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #2A7CC7; line-height: 1.2; }
+.header-left .subtitle { font-size: 0.82rem; color: #5A6370; margin-top: 2px; }
 .back-link {
-  color: #58a6ff; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
-  border: 1px solid #30363d; border-radius: 6px; transition: background 0.2s;
+  color: #0E61AC; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
+  border: 1px solid #D4C9B8; border-radius: 6px; transition: background 0.2s;
 }
-.back-link:hover { background: #1f2937; }
+.back-link:hover { background: #FFF7EB; }
 .main-container { width: 100%; max-width: 1100px; display: flex; gap: 12px; flex: 1; }
 .canvas-panel {
-  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px;
+  background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 10px;
   display: flex; align-items: center; justify-content: center; flex: 1; flex-direction: column; gap: 8px;
 }
-canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; cursor: crosshair; }
+canvas#simCanvas { display: block; border-radius: 4px; background: #FAF2E0; cursor: crosshair; }
 .side-panel { width: 300px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
-.panel-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
-.panel-box h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.panel-box { background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 14px 16px; }
+.panel-box h3 { font-size: 0.9rem; color: #2A7CC7; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
 .control-row label { font-size: 0.82rem; color: #c9d1d9; white-space: nowrap; }
-.control-row input[type="range"] { flex: 1; accent-color: #ffa657; height: 4px; }
-.control-row .val { font-size: 0.78rem; color: #ffa657; min-width: 42px; text-align: right; font-weight: 600; }
+.control-row input[type="range"] { flex: 1; accent-color: #2A7CC7; height: 4px; }
+.control-row .val { font-size: 0.78rem; color: #2A7CC7; min-width: 42px; text-align: right; font-weight: 600; }
 .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .btn {
-  padding: 7px 12px; border: 1px solid #30363d; border-radius: 6px; background: #21262d;
+  padding: 7px 12px; border: 1px solid #D4C9B8; border-radius: 6px; background: #FFFFFF;
   color: #c9d1d9; cursor: pointer; font-size: 0.82rem; font-family: inherit;
   transition: background 0.15s, border-color 0.15s; flex: 1; text-align: center; min-width: 48px;
 }
-.btn:hover { background: #30363d; }
-.btn.active { background: #ffa65733; border-color: #ffa657; color: #ffa657; }
-.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; font-size: 0.82rem; }
+.btn:hover { background: #D4C9B8; }
+.btn.active { background: #2A7CC733; border-color: #2A7CC7; color: #2A7CC7; }
+.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #D4C9B8; font-size: 0.82rem; }
 .stat-item:last-child { border-bottom: none; }
-.stat-label { color: #8b949e; }
-.stat-value { color: #ffa657; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-label { color: #5A6370; }
+.stat-value { color: #2A7CC7; font-weight: 600; font-variant-numeric: tabular-nums; }
 .check-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 0.82rem; cursor: pointer; }
-.check-row input[type="checkbox"] { accent-color: #ffa657; width: 15px; height: 15px; }
+.check-row input[type="checkbox"] { accent-color: #2A7CC7; width: 15px; height: 15px; }
 .colorbar { display: flex; align-items: center; gap: 8px; width: 100%; }
 .colorbar canvas { height: 20px; border-radius: 3px; }
-.colorbar span { font-size: 0.72rem; color: #8b949e; white-space: nowrap; }
+.colorbar span { font-size: 0.72rem; color: #5A6370; white-space: nowrap; }
 @media (max-width: 900px) {
   .main-container { flex-direction: column; }
   .side-panel { width: 100%; min-width: unset; flex-direction: row; flex-wrap: wrap; }
@@ -134,7 +134,7 @@ canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; curs
     </div>
     <div class="panel-box">
       <h3>💡 操作提示</h3>
-      <div style="font-size:0.78rem;color:#8b949e;line-height:1.6;">
+      <div style="font-size:0.78rem;color:#5A6370;line-height:1.6;">
         点击画布添加热源/冷源。<br>
         选择"热源"模式后点击添加100°C热点。<br>
         选择"冷源"模式后点击添加0°C冷点。<br>
@@ -316,11 +316,11 @@ canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; curs
       }
     }
 
-    simCtx.strokeStyle = '#30363d';
+    simCtx.strokeStyle = '#D4C9B8';
     simCtx.lineWidth = 2;
     simCtx.strokeRect(0, 0, SIM_SIZE, SIM_SIZE);
 
-    simCtx.fillStyle = '#8b949e';
+    simCtx.fillStyle = '#5A6370';
     simCtx.font = '11px sans-serif';
     simCtx.fillText(`左 ${leftT}°C`, 4, SIM_SIZE - 6);
     simCtx.fillText(`右 ${rightT}°C`, SIM_SIZE - 50, SIM_SIZE - 6);
@@ -461,7 +461,7 @@ canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; curs
   });
   document.getElementById('btnClear').addEventListener('click', function() {
     paintMode = 'clear';
-    this.style.borderColor = '#8b949e'; this.style.color = '#8b949e';
+    this.style.borderColor = '#5A6370'; this.style.color = '#5A6370';
     document.getElementById('btnHeat').style.borderColor = ''; document.getElementById('btnHeat').style.color = '';
     document.getElementById('btnCool').style.borderColor = ''; document.getElementById('btnCool').style.color = '';
   });

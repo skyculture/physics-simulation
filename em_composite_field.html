@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>带电粒子在复合场中的运动 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; overflow:hidden; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; min-height:0; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; min-height:0; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; align-items:center; }
   .ctrl-group { display:flex; align-items:center; gap:6px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; white-space:nowrap; }
+  .ctrl-group label { color:#5A6370; white-space:nowrap; }
   .ctrl-group input[type="range"] { width:110px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:55px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 5px; color:var(--text); font-size:0.9em; text-align:center; }
-  button { background:var(--accent); color:#0d1117; border:none; border-radius:4px; padding:4px 14px; cursor:pointer; font-size:0.76em; font-weight:600; }
+  button { background:var(--accent); color:#FAF2E0; border:none; border-radius:4px; padding:4px 14px; cursor:pointer; font-size:0.76em; font-weight:600; }
   button:hover { opacity:0.85; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.6; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.6; }
 </style>
 </head>
 <body>
@@ -132,7 +132,7 @@ function drawArrow(x1, y1, x2, y2, color, lw) {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   var p = getParams();
@@ -151,7 +151,7 @@ function draw() {
 
   var cx = canvas.width / 2, cy = canvas.height / 2;
 
-  ctx.strokeStyle = 'rgba(88,166,255,0.06)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.06)';
   ctx.lineWidth = 1;
   var gridOffX = (cameraX * SCALE) % SCALE;
   var gridOffY = (cameraY * SCALE) % SCALE;
@@ -164,7 +164,7 @@ function draw() {
     ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(canvas.width, sy); ctx.stroke();
   }
 
-  ctx.fillStyle = 'rgba(88,166,255,0.1)';
+  ctx.fillStyle = 'rgba(14,97,172,0.1)';
   var bStep = Math.max(2, Math.round(2 * SCALE / 50));
   for (var bx = -25; bx <= 25; bx += bStep) {
     for (var by = -18; by <= 18; by += bStep) {
@@ -181,7 +181,7 @@ function draw() {
   }
 
   if (p.E > 0.01) {
-    ctx.strokeStyle = 'rgba(247,129,102,0.15)';
+    ctx.strokeStyle = 'rgba(42,124,199,0.15)';
     ctx.lineWidth = 1;
     var eStep = Math.max(3, Math.round(3 * SCALE / 50));
     var eArrowLen = Math.min(20, SCALE * 0.6);
@@ -211,7 +211,7 @@ function draw() {
     var chunkSize = 30;
     for (var ci = 0; ci < trail.length - 1; ci += chunkSize) {
       var alpha = ((ci + chunkSize / 2) / trail.length) * 0.85;
-      ctx.strokeStyle = 'rgba(247,129,102,' + alpha.toFixed(3) + ')';
+      ctx.strokeStyle = 'rgba(42,124,199,' + alpha.toFixed(3) + ')';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       var pt0 = toScreen(trail[ci][0], trail[ci][1]);
@@ -226,8 +226,8 @@ function draw() {
   }
 
   var sp = toScreen(px, py);
-  ctx.fillStyle = '#f78166';
-  ctx.shadowColor = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
+  ctx.shadowColor = '#2A7CC7';
   ctx.shadowBlur = 15;
   ctx.beginPath();
   ctx.arc(sp[0], sp[1], 6, 0, Math.PI * 2);
@@ -239,7 +239,7 @@ function draw() {
     var vArrowLen = Math.min(40, 10 + speed * 6);
     var vax = sp[0] + (vx / speed) * vArrowLen;
     var vay = sp[1] - (vy / speed) * vArrowLen;
-    drawArrow(sp[0], sp[1], vax, vay, '#3fb950', 2);
+    drawArrow(sp[0], sp[1], vax, vay, '#0E61AC', 2);
   }
 
   var absq = Math.abs(p.q);
@@ -250,7 +250,7 @@ function draw() {
     var fArrowLen = Math.min(35, 8 + Fmag * 4);
     var fax = sp[0] + (Fx / Fmag) * fArrowLen;
     var fay = sp[1] - (Fy / Fmag) * fArrowLen;
-    drawArrow(sp[0], sp[1], fax, fay, '#58a6ff', 2);
+    drawArrow(sp[0], sp[1], fax, fay, '#0E61AC', 2);
   }
 
   if (p.B > 0.01 && p.E > 0.01) {
@@ -275,7 +275,7 @@ function draw() {
 
   ctx.font = '12px "Segoe UI",sans-serif';
   var iy = canvas.height - 12;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.fillText('速率 |v| = ' + currentSpeed.toFixed(3), 15, iy - 48);
   ctx.fillText('E×B漂移 v_d = ' + vDriftVal.toFixed(3), 15, iy - 32);
   ctx.fillText('回旋半径 r = ' + (rCyc > 0.001 ? rCyc.toFixed(3) : '0'), 15, iy - 16);
@@ -292,13 +292,13 @@ function draw() {
   ctx.fillText('位置 y = ' + py.toFixed(2), 500, iy);
 
   var lx = canvas.width - 155, ly = 18;
-  drawArrow(lx, ly, lx + 25, ly, '#3fb950', 2);
-  ctx.fillStyle = '#3fb950';
+  drawArrow(lx, ly, lx + 25, ly, '#0E61AC', 2);
+  ctx.fillStyle = '#0E61AC';
   ctx.font = '11px "Segoe UI",sans-serif';
   ctx.fillText('速度 v', lx + 30, ly + 4);
 
-  drawArrow(lx, ly + 18, lx + 25, ly + 18, '#58a6ff', 2);
-  ctx.fillStyle = '#58a6ff';
+  drawArrow(lx, ly + 18, lx + 25, ly + 18, '#0E61AC', 2);
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('洛伦兹力 F', lx + 30, ly + 22);
 
   if (p.B > 0.01 && p.E > 0.01) {
@@ -307,10 +307,10 @@ function draw() {
     ctx.fillText('漂移速度 v_d', lx + 30, ly + 40);
   }
 
-  ctx.strokeStyle = 'rgba(247,129,102,0.3)';
+  ctx.strokeStyle = 'rgba(42,124,199,0.3)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(lx, ly + 54); ctx.lineTo(lx + 25, ly + 54); ctx.stroke();
-  ctx.fillStyle = 'rgba(247,129,102,0.5)';
+  ctx.fillStyle = 'rgba(42,124,199,0.5)';
   ctx.fillText('电场 E 方向', lx + 30, ly + 58);
 
   animationId = requestAnimationFrame(draw);

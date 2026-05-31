@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>滚筒法测量手机的转动惯量 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -96,21 +96,21 @@ function drawScene(distM, velM) {
   const thetaDeg = parseFloat(document.getElementById('theta').value);
   const thetaRad = thetaDeg * Math.PI / 180;
 
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, w, h);
 
   const sx = w * 0.1, sy = h * 0.2;
   const slopeLen = w * 0.7;
   const ex = sx + slopeLen, ey = sy + slopeLen * Math.tan(thetaRad);
 
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(sx, sy);
   ctx.lineTo(ex, ey);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(63,185,80,0.12)';
+  ctx.fillStyle = 'rgba(14,97,172,0.12)';
   ctx.beginPath();
   ctx.moveTo(sx, sy);
   ctx.lineTo(ex, ey);
@@ -137,13 +137,13 @@ function drawScene(distM, velM) {
   ctx.translate(centerX, centerY);
   ctx.rotate(rollAngle);
 
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.arc(0, 0, cylR, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(247,129,102,0.1)';
+  ctx.fillStyle = 'rgba(42,124,199,0.1)';
   ctx.beginPath();
   ctx.arc(0, 0, cylR, 0, Math.PI * 2);
   ctx.fill();
@@ -151,7 +151,7 @@ function drawScene(distM, velM) {
   const spokeLen = cylR * 0.85;
   for(let i = 0; i < 4; i++) {
     const angle = i * Math.PI / 2;
-    ctx.strokeStyle = i === 0 ? '#ffa657' : 'rgba(255,166,87,0.5)';
+    ctx.strokeStyle = i === 0 ? '#2A7CC7' : 'rgba(255,166,87,0.5)';
     ctx.lineWidth = i === 0 ? 2.5 : 1.5;
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -159,12 +159,12 @@ function drawScene(distM, velM) {
     ctx.stroke();
   }
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(spokeLen, 0, 4, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.beginPath();
   ctx.arc(0, 0, 3, 0, Math.PI * 2);
   ctx.fill();
@@ -182,7 +182,7 @@ function drawScene(distM, velM) {
   const KE_r = 0.5 * I * omega * omega;
   const PE = M * g * Math.max(0, SLOPE_LENGTH_M - distM) * Math.sin(thetaRad);
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   const fs = S * 0.028;
   ctx.font = `${fs}px sans-serif`;
   ctx.fillText(`位移 s = ${distM.toFixed(3)} m`, 10, fs + 5);
@@ -190,16 +190,16 @@ function drawScene(distM, velM) {
   ctx.fillText(`角速度 ω = ${omega.toFixed(2)} rad/s`, 10, fs * 3 + 5);
   ctx.fillText(`加速度 a = ${a.toFixed(3)} m/s²`, 10, fs * 4 + 5);
   ctx.fillText(`转动惯量 I = ${(I * 10000).toFixed(2)} g·cm²`, 10, fs * 5 + 5);
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText(`平动动能 = ${KE_t.toFixed(4)} J`, 10, fs * 6 + 5);
   ctx.fillText(`转动动能 = ${KE_r.toFixed(4)} J`, 10, fs * 7 + 5);
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`总动能 = ${(KE_t + KE_r).toFixed(4)} J`, 10, fs * 8 + 5);
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText(`势能 PE = ${PE.toFixed(4)} J`, 10, fs * 9 + 5);
 
   const totalTime = distM > 0 ? Math.sqrt(2 * distM / a) : 0;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.fillText(`时间 t = ${totalTime.toFixed(2)} s`, 10, fs * 10 + 5);
 }
 

@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>暗物质宇宙设计 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -77,7 +77,7 @@ function draw() {
   ctx.fillRect(0, 0, w, h);
 
   for (const star of bgStars) {
-    ctx.fillStyle = `rgba(210,168,255,${star.a})`;
+    ctx.fillStyle = `rgba(14,97,172,${star.a})`;
     ctx.beginPath();
     ctx.arc(star.x * w, star.y * h, star.r * S, 0, Math.PI * 2);
     ctx.fill();
@@ -93,7 +93,7 @@ function draw() {
   ctx.arc(cx, cy, galaxyR * 1.5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(cx, cy, S * 0.025, 0, Math.PI * 2);
   ctx.fill();
@@ -115,7 +115,7 @@ function draw() {
     ctx.fill();
   }
 
-  ctx.strokeStyle = 'rgba(210,168,255,0.3)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.3)';
   ctx.lineWidth = S * 0.002;
   for (let r = galaxyR * 0.5; r < galaxyR * 1.5; r += galaxyR * 0.25) {
     ctx.beginPath();
@@ -129,13 +129,13 @@ function draw() {
     const x = cx + os.r * galaxyR * 1.3 * Math.cos(th);
     const y = cy + os.r * galaxyR * 1.3 * Math.sin(th);
 
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.beginPath();
     ctx.arc(x, y, S * 0.008, 0, Math.PI * 2);
     ctx.fill();
 
     const perpTh = th + Math.PI / 2;
-    ctx.strokeStyle = 'rgba(88,166,255,0.5)';
+    ctx.strokeStyle = 'rgba(14,97,172,0.5)';
     ctx.lineWidth = S * 0.003;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -145,7 +145,7 @@ function draw() {
 
   const fs = S * 0.028;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.textAlign = 'left';
   const infoX = S * 0.03, infoY = fs + 5;
   ctx.fillText(`暗物质质量: ${darkMass.toFixed(1)} ×10¹¹ M☉`, infoX, infoY);
@@ -153,7 +153,7 @@ function draw() {
   ctx.fillText(`暗物质占比: ${(darkRatio * 100).toFixed(0)}%`, infoX, infoY + fs * 2.6);
 
   const orbitalVel = Math.sqrt((visMass + darkMass) * 100 / (S * 0.3));
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`旋转速度: ${orbitalVel.toFixed(1)} km/s`, infoX, infoY + fs * 3.9);
 
   ctx.fillStyle = 'rgba(139,92,246,0.6)';

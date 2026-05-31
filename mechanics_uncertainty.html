@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>不确定度 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -43,7 +43,7 @@ function resize() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   
   const n = parseInt(document.getElementById('n').value);
@@ -52,13 +52,13 @@ function draw() {
   
   const cx = canvas.width/2, cy = canvas.height/2;
   
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(cx, cy, canvas.height*0.25, 0, Math.PI*2);
   ctx.stroke();
   
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.beginPath();
   ctx.arc(cx, cy, 5, 0, Math.PI*2);
   ctx.fill();
@@ -77,7 +77,7 @@ function draw() {
   const std = Math.sqrt(sumSq / (n-1));
   const uncertainty = std / Math.sqrt(n);
   
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   measurements.forEach((m, i) => {
     const angle = (i / n) * Math.PI * 2;
     const r = canvas.height * 0.18 * (1 + (m - trueVal) / error);
@@ -86,14 +86,14 @@ function draw() {
     ctx.fill();
   });
   
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '12px sans-serif';
   ctx.fillText(`真值 = ${trueVal}`, canvas.width*0.05, canvas.height*0.1);
   ctx.fillText(`测量次数 n = ${n}`, canvas.width*0.05, canvas.height*0.1+20);
   ctx.fillText(`平均值 = ${mean.toFixed(3)}`, canvas.width*0.05, canvas.height*0.1+40);
   ctx.fillText(`标准差 = ${std.toFixed(3)}`, canvas.width*0.05, canvas.height*0.1+60);
   
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 14px sans-serif';
   ctx.fillText(`结果: ${mean.toFixed(3)} ± ${uncertainty.toFixed(3)}`, cx-80, canvas.height*0.9);
   

@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🧠 核磁共振K空间成像</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
   .header { text-align:center; margin-bottom:16px; }
-  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
-  .header p { font-size:0.8em; color:#8b949e; }
+  .header h1 { font-size:1.4em; color:#0E61AC; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#5A6370; }
   .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
   .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
   .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
   .control-group { display:flex; flex-direction:column; gap:4px; }
-  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group label { font-size:0.8em; color:#5A6370; }
   .control-group input[type="range"] { width:100%; }
   .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
   .info-panel { background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
@@ -153,7 +153,7 @@ function draw() {
   
   ctx.fillStyle = '#1a2a3a';
   ctx.fillRect(kX, kY, kSize, kSize);
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1;
   ctx.strokeRect(kX, kY, kSize, kSize);
 
@@ -164,7 +164,7 @@ function draw() {
       
       if (ky < scanLine && kSpace[ky]) {
         const mag = Math.min(1, Math.abs(kSpace[ky][kx].r) / 100 + Math.abs(kSpace[ky][kx].i) / 100);
-        ctx.fillStyle = `rgba(247,129,102,${mag})`;
+        ctx.fillStyle = `rgba(42,124,199,${mag})`;
         ctx.fillRect(px, py, 1 + kSize / N, 1 + kSize / N);
       }
     }
@@ -185,7 +185,7 @@ function draw() {
 
   ctx.fillStyle = '#1a3a1a';
   ctx.fillRect(imgX, imgY, imgSize, imgSize);
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1;
   ctx.strokeRect(imgX, imgY, imgSize, imgSize);
 
@@ -204,10 +204,10 @@ function draw() {
   ctx.font = '12px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('K 空间 (频率域)', kX + kSize / 2, kY + kSize + 25);
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('图像空间 (重建)', imgX + imgSize / 2, imgY + imgSize + 25);
 
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   ctx.setLineDash([5, 5]);
   ctx.beginPath();
@@ -216,7 +216,7 @@ function draw() {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = '10px sans-serif';
   ctx.fillText('IFFT', kX + kSize + 40, kY + kSize / 2 - 8);
 

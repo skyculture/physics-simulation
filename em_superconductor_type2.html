@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🟦 第二类超导体</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
   .header { text-align:center; margin-bottom:16px; }
-  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
-  .header p { font-size:0.8em; color:#8b949e; }
+  .header h1 { font-size:1.4em; color:#0E61AC; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#5A6370; }
   .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
   .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
   .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
   .control-group { display:flex; flex-direction:column; gap:4px; }
-  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group label { font-size:0.8em; color:#5A6370; }
   .control-group input[type="range"] { width:100%; }
   .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
   .info-panel { background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
@@ -117,11 +117,11 @@ function draw() {
     superconductorGradient.addColorStop(1, '#2d3748');
     document.getElementById('state').textContent = '正常态';
   } else if (B_ext < Bc1) {
-    superconductorGradient.addColorStop(0, '#3fb95044');
+    superconductorGradient.addColorStop(0, '#0E61AC44');
     superconductorGradient.addColorStop(1, '#1a4a2a44');
     document.getElementById('state').textContent = '迈斯纳态';
   } else {
-    superconductorGradient.addColorStop(0, '#58a6ff22');
+    superconductorGradient.addColorStop(0, '#0E61AC22');
     superconductorGradient.addColorStop(1, '#1a3a5a22');
     document.getElementById('state').textContent = '混合态';
   }
@@ -130,7 +130,7 @@ function draw() {
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 3;
   ctx.stroke();
 
@@ -143,15 +143,15 @@ function draw() {
     ctx.rotate(phi);
 
     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, v.r * 4);
-    gradient.addColorStop(0, '#f78166');
-    gradient.addColorStop(0.5, '#f7816644');
+    gradient.addColorStop(0, '#2A7CC7');
+    gradient.addColorStop(0.5, '#2A7CC744');
     gradient.addColorStop(1, 'transparent');
     ctx.fillStyle = gradient;
     ctx.beginPath();
     ctx.arc(0, 0, v.r * 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = '#f78166';
+    ctx.strokeStyle = '#2A7CC7';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(0, 0, v.r * 1.5, 0, Math.PI * 2);
@@ -171,11 +171,11 @@ function draw() {
     ctx.restore();
   });
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '11px sans-serif';
   ctx.fillText('YBCO (T=' + T + 'K)', cx - 40, cy + radius + 20);
 
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(cx + radius + 40, cy - 20, 5, 0, Math.PI * 2);
   ctx.fill();

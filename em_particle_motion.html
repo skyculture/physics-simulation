@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔵 带电粒子运动</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
   .header { text-align:center; margin-bottom:16px; }
-  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
-  .header p { font-size:0.8em; color:#8b949e; }
+  .header h1 { font-size:1.4em; color:#0E61AC; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#5A6370; }
   .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
   .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
   .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
   .control-group { display:flex; flex-direction:column; gap:4px; }
-  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group label { font-size:0.8em; color:#5A6370; }
   .control-group input[type="range"] { width:100%; }
   .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
   .info-panel { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
@@ -58,10 +58,10 @@
       <button id="clearBtn">🗑️ 清除轨迹</button>
     </div>
     <div class="info-panel">
-      <div class="item"><span style="color:#8b949e">速度大小:</span><span style="color:#3b82f6; font-weight:600" id="speed">0 m/s</span></div>
-      <div class="item"><span style="color:#8b949e">回旋半径:</span><span style="color:#3b82f6; font-weight:600" id="radius">0 m</span></div>
-      <div class="item"><span style="color:#8b949e">回旋周期:</span><span style="color:#3b82f6; font-weight:600" id="period">0 s</span></div>
-      <div class="item"><span style="color:#8b949e">漂移速度:</span><span style="color:#3b82f6; font-weight:600" id="drift">0 m/s</span></div>
+      <div class="item"><span style="color:#5A6370">速度大小:</span><span style="color:#3b82f6; font-weight:600" id="speed">0 m/s</span></div>
+      <div class="item"><span style="color:#5A6370">回旋半径:</span><span style="color:#3b82f6; font-weight:600" id="radius">0 m</span></div>
+      <div class="item"><span style="color:#5A6370">回旋周期:</span><span style="color:#3b82f6; font-weight:600" id="period">0 s</span></div>
+      <div class="item"><span style="color:#5A6370">漂移速度:</span><span style="color:#3b82f6; font-weight:600" id="drift">0 m/s</span></div>
     </div>
   </div>
 </div>
@@ -90,7 +90,7 @@ function draw() {
   ctx.fillStyle = '#161b22';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 0.5;
   for (let i = 0; i <= canvas.width; i += 50) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
@@ -110,7 +110,7 @@ function draw() {
   }
 
   if (Ey !== 0) {
-    ctx.strokeStyle = Ey > 0 ? 'rgba(59,130,246,0.3)' : 'rgba(247,129,102,0.3)';
+    ctx.strokeStyle = Ey > 0 ? 'rgba(59,130,246,0.3)' : 'rgba(42,124,199,0.3)';
     ctx.lineWidth = 1;
     for (let x = 30; x < canvas.width; x += 40) {
       const dir = Ey > 0 ? 1 : -1;
@@ -132,7 +132,7 @@ function draw() {
     for (let i = 1; i < trail.length; i++) {
       ctx.lineTo(trail[i].x, trail[i].y);
     }
-    ctx.strokeStyle = q > 0 ? '#3fb95080' : '#f7816680';
+    ctx.strokeStyle = q > 0 ? '#0E61AC80' : '#2A7CC780';
     ctx.lineWidth = 2;
     ctx.stroke();
   }
@@ -140,7 +140,7 @@ function draw() {
   if (particle) {
     ctx.beginPath();
     ctx.arc(particle.x, particle.y, 6, 0, Math.PI * 2);
-    ctx.fillStyle = q > 0 ? '#3fb950' : '#f78166';
+    ctx.fillStyle = q > 0 ? '#0E61AC' : '#2A7CC7';
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 1.5;
@@ -157,11 +157,11 @@ function draw() {
     }
   }
 
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px sans-serif';
   ctx.fillText('B⊙ (垂直纸面向外)', canvas.width - 140, 20);
   if (Ey !== 0) {

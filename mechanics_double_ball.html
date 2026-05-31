@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>刚性轻杆双球滑杆系统 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -58,7 +58,7 @@ function reset() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const m1 = parseFloat(document.getElementById('m1').value);
@@ -77,7 +77,7 @@ function draw() {
   const cx = W / 2, cy = H / 2;
   const scale = S * 0.003;
 
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = Math.max(2, S * 0.005);
   ctx.beginPath();
   ctx.moveTo(W * 0.1, cy);
@@ -89,17 +89,17 @@ function draw() {
   const r1 = S * 0.02 + m1 * S * 0.005;
   const r2 = S * 0.02 + m2 * S * 0.005;
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(px1, cy, r1, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(px2, cy, r2, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = '#d2a8ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = Math.max(2, S * 0.006);
   ctx.beginPath();
   ctx.moveTo(px1, cy);
@@ -108,7 +108,7 @@ function draw() {
 
   const x_cm = (m1 * x1 + m2 * x2) / (m1 + m2);
   const px_cm = cx + x_cm * scale;
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.beginPath();
   ctx.arc(px_cm, cy + S * 0.05, S * 0.012, 0, Math.PI * 2);
   ctx.fill();
@@ -118,7 +118,7 @@ function draw() {
   const p_total = p1 + p2;
   const KE = 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2;
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${S * 0.03}px sans-serif`;
   const fs = S * 0.03;
   ctx.fillText(`质量 m₁ = ${m1} kg`, 10, fs + 5);
@@ -128,7 +128,7 @@ function draw() {
   ctx.fillText(`速度 v₁ = ${v1.toFixed(2)}`, 10, fs * 5 + 5);
   ctx.fillText(`速度 v₂ = ${v2.toFixed(2)}`, 10, fs * 6 + 5);
 
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = `bold ${S * 0.035}px sans-serif`;
   ctx.fillText(`总动量 p = ${p_total.toFixed(2)} (守恒)`, cx - S * 0.2, H - S * 0.07);
   ctx.fillText(`动能 KE = ${KE.toFixed(2)} (守恒)`, cx - S * 0.18, H - S * 0.02);

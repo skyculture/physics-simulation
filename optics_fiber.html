@@ -6,38 +6,38 @@
 <title>光纤 - 物理数值仿真平台</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+body{background:#FAF2E0;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
 .container{width:100%;max-width:1100px}
-.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
-.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
-.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #D4C9B8;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#0E61AC;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#5A6370;line-height:1.6}
 .canvas-row{display:flex;gap:16px;margin-bottom:20px}
 @media(max-width:860px){.canvas-row{flex-direction:column}}
-.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
-.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
-.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
-.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+.panel{flex:1;background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#5A6370;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#FAF2E0}
+.controls{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
 @media(max-width:640px){.controls{grid-template-columns:1fr}}
 .control-group{display:flex;flex-direction:column;gap:6px}
 .control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
-.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
-input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+.control-group label .val{font-size:.8rem;color:#0E61AC;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#D4C9B8;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
 input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
-input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
-.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
 .info-item{display:flex;align-items:baseline;gap:6px}
-.info-item .info-label{color:#8b949e}
-.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.info-item .info-label{color:#5A6370}
+.info-item .info-value{color:#0E61AC;font-weight:700;font-size:1rem}
 .btn-row{display:flex;gap:12px;justify-content:center}
-.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn{padding:10px 28px;border:1px solid #D4C9B8;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
 .btn-start{background:#238636;color:#fff;border-color:#2ea043}
 .btn-start:hover{background:#2ea043}
 .btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
 .btn-pause:hover{background:#bb8009}
-.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
-.btn-reset:hover{background:#30363d}
-.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+.btn-reset{background:#FFFFFF;color:#c9d1d9;border-color:#D4C9B8}
+.btn-reset:hover{background:#D4C9B8}
+.legend-note{text-align:center;font-size:.78rem;color:#5A6370;margin-top:12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -114,7 +114,7 @@ function updateUI(){
   infoCritical.textContent=critAngle.toFixed(1)+'°';
   var totalReflect=theta<=maxAccept;
   infoStatus.textContent=totalReflect?'全反射 ✓':'泄漏 ✗';
-  infoStatus.style.color=totalReflect?'#3fb950':'#f85149';
+  infoStatus.style.color=totalReflect?'#0E61AC':'#f85149';
 }
 
 sliderN1.addEventListener('input',function(){n1=+sliderN1.value;updateUI();if(!running)draw()});
@@ -137,7 +137,7 @@ btnReset.addEventListener('click',function(){
 function drawFiber(){
   var W=canvasFiber.width,H=canvasFiber.height;
   ctxF.clearRect(0,0,W,H);
-  ctxF.fillStyle='#0d1117';ctxF.fillRect(0,0,W,H);
+  ctxF.fillStyle='#FAF2E0';ctxF.fillRect(0,0,W,H);
   var cy=H/2;
   var coreR=H*0.15;
   var cladR=H*0.25;
@@ -145,9 +145,9 @@ function drawFiber(){
   ctxF.strokeStyle='rgba(139,148,158,0.4)';ctxF.lineWidth=cladR*2;
   ctxF.beginPath();ctxF.moveTo(W*0.05,cy);ctxF.lineTo(W*0.95,cy);ctxF.stroke();
 
-  ctxF.fillStyle='rgba(88,166,255,0.15)';
+  ctxF.fillStyle='rgba(14,97,172,0.15)';
   ctxF.fillRect(W*0.05,cy-coreR,W*0.9,coreR*2);
-  ctxF.strokeStyle='rgba(88,166,255,0.5)';ctxF.lineWidth=1;
+  ctxF.strokeStyle='rgba(14,97,172,0.5)';ctxF.lineWidth=1;
   ctxF.beginPath();ctxF.moveTo(W*0.05,cy-coreR);ctxF.lineTo(W*0.95,cy-coreR);ctxF.stroke();
   ctxF.beginPath();ctxF.moveTo(W*0.05,cy+coreR);ctxF.lineTo(W*0.95,cy+coreR);ctxF.stroke();
 
@@ -167,7 +167,7 @@ function drawFiber(){
 
   var rayY=cy;
   var rayDirY=Math.tan(bounceAngle);
-  ctxF.strokeStyle=totalReflect?'#3fb950':'#f85149';
+  ctxF.strokeStyle=totalReflect?'#0E61AC':'#f85149';
   ctxF.lineWidth=2;
   ctxF.beginPath();
 
@@ -193,11 +193,11 @@ function drawFiber(){
   }
   ctxF.stroke();
 
-  ctxF.fillStyle='#ffa657';ctxF.beginPath();ctxF.arc(W*0.05,cy,5,0,Math.PI*2);ctxF.fill();
+  ctxF.fillStyle='#2A7CC7';ctxF.beginPath();ctxF.arc(W*0.05,cy,5,0,Math.PI*2);ctxF.fill();
   ctxF.fillStyle='#c9d1d9';ctxF.font='10px sans-serif';ctxF.textAlign='center';
   ctxF.fillText('纤芯 n₁='+n1.toFixed(2),W*0.5,cy-coreR-8);
   ctxF.fillText('包层 n₂='+n2.toFixed(2),W*0.5,cy-cladR-8);
-  ctxF.fillStyle=totalReflect?'#3fb950':'#f85149';
+  ctxF.fillStyle=totalReflect?'#0E61AC':'#f85149';
   ctxF.font='bold 11px sans-serif';
   ctxF.fillText(totalReflect?'全反射传输':'光信号泄漏',W*0.5,H-12);
 }
@@ -205,7 +205,7 @@ function drawFiber(){
 function drawNA(){
   var W=canvasNA.width,H=canvasNA.height;
   ctxN.clearRect(0,0,W,H);
-  ctxN.fillStyle='#0d1117';ctxN.fillRect(0,0,W,H);
+  ctxN.fillStyle='#FAF2E0';ctxN.fillRect(0,0,W,H);
   var cx=W*0.35,cy=H*0.5;
   var coreR=H*0.12;
   var cladR=H*0.22;
@@ -215,35 +215,35 @@ function drawNA(){
   ctxN.strokeStyle='rgba(139,148,158,0.5)';ctxN.lineWidth=1.5;
   ctxN.beginPath();ctxN.arc(cx,cy,cladR,0,Math.PI*2);ctxN.stroke();
 
-  ctxN.fillStyle='rgba(88,166,255,0.2)';
+  ctxN.fillStyle='rgba(14,97,172,0.2)';
   ctxN.beginPath();ctxN.arc(cx,cy,coreR,0,Math.PI*2);ctxN.fill();
-  ctxN.strokeStyle='#58a6ff';ctxN.lineWidth=1.5;
+  ctxN.strokeStyle='#0E61AC';ctxN.lineWidth=1.5;
   ctxN.beginPath();ctxN.arc(cx,cy,coreR,0,Math.PI*2);ctxN.stroke();
 
   var NA=Math.sqrt(Math.max(0,n1*n1-n2*n2));
   var maxAccept=Math.asin(Math.min(NA,1));
 
-  ctxN.strokeStyle='#3fb950';ctxN.lineWidth=2;
+  ctxN.strokeStyle='#0E61AC';ctxN.lineWidth=2;
   ctxN.beginPath();ctxN.moveTo(cx-coreR-40,cy-Math.tan(maxAccept)*40);ctxN.lineTo(cx-coreR,cy);ctxN.stroke();
   ctxN.beginPath();ctxN.moveTo(cx-coreR-40,cy+Math.tan(maxAccept)*40);ctxN.lineTo(cx-coreR,cy);ctxN.stroke();
-  ctxN.strokeStyle='#ffa657';ctxN.lineWidth=1.5;
+  ctxN.strokeStyle='#2A7CC7';ctxN.lineWidth=1.5;
   ctxN.beginPath();ctxN.arc(cx-coreR,cy,30,-maxAccept,maxAccept);ctxN.stroke();
-  ctxN.fillStyle='#ffa657';ctxN.font='9px sans-serif';ctxN.textAlign='center';
+  ctxN.fillStyle='#2A7CC7';ctxN.font='9px sans-serif';ctxN.textAlign='center';
   ctxN.fillText('NA',cx-coreR-5,cy-35);
 
   ctxN.fillStyle='#c9d1d9';ctxN.font='10px sans-serif';ctxN.textAlign='center';
   ctxN.fillText('端面',cx,cy+cladR+18);
 
   var gx=W*0.6,gy=H*0.15,gw=W*0.35,gh=H*0.7;
-  ctxN.strokeStyle='#8b949e';ctxN.lineWidth=1.5;
+  ctxN.strokeStyle='#5A6370';ctxN.lineWidth=1.5;
   ctxN.beginPath();ctxN.moveTo(gx,gy+gh);ctxN.lineTo(gx,gy);ctxN.stroke();
   ctxN.beginPath();ctxN.moveTo(gx,gy+gh);ctxN.lineTo(gx+gw,gy+gh);ctxN.stroke();
 
-  ctxN.fillStyle='#8b949e';ctxN.font='9px sans-serif';ctxN.textAlign='center';
+  ctxN.fillStyle='#5A6370';ctxN.font='9px sans-serif';ctxN.textAlign='center';
   ctxN.fillText('n₁',gx+gw/2,gy+gh+15);
   ctxN.save();ctxN.translate(gx-12,gy+gh/2);ctxN.rotate(-Math.PI/2);ctxN.fillText('NA',0,0);ctxN.restore();
 
-  ctxN.strokeStyle='#3fb950';ctxN.lineWidth=2.5;ctxN.shadowColor='#3fb950';ctxN.shadowBlur=6;
+  ctxN.strokeStyle='#0E61AC';ctxN.lineWidth=2.5;ctxN.shadowColor='#0E61AC';ctxN.shadowBlur=6;
   ctxN.beginPath();
   for(var i=0;i<=100;i++){
     var nn=1.3+i*(1.7-1.3)/100;
@@ -257,8 +257,8 @@ function drawNA(){
   var currentNA=Math.sqrt(Math.max(0,n1*n1-n2*n2));
   var pxMark=gx+(n1-1.3)/(1.7-1.3)*gw;
   var pyMark=gy+gh-currentNA*gh;
-  ctxN.fillStyle='#3fb950';ctxN.beginPath();ctxN.arc(pxMark,pyMark,6,0,Math.PI*2);ctxN.fill();
-  ctxN.strokeStyle='#ffa657';ctxN.lineWidth=2;ctxN.strokeRect(gx,gy,gw,gh);
+  ctxN.fillStyle='#0E61AC';ctxN.beginPath();ctxN.arc(pxMark,pyMark,6,0,Math.PI*2);ctxN.fill();
+  ctxN.strokeStyle='#2A7CC7';ctxN.lineWidth=2;ctxN.strokeRect(gx,gy,gw,gh);
 }
 
 function draw(){drawFiber();drawNA()}

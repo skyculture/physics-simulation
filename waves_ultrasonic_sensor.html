@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>超声波位移传感器测速原理 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -75,21 +75,21 @@ function draw() {
     document.getElementById('distanceVal').textContent = distance.toFixed(2);
   }
 
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, w, h);
 
   const sensorX = w * 0.15;
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillRect(sensorX - S * 0.04, cy - S * 0.04, S * 0.08, S * 0.08);
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(sensorX + S * 0.04, cy, S * 0.02, Math.PI * 0.5, Math.PI * 1.5);
   ctx.stroke();
 
   const targetX = w * 0.15 + distance / 2.5 * w * 0.7;
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillRect(targetX - S * 0.05, cy - S * 0.06, S * 0.1, S * 0.12);
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   const fs = S * 0.035;
   ctx.font = `${fs}px sans-serif`;
   ctx.fillText('目标', targetX - S * 0.03, cy + S * 0.12);
@@ -110,7 +110,7 @@ function draw() {
     }
 
     const pulsePhase = t * 8;
-    ctx.strokeStyle = pulse.goingToTarget ? '#d2a8ff' : '#ffa657';
+    ctx.strokeStyle = pulse.goingToTarget ? '#0E61AC' : '#2A7CC7';
     ctx.lineWidth = 3;
     ctx.beginPath();
     for (let i = 0; i < 20; i++) {
@@ -129,13 +129,13 @@ function draw() {
     ctx.fillRect(sensorX - S * 0.05, cy - S * 0.05, S * 0.1, S * 0.1);
   }
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.fillText(`距离 d = ${distance.toFixed(2)} m`, w * 0.05, fs + 5);
   ctx.fillText(`速度 v = ${targetSpeed.toFixed(1)} m/s`, w * 0.05, fs * 2 + 5);
 
   if (Math.abs(targetSpeed) > 0.01) {
     const expectedFShift = (2 * targetSpeed / soundSpeed) * 40000;
-    ctx.fillStyle = '#d2a8ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.fillText(`多普勒频移 Δf = ${expectedFShift.toFixed(0)} Hz`, w * 0.05, fs * 3 + 5);
   }
 

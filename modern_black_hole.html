@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>黑洞 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -54,7 +54,7 @@ function draw() {
   ctx.fillStyle = '#0a0a15';
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   for (let i = 0; i < 50; i++) {
     ctx.beginPath();
     ctx.arc(Math.random() * w, Math.random() * h, S * 0.002, 0, Math.PI * 2);
@@ -155,17 +155,17 @@ function draw() {
 
   const fs = S * 0.028;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.textAlign = 'left';
   ctx.fillText(`黑洞质量: ${mass} M\u2609`, w * 0.02, fs + S * 0.01);
   ctx.fillText(`事件视界半径: ${(eventHorizon * 3).toFixed(1)} km`, w * 0.02, fs * 2 + S * 0.01);
   ctx.fillText(`吸积率: ${(accretion * 100).toFixed(0)}%`, w * 0.02, fs * 3 + S * 0.01);
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`史瓦西半径公式: Rs = 2GM/c\u00B2`, w * 0.02, fs * 4 + S * 0.01);
 
   const escapeVel = Math.sqrt(2 * mass / (eventHorizon / S));
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText(`逃逸速度: ${escapeVel.toFixed(1)} c`, w * 0.02, fs * 5 + S * 0.01);
 
   t += 0.02;

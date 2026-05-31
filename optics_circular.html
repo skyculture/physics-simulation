@@ -6,38 +6,38 @@
 <title>圆孔衍射 - 物理数值仿真平台</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+body{background:#FAF2E0;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
 .container{width:100%;max-width:1100px}
-.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
-.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
-.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #D4C9B8;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#0E61AC;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#5A6370;line-height:1.6}
 .canvas-row{display:flex;gap:16px;margin-bottom:20px}
 @media(max-width:860px){.canvas-row{flex-direction:column}}
-.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
-.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
-.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
-.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+.panel{flex:1;background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#5A6370;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#FAF2E0}
+.controls{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
 @media(max-width:640px){.controls{grid-template-columns:1fr}}
 .control-group{display:flex;flex-direction:column;gap:6px}
 .control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
-.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
-input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+.control-group label .val{font-size:.8rem;color:#0E61AC;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#D4C9B8;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
 input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
-input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
-.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
 .info-item{display:flex;align-items:baseline;gap:6px}
-.info-item .info-label{color:#8b949e}
-.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.info-item .info-label{color:#5A6370}
+.info-item .info-value{color:#0E61AC;font-weight:700;font-size:1rem}
 .btn-row{display:flex;gap:12px;justify-content:center}
-.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn{padding:10px 28px;border:1px solid #D4C9B8;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
 .btn-start{background:#238636;color:#fff;border-color:#2ea043}
 .btn-start:hover{background:#2ea043}
 .btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
 .btn-pause:hover{background:#bb8009}
-.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
-.btn-reset:hover{background:#30363d}
-.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+.btn-reset{background:#FFFFFF;color:#c9d1d9;border-color:#D4C9B8}
+.btn-reset:hover{background:#D4C9B8}
+.legend-note{text-align:center;font-size:.78rem;color:#5A6370;margin-top:12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -182,7 +182,7 @@ btnReset.addEventListener('click',function(){
 function drawAiry(){
   var W=canvasAiry.width,H=canvasAiry.height;
   ctxA.clearRect(0,0,W,H);
-  ctxA.fillStyle='#0d1117';ctxA.fillRect(0,0,W,H);
+  ctxA.fillStyle='#FAF2E0';ctxA.fillRect(0,0,W,H);
   var cx=W/2,cy=H/2;
   var halfSize=Math.min(W,H)/2;
   var colors=wavelengthToRGB(lambda*1e9);
@@ -213,7 +213,7 @@ function drawAiry(){
   }
   ctxA.putImageData(imgData,0,0);
 
-  ctxA.strokeStyle='#30363d';ctxA.lineWidth=1;
+  ctxA.strokeStyle='#D4C9B8';ctxA.lineWidth=1;
   ctxA.beginPath();ctxA.arc(cx,cy,halfSize,0,Math.PI*2);ctxA.stroke();
 
   ctxA.fillStyle='#c9d1d9';ctxA.font='11px sans-serif';ctxA.textAlign='center';
@@ -223,7 +223,7 @@ function drawAiry(){
 function drawProfile(){
   var W=canvasProfile.width,H=canvasProfile.height;
   ctxP.clearRect(0,0,W,H);
-  ctxP.fillStyle='#0d1117';ctxP.fillRect(0,0,W,H);
+  ctxP.fillStyle='#FAF2E0';ctxP.fillRect(0,0,W,H);
   var ml=60,mt=30,mr=30,mb=50;
   var pw=W-ml-mr,ph=H-mt-mb;
   var colors=wavelengthToRGB(lambda*1e9);
@@ -233,11 +233,11 @@ function drawProfile(){
   ctxP.beginPath();ctxP.moveTo(ml,mt+ph);ctxP.lineTo(ml,mt);ctxP.stroke();
   ctxP.beginPath();ctxP.moveTo(ml,mt+ph);ctxP.lineTo(ml+pw,mt+ph);ctxP.stroke();
 
-  ctxP.strokeStyle='#30363d';ctxP.lineWidth=0.8;ctxP.setLineDash([4,4]);
+  ctxP.strokeStyle='#D4C9B8';ctxP.lineWidth=0.8;ctxP.setLineDash([4,4]);
   for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxP.beginPath();ctxP.moveTo(ml,y);ctxP.lineTo(ml+pw,y);ctxP.stroke()}
   ctxP.setLineDash([]);
 
-  ctxP.fillStyle='#8b949e';ctxP.font='11px sans-serif';ctxP.textAlign='right';
+  ctxP.fillStyle='#5A6370';ctxP.font='11px sans-serif';ctxP.textAlign='right';
   for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxP.fillText((i/4).toFixed(1),ml-6,y+4)}
   ctxP.textAlign='center';
   ctxP.fillText('r (mm)',ml+pw/2,mt+ph+38);
@@ -268,15 +268,15 @@ function drawProfile(){
     var px=ml+rRing/maxRPhys*pw;
     ctxP.beginPath();ctxP.moveTo(px,mt);ctxP.lineTo(px,mt+ph);ctxP.stroke();
     if(px-lastLabelX>40){
-      ctxP.fillStyle='#ffa657';ctxP.font='10px sans-serif';ctxP.textAlign='center';
+      ctxP.fillStyle='#2A7CC7';ctxP.font='10px sans-serif';ctxP.textAlign='center';
       ctxP.fillText('第'+(k+1)+'暗环',px,mt-5);
       lastLabelX=px;
     }
   }
   ctxP.setLineDash([]);
 
-  ctxP.strokeStyle='#ffa657';ctxP.lineWidth=2;ctxP.strokeRect(ml,mt,pw,ph);
-  ctxP.fillStyle='#8b949e';ctxP.font='10px sans-serif';ctxP.textAlign='left';
+  ctxP.strokeStyle='#2A7CC7';ctxP.lineWidth=2;ctxP.strokeRect(ml,mt,pw,ph);
+  ctxP.fillStyle='#5A6370';ctxP.font='10px sans-serif';ctxP.textAlign='left';
   ctxP.fillText('I/I\u2080',ml+5,mt+12);
 }
 

@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>高中物理电路实验室 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -44,7 +44,7 @@ function resize() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   
   const V = parseFloat(document.getElementById('voltage').value);
@@ -53,13 +53,13 @@ function draw() {
   
   const cx = canvas.width/2, cy = canvas.height/2;
   
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillRect(cx-canvas.width*0.35, cy+canvas.height*0.2, canvas.width*0.1, canvas.height*0.08);
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px sans-serif';
   ctx.fillText('V', cx-canvas.width*0.32, cy+canvas.height*0.26);
   
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(cx-canvas.width*0.25, cy+canvas.height*0.2);
@@ -68,12 +68,12 @@ function draw() {
   ctx.lineTo(cx, cy);
   ctx.stroke();
   
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(cx-canvas.width*0.08, cy, 8, 0, Math.PI*2);
   ctx.fill();
   
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.beginPath();
   ctx.moveTo(cx+canvas.width*0.08, cy);
   ctx.lineTo(cx+canvas.width*0.15, cy);
@@ -81,7 +81,7 @@ function draw() {
   ctx.lineTo(cx+canvas.width*0.35, cy-canvas.height*0.15);
   ctx.stroke();
   
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(cx+canvas.width*0.2, cy-canvas.height*0.25);
@@ -92,7 +92,7 @@ function draw() {
   ctx.lineTo(cx+canvas.width*0.25, cy-canvas.height*0.1);
   ctx.stroke();
   
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.beginPath();
   ctx.moveTo(cx-canvas.width*0.35, cy+canvas.height*0.28);
   ctx.lineTo(cx-canvas.width*0.35, cy-canvas.height*0.1);
@@ -103,14 +103,14 @@ function draw() {
   capVoltage += (V - capVoltage) * (1 - Math.exp(-1/(tau*60)));
   const I = (V - capVoltage) / R;
   
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '11px sans-serif';
   ctx.fillText(`电压: ${V}V`, canvas.width*0.05, canvas.height*0.9);
   ctx.fillText(`电流: ${I.toFixed(2)}A`, canvas.width*0.05, canvas.height*0.95);
   ctx.fillText(`电容电压: ${capVoltage.toFixed(1)}V`, canvas.width*0.3, canvas.height*0.95);
   
   if(Math.random() < Math.abs(I)*5) {
-    ctx.fillStyle = '#3fb950';
+    ctx.fillStyle = '#0E61AC';
     ctx.beginPath();
     ctx.arc(cx-canvas.width*0.08, cy+Math.random()*20-10, 2, 0, Math.PI*2);
     ctx.fill();

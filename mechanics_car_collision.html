@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>汽车碰撞 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -91,7 +91,7 @@ function drawCar(px, cy, carW, carH, bodyColor, windowColor) {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const m1 = parseFloat(document.getElementById('m1').value);
@@ -115,7 +115,7 @@ function draw() {
   const cx = W / 2, cy = H / 2;
   const scale = S * 0.0025;
 
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = Math.max(2, S * 0.005);
   ctx.beginPath();
   ctx.moveTo(W * 0.05, cy + S * 0.08);
@@ -127,14 +127,14 @@ function draw() {
   const carW = S * 0.12;
   const carH = S * 0.07;
 
-  drawCar(px1, cy, carW, carH, '#f78166', '#3fb950');
-  drawCar(px2, cy, carW, carH, '#58a6ff', '#ffa657');
+  drawCar(px1, cy, carW, carH, '#2A7CC7', '#0E61AC');
+  drawCar(px2, cy, carW, carH, '#0E61AC', '#2A7CC7');
 
   const KE_before = 0.5 * m1 * (parseFloat(document.getElementById('v1').value) / 3.6) ** 2;
   const KE_after = collided ? 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2 : KE_before;
   const KE_loss = collided ? ((KE_before - KE_after) / KE_before * 100) : 0;
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${S * 0.03}px sans-serif`;
   const fs = S * 0.03;
   ctx.fillText(`质量 m₁ = ${m1} kg`, 10, fs + 5);
@@ -144,7 +144,7 @@ function draw() {
   ctx.fillText(`碰撞后 v₁' = ${v1.toFixed(2)} m/s`, 10, fs * 5 + 5);
   ctx.fillText(`碰撞后 v₂' = ${v2.toFixed(2)} m/s`, 10, fs * 6 + 5);
 
-  ctx.fillStyle = collided ? '#f78166' : '#3fb950';
+  ctx.fillStyle = collided ? '#2A7CC7' : '#0E61AC';
   ctx.font = `bold ${S * 0.035}px sans-serif`;
   ctx.fillText(collided ? `碰撞完成! 动能损失: ${KE_loss.toFixed(1)}%` : '点击开始碰撞', cx - S * 0.18, H - S * 0.05);
 

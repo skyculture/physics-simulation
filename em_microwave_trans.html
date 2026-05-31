@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>微波阻抗变换器 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -44,7 +44,7 @@ function resize() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   
   const Zs = parseFloat(document.getElementById('zs').value);
@@ -55,7 +55,7 @@ function draw() {
   const cx = canvas.width/2, cy = canvas.height/2;
   
   // 绘制传输线结构
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   
   // 源端
@@ -63,7 +63,7 @@ function draw() {
   ctx.moveTo(canvas.width*0.1, cy);
   ctx.lineTo(canvas.width*0.25, cy);
   ctx.stroke();
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(canvas.width*0.25, cy-15);
@@ -71,13 +71,13 @@ function draw() {
   ctx.stroke();
   
   // λ/4传输线
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(canvas.width*0.25, cy);
   ctx.lineTo(canvas.width*0.75, cy);
   ctx.stroke();
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(canvas.width*0.25, cy-18);
@@ -89,13 +89,13 @@ function draw() {
   ctx.stroke();
   
   // 负载端
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(canvas.width*0.75, cy);
   ctx.lineTo(canvas.width*0.9, cy);
   ctx.stroke();
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(canvas.width*0.75, cy-15);
@@ -103,7 +103,7 @@ function draw() {
   ctx.stroke();
   
   // 绘制标签
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px sans-serif';
   ctx.fillText('Zs', canvas.width*0.12, cy-25);
   ctx.fillText('Z0', cx, cy-25);
@@ -123,14 +123,14 @@ function draw() {
   ctx.fillText(`当前 Z0 = ${Z0.toFixed(1)} Ω`, canvas.width*0.1, canvas.height*0.8+36);
   ctx.fillText(`理想 Z0 = ${requiredZ0.toFixed(1)} Ω`, canvas.width*0.1, canvas.height*0.8+54);
   
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 14px sans-serif';
   ctx.fillText(`驻波比 SWR = ${SWR.toFixed(2)}`, cx-70, canvas.height*0.9);
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`波长 λ = ${wavelength.toFixed(1)} cm`, cx-60, canvas.height*0.9+22);
   
   // 绘制信号动画
-  ctx.strokeStyle = 'rgba(63,185,80,0.6)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.6)';
   ctx.lineWidth = 1.5;
   const offset = Math.sin(time * 0.05) * 20;
   for(let i=0;i<3;i++) {

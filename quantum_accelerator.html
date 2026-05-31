@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>加速器与重离子治疗 - 量子与核物理</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#FFF7EB; --border:#D4C9B8; --text:#1A1A1A; --accent:#0E61AC; --accent2:#0E61AC; --accent3:#2A7CC7; --accent4:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
   .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
   .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
-  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .header-left .subtitle { font-size:0.82rem; color:#5A6370; margin-top:2px; }
   .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
-  .back-link:hover { background:#1f2937; }
+  .back-link:hover { background:#FFF7EB; }
   .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
   .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
-  canvas { display:block; border-radius:4px; background:#0d1117; }
+  canvas { display:block; border-radius:4px; background:#FAF2E0; }
   .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
   .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
   .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
@@ -26,13 +26,13 @@
   select { width:100%; padding:6px 8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:5px; font-size:0.82em; outline:none; cursor:pointer; margin-bottom:8px; }
   select:focus { border-color:var(--accent4); }
   .btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; flex:1; text-align:center; min-width:48px; }
-  .btn:hover { background:#30363d; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; flex:1; text-align:center; min-width:48px; }
+  .btn:hover { background:#D4C9B8; }
   .btn.primary { border-color:var(--accent4); color:var(--accent4); }
-  .btn.primary:hover { background:#1f6feb33; }
+  .btn.primary:hover { background:rgba(14,97,172,0.15); }
   .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
   .stat-item:last-child { border-bottom:none; }
-  .stat-label { color:#8b949e; }
+  .stat-label { color:#5A6370; }
   .stat-value { color:var(--accent4); font-weight:600; font-variant-numeric:tabular-nums; }
   @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
 </style>
@@ -94,10 +94,10 @@
   function resizeCanvas(){const dpr=window.devicePixelRatio||1;canvas.style.width=W+'px';canvas.style.height=H+'px';canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
 
   const particlesData={
-    proton:{mass:1.67e-27,charge:1.6e-19,color:'#3fb950',name:'p⁺',z:1,a:1},
-    carbon:{mass:12*1.67e-27,charge:6*1.6e-19,color:'#f78166',name:'¹²C⁶⁺',z:6,a:12},
-    helium:{mass:4*1.67e-27,charge:2*1.6e-19,color:'#58a6ff',name:'⁴He²⁺',z:2,a:4},
-    oxygen:{mass:16*1.67e-27,charge:8*1.6e-19,color:'#d2a8ff',name:'¹⁶O⁸⁺',z:8,a:16}
+    proton:{mass:1.67e-27,charge:1.6e-19,color:'#0E61AC',name:'p⁺',z:1,a:1},
+    carbon:{mass:12*1.67e-27,charge:6*1.6e-19,color:'#2A7CC7',name:'¹²C⁶⁺',z:6,a:12},
+    helium:{mass:4*1.67e-27,charge:2*1.6e-19,color:'#0E61AC',name:'⁴He²⁺',z:2,a:4},
+    oxygen:{mass:16*1.67e-27,charge:8*1.6e-19,color:'#0E61AC',name:'¹⁶O⁸⁺',z:8,a:16}
   };
 
   let B=1.5,V=50000,particleType='carbon';
@@ -111,14 +111,14 @@
   }
 
   function draw(){
-    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
     const cx=W/2,cy=H/2;
 
-    ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.strokeStyle='#D4C9B8';ctx.lineWidth=1;ctx.setLineDash([3,3]);
     for(let i=0;i<10;i++){const r=70+i*25;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();}
     ctx.setLineDash([]);
 
-    ctx.fillStyle='#21262d';ctx.beginPath();
+    ctx.fillStyle='#FFFFFF';ctx.beginPath();
     ctx.arc(cx,cy,160,-Math.PI/2,Math.PI/2);ctx.lineTo(cx,cy);ctx.closePath();ctx.fill();
     ctx.fillStyle='#2d3748';ctx.beginPath();
     ctx.arc(cx,cy,160,Math.PI/2,-Math.PI/2);ctx.lineTo(cx,cy);ctx.closePath();ctx.fill();
@@ -126,7 +126,7 @@
     ctx.strokeStyle='var(--accent4)';ctx.lineWidth=2;
     ctx.beginPath();ctx.arc(cx,cy,160,0,Math.PI*2);ctx.stroke();
 
-    if(trail.length>1){ctx.strokeStyle='rgba(210,168,255,0.3)';ctx.lineWidth=2;ctx.beginPath();
+    if(trail.length>1){ctx.strokeStyle='rgba(14,97,172,0.3)';ctx.lineWidth=2;ctx.beginPath();
       ctx.moveTo(trail[0].x,trail[0].y);for(let i=1;i<trail.length;i++)ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke();}
 
     beamParticles.forEach(bp=>{ctx.fillStyle=bp.color;ctx.beginPath();ctx.arc(bp.x,bp.y,4,0,Math.PI*2);ctx.fill();
@@ -139,7 +139,7 @@
 
     ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fill();
 
-    ctx.strokeStyle='#f78166';ctx.lineWidth=3;ctx.setLineDash([5,5]);
+    ctx.strokeStyle='#2A7CC7';ctx.lineWidth=3;ctx.setLineDash([5,5]);
     ctx.beginPath();ctx.moveTo(cx+160,cy);ctx.lineTo(W-40,cy);ctx.stroke();ctx.setLineDash([]);
 
     ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(W-30,cy,14,0,Math.PI*2);ctx.fill();
@@ -148,7 +148,7 @@
     ctx.fillStyle=particlesData[particleType].color;ctx.font='11px sans-serif';ctx.textAlign='left';
     ctx.fillText(particlesData[particleType].name+' 加速中',cx-50,cy-170);
 
-    ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#5A6370';ctx.font='9px sans-serif';ctx.textAlign='center';
     ctx.fillText('D 型电极',cx-80,cy-40);ctx.fillText('D 型电极',cx+80,cy+40);
     ctx.fillText('B = '+B.toFixed(1)+' T',cx,cy+10);
   }

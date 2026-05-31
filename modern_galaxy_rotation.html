@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>星系旋转曲线 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -73,14 +73,14 @@ function draw() {
   ctx.fillRect(0, 0, w, h);
 
   for (const star of bgStars) {
-    ctx.fillStyle = `rgba(210,168,255,${star.a})`;
+    ctx.fillStyle = `rgba(14,97,172,${star.a})`;
     ctx.beginPath();
     ctx.arc(star.x * w, star.y * h, star.r * S, 0, Math.PI * 2);
     ctx.fill();
   }
 
   const galaxyR = S * 0.2;
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(cx, cy, S * 0.03, 0, Math.PI * 2);
   ctx.fill();
@@ -108,13 +108,13 @@ function draw() {
     const x = cx + os.r * galaxyR * 1.5 * Math.cos(th);
     const y = cy + os.r * galaxyR * 1.5 * Math.sin(th);
 
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.beginPath();
     ctx.arc(x, y, S * 0.008, 0, Math.PI * 2);
     ctx.fill();
 
     const perpTh = th + Math.PI / 2;
-    ctx.strokeStyle = 'rgba(88,166,255,0.5)';
+    ctx.strokeStyle = 'rgba(14,97,172,0.5)';
     ctx.lineWidth = S * 0.003;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -128,7 +128,7 @@ function draw() {
 
   ctx.fillStyle = 'rgba(22,27,34,0.85)';
   ctx.fillRect(graphX, graphY, graphSize, graphSize * 0.7);
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1;
   ctx.strokeRect(graphX, graphY, graphSize, graphSize * 0.7);
 
@@ -149,7 +149,7 @@ function draw() {
   ctx.setLineDash([]);
 
   const maxVel = 10;
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = S * 0.004;
   ctx.beginPath();
   for (let i = 0; i <= 40; i++) {
@@ -162,7 +162,7 @@ function draw() {
   }
   ctx.stroke();
 
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = S * 0.004;
   ctx.beginPath();
   for (let i = 0; i <= 40; i++) {
@@ -177,23 +177,23 @@ function draw() {
 
   const labelFs = S * 0.02;
   ctx.font = `${labelFs}px sans-serif`;
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.textAlign = 'left';
   ctx.fillText('仅可见物质', gX, gY + gH + labelFs * 1.5);
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('含暗物质(观测)', gX, gY + gH + labelFs * 2.8);
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.fillText('v (km/s)', gX - S * 0.01, gY - labelFs * 0.5);
   ctx.fillText('r (kpc)', gX + gW - S * 0.03, gY + gH + labelFs * 4.2);
 
   const fs = S * 0.028;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.textAlign = 'left';
   const infoX = S * 0.03, infoY = h - S * 0.12;
   ctx.fillText(`可见物质: ${visMass} ×10¹¹ M☉`, infoX, infoY);
   ctx.fillText(`暗物质: ${darkMass.toFixed(1)} ×10¹¹ M☉`, infoX, infoY + fs * 1.3);
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText(`暗物质占比: ${(darkRatio * 100).toFixed(0)}%`, infoX, infoY + fs * 2.6);
 
   t += 0.02;

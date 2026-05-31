@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>抗磁悬浮 - 物理数值仿真平台</title>
 <style>
-html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+html,body{margin:0;padding:0;height:100%;background:#FAF2E0;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
 #app{height:100%;display:flex;flex-direction:column}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
-#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
-#back:hover{background:#30363d}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #D4C9B8}
+#back{background:#FFFFFF;border:1px solid #D4C9B8;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#D4C9B8}
 header h1{margin:0;font-size:18px;font-weight:600}
-#info{margin-left:auto;color:#8b949e;font-size:13px}
+#info{margin-left:auto;color:#5A6370;font-size:13px}
 main{flex:1;display:flex;overflow:hidden}
 #canvasWrap{flex:1;position:relative}
 canvas{display:block;width:100%;height:100%}
-#sidebar{width:280px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
-.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+#sidebar{width:280px;background:#161b22;border-left:1px solid #D4C9B8;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D4C9B8}
 .sec:last-child{border-bottom:none}
-h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 .row{display:flex;align-items:center;gap:10px;margin:8px 0}
 .row label{flex:0 0 120px;font-size:13px}
 .row input[type=range]{flex:1}
-.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+.row input[type=number]{width:70px;background:#FAF2E0;border:1px solid #D4C9B8;color:#c9d1d9;padding:6px 8px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -66,13 +66,13 @@ t+=0.016;
 const margin=60,top=margin,bottom=H-margin,left=margin,right=W-margin;
 const cx=(left+right)/2,cy=(top+bottom)/2;
 const scale=Math.min(right-left,bottom-top)/2.2;
-ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 // magnets
-ctx.fillStyle='#30363d';ctx.fillRect(cx-scale*0.7,cy+scale*0.2,scale*1.4,scale*0.3);
-ctx.fillStyle='#58a6ff';ctx.fillRect(cx-scale*0.7,cy-scale*0.5,scale*1.4,scale*0.3);
-ctx.strokeStyle='#21262d';ctx.lineWidth=2;ctx.strokeRect(cx-scale*0.7,cy+scale*0.2,scale*1.4,scale*0.3);ctx.strokeRect(cx-scale*0.7,cy-scale*0.5,scale*1.4,scale*0.3);
+ctx.fillStyle='#D4C9B8';ctx.fillRect(cx-scale*0.7,cy+scale*0.2,scale*1.4,scale*0.3);
+ctx.fillStyle='#0E61AC';ctx.fillRect(cx-scale*0.7,cy-scale*0.5,scale*1.4,scale*0.3);
+ctx.strokeStyle='#FFFFFF';ctx.lineWidth=2;ctx.strokeRect(cx-scale*0.7,cy+scale*0.2,scale*1.4,scale*0.3);ctx.strokeRect(cx-scale*0.7,cy-scale*0.5,scale*1.4,scale*0.3);
 // B field lines
-ctx.strokeStyle='#3fb950';ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
+ctx.strokeStyle='#0E61AC';ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
 for(let i=0;i<NL;i++){
 const sx=cx-scale*0.6+i/NL*scale*1.2, sy=cy-scale*0.2;
 ctx.beginPath();
@@ -100,11 +100,11 @@ if(obj.y<-0.4){obj.y=-0.4; obj.vy=0;}
 if(obj.y>0.1){obj.y=0.1; obj.vy=-obj.vy*0.5;}
 // draw object
 const oy=cy+(0.3-obj.y)*scale*0.7;
-ctx.fillStyle='#f78166';
+ctx.fillStyle='#2A7CC7';
 ctx.beginPath();ctx.moveTo(cx-25,oy-15);ctx.lineTo(cx+25,oy-15);ctx.lineTo(cx+20,oy+10);ctx.lineTo(cx-20,oy+10);ctx.closePath();ctx.fill();
-ctx.fillStyle='#21262d';
+ctx.fillStyle='#FFFFFF';
 ctx.beginPath();ctx.ellipse(cx,oy-15,20,8,0,0,Math.PI);ctx.fill();
-ctx.strokeStyle='#30363d';ctx.lineWidth=2;
+ctx.strokeStyle='#D4C9B8';ctx.lineWidth=2;
 ctx.beginPath();ctx.moveTo(cx-25,oy-15);ctx.lineTo(cx+25,oy-15);ctx.lineTo(cx+20,oy+10);ctx.lineTo(cx-20,oy+10);ctx.closePath();ctx.stroke();
 }
 function loop(){draw();requestAnimationFrame(loop)}

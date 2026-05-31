@@ -4,14 +4,14 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>位移电流 - 物理数值仿真平台</title>
 <style>
-html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+html,body{margin:0;padding:0;height:100%;background:#FAF2E0;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
 #app{height:100%;display:flex;flex-direction:column}
 main{flex:1;display:flex;overflow:hidden}#canvasWrap{flex:1;position:relative}canvas{display:block;width:100%;height:100%}
-#sidebar{width:300px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
-.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}.sec:last-child{border-bottom:none}
-h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+#sidebar{width:300px;background:#161b22;border-left:1px solid #D4C9B8;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D4C9B8}.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 .row{display:flex;align-items:center;gap:10px;margin:8px 0}.row label{flex:0 0 100px;font-size:13px}
-.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#FAF2E0;border:1px solid #D4C9B8;color:#c9d1d9;padding:6px 8px;border-radius:6px}
 </style></head>
 <body><div id="app">
 <main><div id="canvasWrap"><canvas id="c"></canvas></div>
@@ -33,17 +33,17 @@ function draw(){
 if(!inited){resize();inited=true;}
 const W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H){requestAnimationFrame(draw);return}
 const V=+p1.value,f=+p2.value,eps=+p3.value;t+=0.016;
-ctx.clearRect(0,0,W,H);ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 const margin=60,cx=(margin+W-margin)/2,cy=(margin+H-margin)/2;
 const scale=Math.min(W,H)/5;
 // capacitor plates
 const pw=scale*0.06,ph=scale*1.5;
-ctx.fillStyle='#21262d';ctx.strokeStyle='#30363d';ctx.lineWidth=2;
+ctx.fillStyle='#FFFFFF';ctx.strokeStyle='#D4C9B8';ctx.lineWidth=2;
 ctx.fillRect(cx-pw-scale*0.8,cy-ph/2,ph/6,ph);ctx.strokeRect(cx-pw-scale*0.8,cy-ph/2,ph/6,ph);
 ctx.fillRect(cx+scale*0.8,cy-ph/2,ph/6,ph);ctx.strokeRect(cx+scale*0.8,cy-ph/2,ph/6,ph);
 // E field oscillating
 const Et=V*Math.sin(2*Math.PI*f*t);
-ctx.strokeStyle='rgba(88,166,255,0.6)';ctx.lineWidth=2;
+ctx.strokeStyle='rgba(14,97,172,0.6)';ctx.lineWidth=2;
 for(let i=0;i<8;i++){
 const y=cy-ph*0.4+i*ph*0.12;
 ctx.beginPath();ctx.moveTo(cx-scale*0.7,y);
@@ -52,15 +52,15 @@ ctx.lineTo(cx+ex,y);ctx.stroke();
 }
 // displacement current Id = ε dE/dt
 const Id=eps*V*2*Math.PI*f*Math.cos(2*Math.PI*f*t)*0.01;
-ctx.strokeStyle='#f78166';ctx.lineWidth=3;
+ctx.strokeStyle='#2A7CC7';ctx.lineWidth=3;
 const IdScale=Math.abs(Id)*20;
 ctx.beginPath();ctx.ellipse(cx,cy-Math.sign(Id)*IdScale,scale*0.2,scale*0.1,0,0,Math.PI*2);ctx.stroke();
 // B field rings (circular around displacement current)
-ctx.strokeStyle='rgba(63,185,80,0.5)';ctx.lineWidth=2;
+ctx.strokeStyle='rgba(14,97,172,0.5)';ctx.lineWidth=2;
 for(let r=0.3;r<=1.5;r+=0.4){
 ctx.beginPath();ctx.ellipse(cx,cy,scale*r,scale*r*0.3,0,0,Math.PI*2);ctx.stroke();
 }
-ctx.fillStyle='#8b949e';ctx.font='14px system-ui';
+ctx.fillStyle='#5A6370';ctx.font='14px system-ui';
 ctx.fillText(`位移电流 I_d = ε₀·dΦ_E/dt ≈ ${Math.abs(Id).toFixed(3)} (arb.)`,margin,H-margin-20);
 ctx.fillText(`∇×B = μ₀(J + ε₀∂E/∂t) — Maxwell修正项`,margin,H-margin-40);
 requestAnimationFrame(draw);

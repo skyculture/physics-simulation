@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>正电子发射断层扫描 PET - 物理数值仿真平台</title>
 <style>
-html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+html,body{margin:0;padding:0;height:100%;background:#FAF2E0;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
 #app{height:100%;display:flex;flex-direction:column}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
-#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
-#back:hover{background:#30363d}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #D4C9B8}
+#back{background:#FFFFFF;border:1px solid #D4C9B8;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#D4C9B8}
 header h1{margin:0;font-size:18px;font-weight:600}
-#info{margin-left:auto;color:#8b949e;font-size:13px}
+#info{margin-left:auto;color:#5A6370;font-size:13px}
 main{flex:1;display:flex;overflow:hidden}
 #canvasWrap{flex:1;position:relative}
 canvas{display:block;width:100%;height:100%}
-#sidebar{width:280px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
-.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+#sidebar{width:280px;background:#161b22;border-left:1px solid #D4C9B8;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D4C9B8}
 .sec:last-child{border-bottom:none}
-h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 .row{display:flex;align-items:center;gap:10px;margin:8px 0}
 .row label{flex:0 0 120px;font-size:13px}
 .row input[type=range]{flex:1}
-.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+.row input[type=number]{width:70px;background:#FAF2E0;border:1px solid #D4C9B8;color:#c9d1d9;padding:6px 8px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -74,14 +74,14 @@ const act=+p1.value,tau=+p2.value,sz=+p3.value,accFrames=+p4.value;
 const margin=60,top=margin,bottom=H-margin,left=margin,right=W-margin;
 const cx=(left+right)/2,cy=(top+bottom)/2;
 const R=Math.min(right-left,bottom-top)/2-20;
-ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 
 // init grid on resolution change
 if(!accumGrid||accumGrid.length!==sz*sz)resetGrid(sz);
 
 // phantom
 ctx.fillStyle='#161b22';ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#21262d';
+ctx.fillStyle='#FFFFFF';
 for(const ph of phantoms){ctx.beginPath();ctx.arc(cx+ph.x*R,cy+ph.y*R,ph.r*R,0,Math.PI*2);ctx.fill();}
 
 // generate events
@@ -99,7 +99,7 @@ const e=events[i];
 const a1=cx+e.x*R, b1=cy+e.y*R;
 const a2=a1+e.cos*R*2, b2=b1+e.sin*R*2;
 const a3=a1-e.cos*R*2, b3=b1-e.sin*R*2;
-ctx.strokeStyle='rgba(247,129,102,0.15)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a2,b2);ctx.lineTo(a3,b3);ctx.stroke();
+ctx.strokeStyle='rgba(42,124,199,0.15)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a2,b2);ctx.lineTo(a3,b3);ctx.stroke();
 e.life-=16;
 if(e.life<=0)events.splice(i,1);
 }
@@ -129,7 +129,7 @@ for(let i=0;i<sz;i++){
 for(let j=0;j<sz;j++){
 const v=accumGrid[i+j*sz];
 if(v>0.001){
-ctx.fillStyle=`rgba(63,185,80,${Math.min(0.8,v*0.05)})`;
+ctx.fillStyle=`rgba(14,97,172,${Math.min(0.8,v*0.05)})`;
 ctx.fillRect(cx+(i/sz-0.5)*R*2,cy+(j/sz-0.5)*R*2,cellW,cellH);
 }
 }
@@ -137,7 +137,7 @@ ctx.fillRect(cx+(i/sz-0.5)*R*2,cy+(j/sz-0.5)*R*2,cellW,cellH);
 ctx.globalAlpha=1;
 
 // info
-ctx.fillStyle='#8b949e';ctx.font='14px system-ui';
+ctx.fillStyle='#5A6370';ctx.font='14px system-ui';
 ctx.fillText(`事件数: ${events.length} | 帧: ${frameCount}`,left,bottom+20);
 ctx.fillText('左侧=模体 | 右侧=重建图像',left,bottom+40);
 }

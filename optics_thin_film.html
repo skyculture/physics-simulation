@@ -6,38 +6,38 @@
 <title>薄膜干涉 - 物理数值仿真平台</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+body{background:#FAF2E0;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
 .container{width:100%;max-width:1100px}
-.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
-.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
-.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #D4C9B8;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#0E61AC;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#5A6370;line-height:1.6}
 .canvas-row{display:flex;gap:16px;margin-bottom:20px}
 @media(max-width:860px){.canvas-row{flex-direction:column}}
-.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
-.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
-.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
-.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+.panel{flex:1;background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#5A6370;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#FAF2E0}
+.controls{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
 @media(max-width:640px){.controls{grid-template-columns:1fr}}
 .control-group{display:flex;flex-direction:column;gap:6px}
 .control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
-.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
-input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+.control-group label .val{font-size:.8rem;color:#0E61AC;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#D4C9B8;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
 input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
-input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
-.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
 .info-item{display:flex;align-items:baseline;gap:6px}
-.info-item .info-label{color:#8b949e}
-.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.info-item .info-label{color:#5A6370}
+.info-item .info-value{color:#0E61AC;font-weight:700;font-size:1rem}
 .btn-row{display:flex;gap:12px;justify-content:center}
-.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn{padding:10px 28px;border:1px solid #D4C9B8;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
 .btn-start{background:#238636;color:#fff;border-color:#2ea043}
 .btn-start:hover{background:#2ea043}
 .btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
 .btn-pause:hover{background:#bb8009}
-.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
-.btn-reset:hover{background:#30363d}
-.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+.btn-reset{background:#FFFFFF;color:#c9d1d9;border-color:#D4C9B8}
+.btn-reset:hover{background:#D4C9B8}
+.legend-note{text-align:center;font-size:.78rem;color:#5A6370;margin-top:12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -195,7 +195,7 @@ btnReset.addEventListener('click',function(){
 function drawFilm(){
   var W=canvasFilm.width,H=canvasFilm.height;
   ctxF.clearRect(0,0,W,H);
-  ctxF.fillStyle='#0d1117';ctxF.fillRect(0,0,W,H);
+  ctxF.fillStyle='#FAF2E0';ctxF.fillRect(0,0,W,H);
   var ml=40,mr=40,mt=30,mb=40;
   var pw=W-ml-mr,ph=H-mt-mb;
   var layer1Top=mt+ph*0.25;
@@ -205,7 +205,7 @@ function drawFilm(){
   var layer2Bot=layer3Top;
   var layer3Bot=mt+ph;
 
-  ctxF.fillStyle='rgba(88,166,255,0.06)';
+  ctxF.fillStyle='rgba(14,97,172,0.06)';
   ctxF.fillRect(ml,layer1Top,pw,layer1Bot-layer1Top);
   var theta1Rad=thetaDeg*Math.PI/180;
   var sinTheta2=n1*Math.sin(theta1Rad)/n2;
@@ -236,16 +236,16 @@ function drawFilm(){
   ctxF.fillStyle='rgba(139,148,158,0.12)';
   ctxF.fillRect(ml,layer3Top,pw,layer3Bot-layer3Top);
 
-  ctxF.strokeStyle='#58a6ff';ctxF.lineWidth=2;
+  ctxF.strokeStyle='#0E61AC';ctxF.lineWidth=2;
   ctxF.beginPath();ctxF.moveTo(ml,layer2Top);ctxF.lineTo(ml+pw,layer2Top);ctxF.stroke();
-  ctxF.strokeStyle='#3fb950';ctxF.lineWidth=2;
+  ctxF.strokeStyle='#0E61AC';ctxF.lineWidth=2;
   ctxF.beginPath();ctxF.moveTo(ml,layer3Top);ctxF.lineTo(ml+pw,layer3Top);ctxF.stroke();
 
-  ctxF.fillStyle='#58a6ff';ctxF.font='13px sans-serif';ctxF.textAlign='left';
+  ctxF.fillStyle='#0E61AC';ctxF.font='13px sans-serif';ctxF.textAlign='left';
   ctxF.fillText('n₁ = '+n1.toFixed(2)+' (空气)',ml+8,layer1Top+(layer1Bot-layer1Top)/2+5);
-  ctxF.fillStyle='#3fb950';
+  ctxF.fillStyle='#0E61AC';
   ctxF.fillText('n₂ = '+n2.toFixed(2)+' (薄膜)',ml+8,layer2Top+(layer2Bot-layer2Top)/2+5);
-  ctxF.fillStyle='#8b949e';
+  ctxF.fillStyle='#5A6370';
   ctxF.fillText('n₃ = '+n3.toFixed(2)+' (基底)',ml+8,layer3Top+(layer3Bot-layer3Top)/2+5);
 
   var theta1=thetaDeg*Math.PI/180;
@@ -262,9 +262,9 @@ function drawFilm(){
   var incX=hitX-rayLen1*Math.sin(theta1);
   var incY=hitY1-rayLen1*Math.cos(theta1);
 
-  ctxF.strokeStyle='#ffa657';ctxF.lineWidth=2.5;
+  ctxF.strokeStyle='#2A7CC7';ctxF.lineWidth=2.5;
   ctxF.beginPath();ctxF.moveTo(incX,incY);ctxF.lineTo(hitX,hitY1);ctxF.stroke();
-  drawArrowHead(ctxF,incX,incY,hitX,hitY1,10,'#ffa657');
+  drawArrowHead(ctxF,incX,incY,hitX,hitY1,10,'#2A7CC7');
 
   var refX=hitX+rayLen1*Math.sin(theta1);
   var refY=hitY1-rayLen1*Math.cos(theta1);
@@ -275,9 +275,9 @@ function drawFilm(){
   var hitY2=layer3Top;
   var filmH=hitY2-hitY1;
   var refractX1=hitX+filmH*Math.tan(theta2);
-  ctxF.strokeStyle='#3fb950';ctxF.lineWidth=2;
+  ctxF.strokeStyle='#0E61AC';ctxF.lineWidth=2;
   ctxF.beginPath();ctxF.moveTo(hitX,hitY1);ctxF.lineTo(refractX1,hitY2);ctxF.stroke();
-  drawArrowHead(ctxF,hitX,hitY1,refractX1,hitY2,8,'#3fb950');
+  drawArrowHead(ctxF,hitX,hitY1,refractX1,hitY2,8,'#0E61AC');
 
   var ref2X=refractX1+rayLen1*0.6*Math.sin(theta2);
   var ref2Y=hitY1-rayLen1*0.6*Math.cos(theta2);
@@ -292,7 +292,7 @@ function drawFilm(){
   ctxF.beginPath();ctxF.moveTo(refractX1,hitY2);ctxF.lineTo(transX,transY);ctxF.stroke();
   drawArrowHead(ctxF,refractX1,hitY2,transX,transY,10,'#79c0ff');
 
-  ctxF.fillStyle='#ffa657';ctxF.font='11px sans-serif';ctxF.textAlign='left';
+  ctxF.fillStyle='#2A7CC7';ctxF.font='11px sans-serif';ctxF.textAlign='left';
   ctxF.fillText('入射光',incX-10,incY-8);
   ctxF.fillStyle='#f85149';
   ctxF.fillText('反射光',refX+5,refY-5);
@@ -305,10 +305,10 @@ function drawFilm(){
   ctxF.fillText('2n₂dcosθ₂ = '+delta.toFixed(1)+' nm',W/2,layer2Top+(layer2Bot-layer2Top)/2+22);
 
   var order=delta/550;
-  ctxF.fillStyle='#8b949e';ctxF.font='11px sans-serif';
+  ctxF.fillStyle='#5A6370';ctxF.font='11px sans-serif';
   ctxF.fillText('光程差/λ(550nm) = '+order.toFixed(2),W/2,layer2Top+(layer2Bot-layer2Top)/2+38);
 
-  ctxF.strokeStyle='#ffa657';ctxF.lineWidth=1;
+  ctxF.strokeStyle='#2A7CC7';ctxF.lineWidth=1;
   ctxF.setLineDash([3,3]);
   ctxF.beginPath();ctxF.moveTo(hitX,hitY1-30);ctxF.lineTo(hitX,hitY1);ctxF.stroke();
   ctxF.setLineDash([]);
@@ -318,11 +318,11 @@ function drawFilm(){
     ctxF.beginPath();ctxF.moveTo(hitX,hitY1);ctxF.lineTo(hitX,hitY1-25);ctxF.stroke();
     var arcR=20;
     ctxF.beginPath();ctxF.arc(hitX,hitY1,arcR,-Math.PI/2,-Math.PI/2+theta1);ctxF.stroke();
-    ctxF.fillStyle='#ffa657';ctxF.font='10px sans-serif';ctxF.textAlign='left';
+    ctxF.fillStyle='#2A7CC7';ctxF.font='10px sans-serif';ctxF.textAlign='left';
     ctxF.fillText('θ₁',hitX+arcR+2,hitY1-15);
   }
 
-  ctxF.fillStyle='#8b949e';ctxF.font='11px sans-serif';ctxF.textAlign='center';
+  ctxF.fillStyle='#5A6370';ctxF.font='11px sans-serif';ctxF.textAlign='center';
   ctxF.fillText('薄膜干涉示意图',W/2,H-8);
 }
 
@@ -339,7 +339,7 @@ function drawArrowHead(ctx,fromX,fromY,toX,toY,size,color){
 function drawSpectrum(){
   var W=canvasSpectrum.width,H=canvasSpectrum.height;
   ctxS.clearRect(0,0,W,H);
-  ctxS.fillStyle='#0d1117';ctxS.fillRect(0,0,W,H);
+  ctxS.fillStyle='#FAF2E0';ctxS.fillRect(0,0,W,H);
   var barH=30;
   var ml=60,mt=barH+20,mr=30,mb=50;
   var pw=W-ml-mr,ph=H-mt-mb;
@@ -359,20 +359,20 @@ function drawSpectrum(){
     }
   }
   ctxS.putImageData(imgData,0,0);
-  ctxS.strokeStyle='#30363d';ctxS.lineWidth=1;
+  ctxS.strokeStyle='#D4C9B8';ctxS.lineWidth=1;
   ctxS.strokeRect(0,0,W,barH);
-  ctxS.fillStyle='#8b949e';ctxS.font='10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillStyle='#5A6370';ctxS.font='10px sans-serif';ctxS.textAlign='center';
   ctxS.fillText('反射色',W/2,barH+14);
 
   ctxS.strokeStyle='#484f58';ctxS.lineWidth=1.5;
   ctxS.beginPath();ctxS.moveTo(ml,mt+ph);ctxS.lineTo(ml,mt);ctxS.stroke();
   ctxS.beginPath();ctxS.moveTo(ml,mt+ph);ctxS.lineTo(ml+pw,mt+ph);ctxS.stroke();
 
-  ctxS.strokeStyle='#30363d';ctxS.lineWidth=0.8;ctxS.setLineDash([4,4]);
+  ctxS.strokeStyle='#D4C9B8';ctxS.lineWidth=0.8;ctxS.setLineDash([4,4]);
   for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxS.beginPath();ctxS.moveTo(ml,y);ctxS.lineTo(ml+pw,y);ctxS.stroke()}
   ctxS.setLineDash([]);
 
-  ctxS.fillStyle='#8b949e';ctxS.font='11px sans-serif';ctxS.textAlign='right';
+  ctxS.fillStyle='#5A6370';ctxS.font='11px sans-serif';ctxS.textAlign='right';
   for(var i=0;i<=4;i++){var y=mt+ph-i*(ph/4);ctxS.fillText((i/4).toFixed(1),ml-6,y+4)}
   ctxS.textAlign='center';
   ctxS.fillText('波长 λ (nm)',ml+pw/2,mt+ph+38);
@@ -382,7 +382,7 @@ function drawSpectrum(){
     ctxS.fillText(lambdaVal,x,mt+ph+18);
   }
 
-  ctxS.strokeStyle='#3fb950';ctxS.lineWidth=2.5;ctxS.shadowColor='#3fb950';ctxS.shadowBlur=6;
+  ctxS.strokeStyle='#0E61AC';ctxS.lineWidth=2.5;ctxS.shadowColor='#0E61AC';ctxS.shadowBlur=6;
   ctxS.beginPath();
   var maxR=0;
   for(var i=0;i<=400;i++){
@@ -405,7 +405,7 @@ function drawSpectrum(){
     ctxS.fillRect(px,py,pw/400+1,mt+ph-py);
   }
 
-  ctxS.strokeStyle='#3fb950';ctxS.lineWidth=2.5;
+  ctxS.strokeStyle='#0E61AC';ctxS.lineWidth=2.5;
   ctxS.beginPath();
   for(var i=0;i<=400;i++){
     var lambda=380+i/400*400;
@@ -416,11 +416,11 @@ function drawSpectrum(){
   }
   ctxS.stroke();
 
-  ctxS.strokeStyle='#ffa657';ctxS.lineWidth=2;ctxS.strokeRect(ml,mt,pw,ph);
-  ctxS.fillStyle='#8b949e';ctxS.font='10px sans-serif';ctxS.textAlign='left';
+  ctxS.strokeStyle='#2A7CC7';ctxS.lineWidth=2;ctxS.strokeRect(ml,mt,pw,ph);
+  ctxS.fillStyle='#5A6370';ctxS.font='10px sans-serif';ctxS.textAlign='left';
   ctxS.fillText('R(λ)',ml+5,mt+12);
 
-  ctxS.fillStyle='#8b949e';ctxS.font='11px sans-serif';ctxS.textAlign='center';
+  ctxS.fillStyle='#5A6370';ctxS.font='11px sans-serif';ctxS.textAlign='center';
   ctxS.fillText('反射率光谱',W/2,H-8);
 }
 

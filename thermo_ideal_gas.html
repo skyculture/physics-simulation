@@ -7,57 +7,57 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  background: #0d1117; color: #c9d1d9;
+  background: #FAF2E0; color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px;
 }
 .header {
   width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center;
-  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 24px;
+  background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 14px 24px;
 }
-.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #ffa657; line-height: 1.2; }
-.header-left .subtitle { font-size: 0.82rem; color: #8b949e; margin-top: 2px; }
+.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #2A7CC7; line-height: 1.2; }
+.header-left .subtitle { font-size: 0.82rem; color: #5A6370; margin-top: 2px; }
 .back-link {
-  color: #58a6ff; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
-  border: 1px solid #30363d; border-radius: 6px; transition: background 0.2s;
+  color: #0E61AC; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
+  border: 1px solid #D4C9B8; border-radius: 6px; transition: background 0.2s;
 }
-.back-link:hover { background: #1f2937; }
+.back-link:hover { background: #FFF7EB; }
 .main-container { width: 100%; max-width: 1100px; display: flex; gap: 12px; flex: 1; }
 .canvas-panel {
-  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px;
+  background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 10px;
   display: flex; align-items: center; justify-content: center; flex: 1;
 }
-canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; }
+canvas#simCanvas { display: block; border-radius: 4px; background: #FAF2E0; }
 .side-panel { width: 300px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
-.panel-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
-.panel-box h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.panel-box { background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 14px 16px; }
+.panel-box h3 { font-size: 0.9rem; color: #2A7CC7; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
 .control-row label { font-size: 0.82rem; color: #c9d1d9; white-space: nowrap; }
-.control-row input[type="range"] { flex: 1; accent-color: #ffa657; height: 4px; }
-.control-row .val { font-size: 0.78rem; color: #ffa657; min-width: 42px; text-align: right; font-weight: 600; }
+.control-row input[type="range"] { flex: 1; accent-color: #2A7CC7; height: 4px; }
+.control-row .val { font-size: 0.78rem; color: #2A7CC7; min-width: 42px; text-align: right; font-weight: 600; }
 .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .btn {
-  padding: 7px 12px; border: 1px solid #30363d; border-radius: 6px; background: #21262d;
+  padding: 7px 12px; border: 1px solid #D4C9B8; border-radius: 6px; background: #FFFFFF;
   color: #c9d1d9; cursor: pointer; font-size: 0.82rem; font-family: inherit;
   transition: background 0.15s, border-color 0.15s; flex: 1; text-align: center; min-width: 48px;
 }
-.btn:hover { background: #30363d; }
-.btn.active { background: #ffa65733; border-color: #ffa657; color: #ffa657; }
+.btn:hover { background: #D4C9B8; }
+.btn.active { background: #2A7CC733; border-color: #2A7CC7; color: #2A7CC7; }
 .btn.heat { border-color: #f8514966; }
 .btn.heat:hover { background: #f8514922; border-color: #f85149; color: #f85149; }
 .btn.cool { border-color: #79c0ff66; }
 .btn.cool:hover { background: #79c0ff22; border-color: #79c0ff; color: #79c0ff; }
-.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; font-size: 0.82rem; }
+.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #D4C9B8; font-size: 0.82rem; }
 .stat-item:last-child { border-bottom: none; }
-.stat-label { color: #8b949e; }
-.stat-value { color: #ffa657; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-label { color: #5A6370; }
+.stat-value { color: #2A7CC7; font-weight: 600; font-variant-numeric: tabular-nums; }
 .check-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 0.82rem; cursor: pointer; }
-.check-row input[type="checkbox"] { accent-color: #ffa657; width: 15px; height: 15px; }
+.check-row input[type="checkbox"] { accent-color: #2A7CC7; width: 15px; height: 15px; }
 .pv-panel {
-  width: 100%; max-width: 1100px; background: #161b22; border: 1px solid #30363d;
+  width: 100%; max-width: 1100px; background: #161b22; border: 1px solid #D4C9B8;
   border-radius: 8px; padding: 14px 20px;
 }
-.pv-panel h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 6px; font-weight: 600; }
+.pv-panel h3 { font-size: 0.9rem; color: #2A7CC7; margin-bottom: 6px; font-weight: 600; }
 canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
 @media (max-width: 900px) {
   .main-container { flex-direction: column; }
@@ -337,10 +337,10 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
     simCtx.clearRect(0, 0, SIM_W, SIM_H);
     const bw = getBoxWidth();
 
-    simCtx.fillStyle = '#0d1117';
+    simCtx.fillStyle = '#FAF2E0';
     simCtx.fillRect(0, 0, bw, SIM_H);
 
-    simCtx.strokeStyle = '#30363d33';
+    simCtx.strokeStyle = '#D4C9B833';
     simCtx.lineWidth = 0.5;
     for (let x = 40; x < bw; x += 40) { simCtx.beginPath(); simCtx.moveTo(x, 0); simCtx.lineTo(x, SIM_H); simCtx.stroke(); }
     for (let y = 40; y < SIM_H; y += 40) { simCtx.beginPath(); simCtx.moveTo(0, y); simCtx.lineTo(bw, y); simCtx.stroke(); }
@@ -373,18 +373,18 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
       simCtx.beginPath(); simCtx.moveTo(bw - pistonW / 2 + 2, y); simCtx.lineTo(bw + pistonW / 2 - 2, y + 10); simCtx.stroke();
     }
 
-    simCtx.strokeStyle = '#30363d';
+    simCtx.strokeStyle = '#D4C9B8';
     simCtx.lineWidth = 2;
     simCtx.strokeRect(0, 0, bw, SIM_H);
 
-    simCtx.fillStyle = '#8b949e';
+    simCtx.fillStyle = '#5A6370';
     simCtx.font = '12px sans-serif';
     simCtx.fillText(`T = ${T.toFixed(1)} K`, 10, 20);
     simCtx.fillText(`V = ${volumeFactor.toFixed(1)}`, 10, 38);
     simCtx.fillText(`N = ${particles.length}`, 10, 56);
 
     if (bw < SIM_W - 30) {
-      simCtx.fillStyle = '#ffa657';
+      simCtx.fillStyle = '#2A7CC7';
       simCtx.font = 'bold 13px sans-serif';
       simCtx.fillText('活塞', bw + 16, SIM_H / 2 - 8);
       simCtx.fillText('→', bw + 22, SIM_H / 2 + 10);
@@ -420,7 +420,7 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
     const plotH = H - margin.top - margin.bottom;
     pvCtx.clearRect(0, 0, W, H);
 
-    pvCtx.strokeStyle = '#30363d';
+    pvCtx.strokeStyle = '#D4C9B8';
     pvCtx.lineWidth = 1;
     pvCtx.beginPath();
     pvCtx.moveTo(margin.left, margin.top);
@@ -433,7 +433,7 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
     const pMaxCalc = (N * 800) / (2 * SIM_W * SIM_H / 10);
     const pMax = Math.max(pMaxCalc * 1.2, 0.01);
 
-    pvCtx.fillStyle = '#8b949e';
+    pvCtx.fillStyle = '#5A6370';
     pvCtx.font = '10px sans-serif';
     pvCtx.textAlign = 'center';
     for (let i = 0; i <= 4; i++) {
@@ -453,7 +453,7 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
     const isotherms = [200, 300, 400, 600, 800];
     isotherms.forEach((tIso, idx) => {
       pvCtx.beginPath();
-      pvCtx.strokeStyle = idx === 1 ? '#ffa65788' : '#30363d88';
+      pvCtx.strokeStyle = idx === 1 ? '#2A7CC788' : '#D4C9B888';
       pvCtx.lineWidth = idx === 1 ? 1.5 : 0.8;
       if (idx !== 1) pvCtx.setLineDash([4, 4]);
       for (let i = 0; i <= 200; i++) {
@@ -472,7 +472,7 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
       const lx = margin.left + (labelV - vMin) / (vMax - vMin) * plotW;
       const ly = margin.top + plotH - (labelP / pMax) * plotH;
       if (ly > margin.top + 5) {
-        pvCtx.fillStyle = idx === 1 ? '#ffa657' : '#8b949e';
+        pvCtx.fillStyle = idx === 1 ? '#2A7CC7' : '#5A6370';
         pvCtx.font = '9px sans-serif';
         pvCtx.textAlign = 'left';
         pvCtx.fillText(`${tIso}K`, lx + 2, ly - 3);
@@ -481,7 +481,7 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
 
     if (pvTrail.length > 1) {
       pvCtx.beginPath();
-      pvCtx.strokeStyle = '#f7816688';
+      pvCtx.strokeStyle = '#2A7CC788';
       pvCtx.lineWidth = 1;
       for (let i = Math.max(0, pvTrail.length - 200); i < pvTrail.length; i++) {
         const pt = pvTrail[i];
@@ -495,9 +495,9 @@ canvas#pvCanvas { display: block; width: 100%; border-radius: 4px; }
     const currentP = parseFloat(statPressure.textContent) || 0;
     const cx = margin.left + (volumeFactor - vMin) / (vMax - vMin) * plotW;
     const cy = margin.top + plotH - (currentP / pMax) * plotH;
-    pvCtx.fillStyle = '#f78166';
+    pvCtx.fillStyle = '#2A7CC7';
     pvCtx.beginPath(); pvCtx.arc(cx, cy, 5, 0, 2 * Math.PI); pvCtx.fill();
-    pvCtx.strokeStyle = '#ffa657'; pvCtx.lineWidth = 1.5; pvCtx.stroke();
+    pvCtx.strokeStyle = '#2A7CC7'; pvCtx.lineWidth = 1.5; pvCtx.stroke();
   }
 
   function startSimulation() {

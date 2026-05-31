@@ -8,7 +8,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
@@ -32,19 +32,19 @@ body {
   margin-bottom: 24px;
   padding: 28px 20px;
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 12px;
 }
 .header h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #58a6ff;
+  color: #0E61AC;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
 }
 .header .subtitle {
   font-size: 0.95rem;
-  color: #8b949e;
+  color: #5A6370;
   line-height: 1.6;
 }
 
@@ -61,7 +61,7 @@ body {
 .panel {
   flex: 1;
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 12px;
   padding: 12px;
   display: flex;
@@ -71,7 +71,7 @@ body {
 .panel h2 {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #8b949e;
+  color: #5A6370;
   margin-bottom: 8px;
   text-align: center;
 }
@@ -79,13 +79,13 @@ body {
   width: 100%;
   height: auto;
   border-radius: 6px;
-  background: #0d1117;
+  background: #FAF2E0;
 }
 
 /* ===== 控制面板 ===== */
 .controls {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 12px;
   padding: 20px 24px;
   display: grid;
@@ -112,7 +112,7 @@ body {
 }
 .control-group label .val {
   font-size: 0.8rem;
-  color: #58a6ff;
+  color: #0E61AC;
   font-weight: 700;
   min-width: 80px;
   text-align: right;
@@ -128,7 +128,7 @@ input[type="range"] {
   width: 100%;
   height: 8px;
   border-radius: 4px;
-  background: #30363d;
+  background: #D4C9B8;
   outline: none;
   cursor: pointer;
 }
@@ -138,7 +138,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #58a6ff;
+  background: #0E61AC;
   border: 2px solid #161b22;
   cursor: pointer;
   transition: transform 0.1s;
@@ -150,7 +150,7 @@ input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #58a6ff;
+  background: #0E61AC;
   border: 2px solid #161b22;
   cursor: pointer;
 }
@@ -158,7 +158,7 @@ input[type="range"]::-moz-range-thumb {
 /* ===== 信息显示区 ===== */
 .info-bar {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 12px;
   padding: 14px 24px;
   margin-bottom: 16px;
@@ -174,10 +174,10 @@ input[type="range"]::-moz-range-thumb {
   gap: 6px;
 }
 .info-item .info-label {
-  color: #8b949e;
+  color: #5A6370;
 }
 .info-item .info-value {
-  color: #58a6ff;
+  color: #0E61AC;
   font-weight: 700;
   font-size: 1rem;
 }
@@ -190,7 +190,7 @@ input[type="range"]::-moz-range-thumb {
 }
 .btn {
   padding: 10px 28px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -211,17 +211,17 @@ input[type="range"]::-moz-range-thumb {
 }
 .btn-pause:hover { background: #bb8009; }
 .btn-reset {
-  background: #21262d;
+  background: #FFFFFF;
   color: #c9d1d9;
-  border-color: #30363d;
+  border-color: #D4C9B8;
 }
-.btn-reset:hover { background: #30363d; }
+.btn-reset:hover { background: #D4C9B8; }
 
 /* ===== 图例提示 ===== */
 .legend-note {
   text-align: center;
   font-size: 0.78rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 12px;
   line-height: 1.5;
 }
@@ -725,7 +725,7 @@ function drawSource(ctx, coords) {
   ctx.fillRect(sx, sy - sh/2, sw, sh);
 
   // 边框
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 1.5;
   ctx.strokeRect(sx, sy - sh/2, sw, sh);
 
@@ -754,7 +754,7 @@ function drawBarrier(ctx, coords) {
   const by = centerY - bh/2;
 
   // 遮光板主体
-  ctx.fillStyle = '#30363d';
+  ctx.fillStyle = '#D4C9B8';
   ctx.fillRect(bx, by, bw, bh);
   ctx.strokeStyle = '#484f58';
   ctx.lineWidth = 1.5;
@@ -762,25 +762,25 @@ function drawBarrier(ctx, coords) {
 
   // 缝的开口（在遮光板上开两个小口）- 用背景色擦除
   const slitH = Math.max(3, H * 0.025);
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(bx - 1, slit1Y - slitH/2, bw + 2, slitH);
   ctx.fillRect(bx - 1, slit2Y - slitH/2, bw + 2, slitH);
 
   // 缝边缘高亮
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 1;
   ctx.strokeRect(bx - 1, slit1Y - slitH/2, bw + 2, slitH);
   ctx.strokeRect(bx - 1, slit2Y - slitH/2, bw + 2, slitH);
 
   // 缝标签
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = `bold ${Math.round(W * 0.024)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'right';
   ctx.fillText('S₁', bx - 6, slit1Y + 4);
   ctx.fillText('S₂', bx - 6, slit2Y + 4);
 
   // 缝间距标注
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 0.8;
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
@@ -801,7 +801,7 @@ function drawBarrier(ctx, coords) {
   ctx.lineTo(bx - bw + 4, slit2Y - 3);
   ctx.stroke();
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${Math.round(W * 0.019)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'right';
   ctx.fillText('d', bx - bw - 8, centerY + 4);
@@ -819,9 +819,9 @@ function drawScreen(ctx, coords) {
   const sy = centerY - sh/2;
 
   // 屏幕主体
-  ctx.fillStyle = '#21262d';
+  ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(sx, sy, sw, sh);
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 2;
   ctx.strokeRect(sx, sy, sw, sh);
 
@@ -920,14 +920,14 @@ function drawRays(ctx, coords) {
 
   // 距离标注 L
   const midX = (barrierX + screenX) / 2;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${Math.round(W * 0.02)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('L', midX, centerY_coord - H * 0.32);
   ctx.beginPath();
   ctx.moveTo(barrierX, centerY_coord - H * 0.30);
   ctx.lineTo(screenX, centerY_coord - H * 0.30);
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 0.6;
   ctx.stroke();
 }
@@ -996,7 +996,7 @@ function drawSetupCanvas(time) {
   ctx.clearRect(0, 0, W, H);
 
   // 填充背景色
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, W, H);
 
   // 1. 绘制预计算的干涉场背景
@@ -1045,7 +1045,7 @@ function drawPatternCanvas() {
   const ctx = ctxPattern;
 
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, W, H);
 
   const rgb = wavelengthToRGB(lambdaNm);
@@ -1089,17 +1089,17 @@ function drawPatternCanvas() {
   }
 
   // 条纹区域边框
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1.5;
   ctx.strokeRect(stripeLeft, stripeTop, stripeWidth, stripeHeight);
 
   // 标注亮纹级次
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'right';
 
   // 中心亮纹 m=0
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = `bold ${Math.round(W * 0.021)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'right';
   const maxM = Math.floor((displayRangeMm / 2) / deltaY);
@@ -1159,12 +1159,12 @@ function drawPatternCanvas() {
   ctx.stroke();
 
   // 纵轴刻度
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${Math.round(W * 0.017)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'right';
   for (let v = 0; v <= 1; v += 0.25) {
     const yPx = graphBottom - v * graphHeight;
-    ctx.strokeStyle = '#30363d';
+    ctx.strokeStyle = '#D4C9B8';
     ctx.lineWidth = 0.5;
     ctx.setLineDash([2, 4]);
     ctx.beginPath();
@@ -1233,7 +1233,7 @@ function drawPatternCanvas() {
   ctx.shadowBlur = 0;
 
   // 横轴标注
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${Math.round(W * 0.018)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   const tickCount = 8;
@@ -1252,7 +1252,7 @@ function drawPatternCanvas() {
   }
 
   // Δy 标注
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = `bold ${Math.round(W * 0.02)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText(`Δy = ${deltaY.toFixed(3)} mm`, graphLeft + graphWidth/2, graphBottom + 28);
@@ -1275,7 +1275,7 @@ function drawPatternCanvas() {
   ctx.fillText('光强分布 I(y)', graphLeft + graphWidth/2, graphTop - 14);
 
   // 公式标注
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${Math.round(W * 0.019)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('I(y) = I₀·cos²(π d y / λ L)', graphLeft + graphWidth/2, graphTop - 36);

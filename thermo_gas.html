@@ -8,7 +8,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
@@ -26,7 +26,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px 24px;
 }
@@ -34,27 +34,27 @@ body {
 .header-left h1 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #58a6ff;
+  color: #0E61AC;
   line-height: 1.2;
 }
 
 .header-left .subtitle {
   font-size: 0.82rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 2px;
 }
 
 .back-link {
-  color: #58a6ff;
+  color: #0E61AC;
   text-decoration: none;
   font-size: 0.95rem;
   padding: 6px 14px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
   transition: background 0.2s;
 }
 
-.back-link:hover { background: #1f2937; }
+.back-link:hover { background: #FFF7EB; }
 
 .main-container {
   width: 100%;
@@ -66,7 +66,7 @@ body {
 
 .canvas-panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 10px;
   display: flex;
@@ -78,7 +78,7 @@ body {
 canvas#simCanvas {
   display: block;
   border-radius: 4px;
-  background: #0d1117;
+  background: #FAF2E0;
 }
 
 .side-panel {
@@ -91,14 +91,14 @@ canvas#simCanvas {
 
 .panel-box {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px 16px;
 }
 
 .panel-box h3 {
   font-size: 0.9rem;
-  color: #58a6ff;
+  color: #0E61AC;
   margin-bottom: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -121,13 +121,13 @@ canvas#simCanvas {
 
 .control-row input[type="range"] {
   flex: 1;
-  accent-color: #58a6ff;
+  accent-color: #0E61AC;
   height: 4px;
 }
 
 .control-row .val {
   font-size: 0.78rem;
-  color: #58a6ff;
+  color: #0E61AC;
   min-width: 36px;
   text-align: right;
   font-weight: 600;
@@ -142,9 +142,9 @@ canvas#simCanvas {
 
 .btn {
   padding: 7px 12px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
-  background: #21262d;
+  background: #FFFFFF;
   color: #c9d1d9;
   cursor: pointer;
   font-size: 0.82rem;
@@ -155,8 +155,8 @@ canvas#simCanvas {
   min-width: 48px;
 }
 
-.btn:hover { background: #30363d; }
-.btn.active { background: #1f6feb33; border-color: #58a6ff; color: #58a6ff; }
+.btn:hover { background: #D4C9B8; }
+.btn.active { background: #1f6feb33; border-color: #0E61AC; color: #0E61AC; }
 .btn.heat { border-color: #f8514966; }
 .btn.heat:hover { background: #f8514922; border-color: #f85149; color: #f85149; }
 .btn.cool { border-color: #79c0ff66; }
@@ -166,14 +166,14 @@ canvas#simCanvas {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
-  border-bottom: 1px solid #30363d;
+  border-bottom: 1px solid #D4C9B8;
   font-size: 0.82rem;
 }
 
 .stat-item:last-child { border-bottom: none; }
 
-.stat-label { color: #8b949e; }
-.stat-value { color: #58a6ff; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-label { color: #5A6370; }
+.stat-value { color: #0E61AC; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .check-row {
   display: flex;
@@ -185,7 +185,7 @@ canvas#simCanvas {
 }
 
 .check-row input[type="checkbox"] {
-  accent-color: #58a6ff;
+  accent-color: #0E61AC;
   width: 15px;
   height: 15px;
 }
@@ -194,14 +194,14 @@ canvas#simCanvas {
   width: 100%;
   max-width: 1100px;
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px 20px;
 }
 
 .histogram-panel h3 {
   font-size: 0.9rem;
-  color: #58a6ff;
+  color: #0E61AC;
   margin-bottom: 6px;
   font-weight: 600;
 }
@@ -765,12 +765,12 @@ canvas#histCanvas {
     simCtx.clearRect(0, 0, SIM_WIDTH, SIM_HEIGHT);
 
     /* 绘制盒子边框 */
-    simCtx.strokeStyle = '#30363d';
+    simCtx.strokeStyle = '#D4C9B8';
     simCtx.lineWidth = 2;
     simCtx.strokeRect(0, 0, SIM_WIDTH, SIM_HEIGHT);
 
     /* 绘制网格 (弱) */
-    simCtx.strokeStyle = '#30363d33';
+    simCtx.strokeStyle = '#D4C9B833';
     simCtx.lineWidth = 0.5;
     const gridSize = 40;
     for (let x = gridSize; x < SIM_WIDTH; x += gridSize) {
@@ -809,7 +809,7 @@ canvas#histCanvas {
       simCtx.fillStyle = grad;
       simCtx.fill();
 
-      simCtx.strokeStyle = '#30363d66';
+      simCtx.strokeStyle = '#D4C9B866';
       simCtx.lineWidth = 0.5;
       simCtx.stroke();
     }
@@ -892,7 +892,7 @@ canvas#histCanvas {
     const Npart = particles.length;
 
     /* 绘制坐标轴 */
-    histCtx.strokeStyle = '#30363d';
+    histCtx.strokeStyle = '#D4C9B8';
     histCtx.lineWidth = 1;
     histCtx.beginPath();
     histCtx.moveTo(margin.left, margin.top);
@@ -901,7 +901,7 @@ canvas#histCanvas {
     histCtx.stroke();
 
     /* X 轴刻度 */
-    histCtx.fillStyle = '#8b949e';
+    histCtx.fillStyle = '#5A6370';
     histCtx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
     histCtx.textAlign = 'center';
     const xTicks = 5;
@@ -990,7 +990,7 @@ canvas#histCanvas {
     /* 绘制最概然速率参考线 */
     const xVp = margin.left + (vpMB / vMax) * plotW;
     histCtx.beginPath();
-    histCtx.strokeStyle = '#58a6ff66';
+    histCtx.strokeStyle = '#0E61AC66';
     histCtx.lineWidth = 1;
     histCtx.setLineDash([3, 4]);
     histCtx.moveTo(xVp, margin.top);
@@ -998,7 +998,7 @@ canvas#histCanvas {
     histCtx.stroke();
     histCtx.setLineDash([]);
 
-    histCtx.fillStyle = '#58a6ff';
+    histCtx.fillStyle = '#0E61AC';
     histCtx.textAlign = 'center';
     histCtx.fillText(`v_p=${vpMB.toFixed(1)}`, xVp, margin.top - 2);
 

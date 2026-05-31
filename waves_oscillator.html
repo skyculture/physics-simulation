@@ -8,7 +8,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background: #0d1117;
+    background: #FAF2E0;
     color: #c9d1d9;
     font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     min-height: 100vh;
@@ -21,23 +21,23 @@ body {
     align-items: center;
     padding: 12px 20px;
     background: #161b22;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 8px;
     margin-bottom: 16px;
 }
 
-.header h1 { font-size: 1.4rem; color: #58a6ff; }
+.header h1 { font-size: 1.4rem; color: #0E61AC; }
 
 .back-link {
-    color: #8b949e;
+    color: #5A6370;
     text-decoration: none;
     font-size: 0.9rem;
     padding: 6px 14px;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 6px;
     transition: all 0.2s;
 }
-.back-link:hover { color: #58a6ff; border-color: #58a6ff; }
+.back-link:hover { color: #0E61AC; border-color: #0E61AC; }
 
 .main-row {
     display: flex;
@@ -50,7 +50,7 @@ body {
     width: 280px;
     flex-shrink: 0;
     background: #161b22;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 8px;
     padding: 16px;
     display: flex;
@@ -62,7 +62,7 @@ body {
 
 .control-group label {
     font-size: 0.82rem;
-    color: #8b949e;
+    color: #5A6370;
     display: flex;
     justify-content: space-between;
 }
@@ -74,7 +74,7 @@ input[type="range"] {
     width: 100%;
     height: 6px;
     border-radius: 3px;
-    background: #30363d;
+    background: #D4C9B8;
     outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
@@ -82,7 +82,7 @@ input[type="range"]::-webkit-slider-thumb {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #58a6ff;
+    background: #0E61AC;
     cursor: pointer;
 }
 
@@ -94,16 +94,16 @@ input[type="range"]::-webkit-slider-thumb {
 
 button {
     padding: 7px 14px;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 6px;
-    background: #21262d;
+    background: #FFFFFF;
     color: #c9d1d9;
     cursor: pointer;
     font-size: 0.85rem;
     transition: all 0.15s;
     font-family: inherit;
 }
-button:hover { background: #30363d; }
+button:hover { background: #D4C9B8; }
 button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
 button.primary:hover { background: #388bfd; }
 button.sweep { background: #6e40c9; border-color: #6e40c9; color: #fff; }
@@ -111,8 +111,8 @@ button.sweep:hover { background: #7c4dff; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .info-panel {
-    background: #0d1117;
-    border: 1px solid #30363d;
+    background: #FAF2E0;
+    border: 1px solid #D4C9B8;
     border-radius: 6px;
     padding: 10px 14px;
     display: flex;
@@ -122,14 +122,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .info-item { display: flex; flex-direction: column; gap: 1px; }
-.info-item .info-label { color: #8b949e; font-size: 0.7rem; }
-.info-item .info-value { color: #d2a8ff; font-weight: 600; font-size: 0.88rem; }
+.info-item .info-label { color: #5A6370; font-size: 0.7rem; }
+.info-item .info-value { color: #0E61AC; font-weight: 600; font-size: 0.88rem; }
 
 .canvas-container {
     flex: 1;
     min-width: 500px;
     background: #161b22;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 8px;
     padding: 8px;
     display: flex;
@@ -149,7 +149,7 @@ canvas { display: block; max-width: 100%; }
     flex: 1;
     min-width: 420px;
     background: #161b22;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 8px;
     padding: 8px;
     display: flex;
@@ -563,7 +563,7 @@ canvas { display: block; max-width: 100%; }
         ctx.rect(dashX, y - hh, dashW, dashH);
         ctx.clip();
         ctx.beginPath();
-        ctx.strokeStyle = "#8b949e";
+        ctx.strokeStyle = "#5A6370";
         ctx.lineWidth = 1;
         const stepX = 8;
         for (let sx = dashX + 2; sx < dashX + dashW; sx += stepX) {
@@ -609,7 +609,7 @@ canvas { display: block; max-width: 100%; }
         const massBottom  = springY + massH / 2;
 
         /* --- 墙壁 --- */
-        ctx.fillStyle = "#8b949e";
+        ctx.fillStyle = "#5A6370";
         ctx.fillRect(wallX - 10, springY - 60, 16, 120);
         /* 斜线填充表示固定 */
         ctx.strokeStyle = "#484f58";
@@ -630,20 +630,20 @@ canvas { display: block; max-width: 100%; }
         ctx.stroke();
 
         /* --- 弹簧 --- */
-        ctx.strokeStyle  = "#58a6ff";
+        ctx.strokeStyle  = "#0E61AC";
         ctx.lineWidth    = 2.5;
         const springMinLen = 20;  /* 弹簧最短长度(防止翻转) */
         const springEnd = Math.max(wallX + springMinLen, massLeft);
         drawSpring(ctx, wallX, springY, springEnd, 14, 14);
 
         /* --- 阻尼器 --- */
-        ctx.strokeStyle  = "#d2a8ff";
+        ctx.strokeStyle  = "#0E61AC";
         ctx.lineWidth    = 2;
         drawDamper(ctx, wallX, damperY, massLeft);
 
         /* --- 质量块 --- */
         const grad = ctx.createLinearGradient(massLeft, massTop, massLeft, massBottom);
-        grad.addColorStop(0, "#3fb950");
+        grad.addColorStop(0, "#0E61AC");
         grad.addColorStop(1, "#238636");
         ctx.fillStyle = grad;
         ctx.fillRect(massLeft, massTop, massW, massH);
@@ -698,7 +698,7 @@ canvas { display: block; max-width: 100%; }
         ctx.setLineDash([]);
 
         /* --- 位移标注 --- */
-        ctx.fillStyle = "#8b949e";
+        ctx.fillStyle = "#5A6370";
         ctx.font = "11px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("x = " + xVal.toFixed(3) + " m", massCenterX, massBottom + 16);
@@ -709,12 +709,12 @@ canvas { display: block; max-width: 100%; }
         const legendX = W - 170;
         const legendY = 16;
 
-        ctx.fillStyle = "#58a6ff";
+        ctx.fillStyle = "#0E61AC";
         ctx.fillRect(legendX, legendY, 14, 3);
         ctx.fillStyle = "#c9d1d9";
         ctx.fillText("弹簧 k", legendX + 20, legendY + 5);
 
-        ctx.strokeStyle = "#d2a8ff";
+        ctx.strokeStyle = "#0E61AC";
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(legendX, legendY + 18);
@@ -751,7 +751,7 @@ canvas { display: block; max-width: 100%; }
         const ph = H - margin.top - margin.bottom;
 
         /* 背景网格 */
-        ctx.strokeStyle = "#21262d";
+        ctx.strokeStyle = "#FFFFFF";
         ctx.lineWidth = 0.5;
         for (let i = 0; i <= 10; i++) {
             const y = margin.top + (ph / 10) * i;
@@ -763,7 +763,7 @@ canvas { display: block; max-width: 100%; }
         }
 
         /* 坐标轴 */
-        ctx.strokeStyle = "#8b949e";
+        ctx.strokeStyle = "#5A6370";
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(margin.left, margin.top);
@@ -772,7 +772,7 @@ canvas { display: block; max-width: 100%; }
         ctx.stroke();
 
         /* 轴标签 */
-        ctx.fillStyle = "#8b949e";
+        ctx.fillStyle = "#5A6370";
         ctx.font = "12px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("时间 t (s)", margin.left + pw / 2, margin.top + ph + 30);
@@ -806,7 +806,7 @@ canvas { display: block; max-width: 100%; }
         const zeroY = margin.top + ph * (xMax / (xMax - xMin));
         if (xMin <= 0 && xMax >= 0) {
             ctx.setLineDash([3, 5]);
-            ctx.strokeStyle = "#30363d";
+            ctx.strokeStyle = "#D4C9B8";
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(margin.left, zeroY);
@@ -816,7 +816,7 @@ canvas { display: block; max-width: 100%; }
         }
 
         /* 绘制位移曲线 */
-        ctx.strokeStyle = "#58a6ff";
+        ctx.strokeStyle = "#0E61AC";
         ctx.lineWidth = 2;
         ctx.beginPath();
         let firstPoint = true;
@@ -830,7 +830,7 @@ canvas { display: block; max-width: 100%; }
         ctx.stroke();
 
         /* 轴刻度 */
-        ctx.fillStyle = "#8b949e";
+        ctx.fillStyle = "#5A6370";
         ctx.font = "10px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
         ctx.textAlign = "right";
         for (let i = 0; i <= 4; i++) {
@@ -893,7 +893,7 @@ canvas { display: block; max-width: 100%; }
         ampMax *= 1.15;
 
         /* 背景网格 */
-        ctx.strokeStyle = "#21262d";
+        ctx.strokeStyle = "#FFFFFF";
         ctx.lineWidth = 0.5;
         for (let i = 0; i <= 10; i++) {
             const y = margin.top + (ph / 10) * i;
@@ -905,7 +905,7 @@ canvas { display: block; max-width: 100%; }
         }
 
         /* 坐标轴 */
-        ctx.strokeStyle = "#8b949e";
+        ctx.strokeStyle = "#5A6370";
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(margin.left, margin.top);
@@ -914,7 +914,7 @@ canvas { display: block; max-width: 100%; }
         ctx.stroke();
 
         /* 轴标签 */
-        ctx.fillStyle = "#8b949e";
+        ctx.fillStyle = "#5A6370";
         ctx.font = "12px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("驱动频率 ω (rad/s)", margin.left + pw / 2, margin.top + ph + 30);
@@ -943,7 +943,7 @@ canvas { display: block; max-width: 100%; }
             if (dp.om > omegaPlotMax) continue;
             const sx = margin.left + pw * (dp.om - omegaPlotMin) / (omegaPlotMax - omegaPlotMin);
             const sy = margin.top + ph * (1 - dp.amp / ampMax);
-            ctx.fillStyle = "#d2a8ff";
+            ctx.fillStyle = "#0E61AC";
             ctx.beginPath();
             ctx.arc(sx, sy, 3, 0, Math.PI * 2);
             ctx.fill();
@@ -982,14 +982,14 @@ canvas { display: block; max-width: 100%; }
             ctx.stroke();
             ctx.setLineDash([]);
 
-            ctx.fillStyle = "#d2a8ff";
+            ctx.fillStyle = "#0E61AC";
             ctx.font = "bold 11px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
             ctx.textAlign = "center";
             ctx.fillText("ω₀=" + omega0.toFixed(2), sx, margin.top + ph + 18);
         }
 
         /* 轴刻度 */
-        ctx.fillStyle = "#8b949e";
+        ctx.fillStyle = "#5A6370";
         ctx.font = "10px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
         ctx.textAlign = "right";
         for (let i = 0; i <= 4; i++) {

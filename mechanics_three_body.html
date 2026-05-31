@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>三体运动 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -76,9 +76,9 @@ function init() {
   const v3 = Math.sqrt(G * (m1 + m2) / (r3 + SOFTENING)) * 0.6;
 
   bodies = [
-    { x: x1, y: y1, vx: v1 * Math.cos(angle1 + Math.PI / 2), vy: v1 * Math.sin(angle1 + Math.PI / 2), ax: 0, ay: 0, m: m1, color: '#ffa657', trailColor: 'rgba(255,166,87,' },
-    { x: x2, y: y2, vx: v2 * Math.cos(angle2 + Math.PI / 2), vy: v2 * Math.sin(angle2 + Math.PI / 2), ax: 0, ay: 0, m: m2, color: '#f78166', trailColor: 'rgba(247,129,102,' },
-    { x: x3, y: y3, vx: v3 * Math.cos(angle3 + Math.PI / 2), vy: v3 * Math.sin(angle3 + Math.PI / 2), ax: 0, ay: 0, m: m3, color: '#3fb950', trailColor: 'rgba(63,185,80,' }
+    { x: x1, y: y1, vx: v1 * Math.cos(angle1 + Math.PI / 2), vy: v1 * Math.sin(angle1 + Math.PI / 2), ax: 0, ay: 0, m: m1, color: '#2A7CC7', trailColor: 'rgba(255,166,87,' },
+    { x: x2, y: y2, vx: v2 * Math.cos(angle2 + Math.PI / 2), vy: v2 * Math.sin(angle2 + Math.PI / 2), ax: 0, ay: 0, m: m2, color: '#2A7CC7', trailColor: 'rgba(42,124,199,' },
+    { x: x3, y: y3, vx: v3 * Math.cos(angle3 + Math.PI / 2), vy: v3 * Math.sin(angle3 + Math.PI / 2), ax: 0, ay: 0, m: m3, color: '#0E61AC', trailColor: 'rgba(14,97,172,' }
   ];
 
   computeAccelerations();
@@ -135,7 +135,7 @@ function computeEnergy() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   bodies[0].m = parseFloat(document.getElementById('m1').value);
@@ -181,10 +181,10 @@ function draw() {
   }
 
   const E = computeEnergy();
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '12px sans-serif';
   ctx.fillText(`质量: m₁=${bodies[0].m.toFixed(1)}  m₂=${bodies[1].m.toFixed(1)}  m₃=${bodies[2].m.toFixed(1)}`, canvas.width * 0.05, canvas.height * 0.06);
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText(`总能量 E = ${E.toFixed(1)} (守恒量)`, canvas.width * 0.05, canvas.height * 0.06 + 20);
 
   animationId = requestAnimationFrame(draw);

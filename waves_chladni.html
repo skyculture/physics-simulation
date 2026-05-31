@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>克拉尼板 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -50,12 +50,12 @@ function draw() {
   const speed = parseFloat(document.getElementById('speed').value);
   const size = S * 0.8;
 
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = 'rgba(210,168,255,0.15)';
+  ctx.fillStyle = 'rgba(14,97,172,0.15)';
   ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
-  ctx.strokeStyle = '#d2a8ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   ctx.strokeRect(cx - size / 2, cy - size / 2, size, size);
 
@@ -63,7 +63,7 @@ function draw() {
   const step = size / resolution;
 
   ctx.lineWidth = 1.2;
-  ctx.strokeStyle = 'rgba(247,129,102,0.8)';
+  ctx.strokeStyle = 'rgba(42,124,199,0.8)';
   ctx.beginPath();
 
   for (let i = 0; i <= resolution; i++) {
@@ -84,7 +84,7 @@ function draw() {
   }
   ctx.stroke();
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${S * 0.035}px sans-serif`;
   ctx.fillText(`模式: (${m},${n})`, w * 0.05, h * 0.08);
   

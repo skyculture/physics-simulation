@@ -7,7 +7,7 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
@@ -22,30 +22,30 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  border-bottom: 1px solid #30363d;
+  border-bottom: 1px solid #D4C9B8;
   margin-bottom: 16px;
 }
 .header-left h1 {
   font-size: 28px;
   font-weight: 700;
-  color: #f0f6fc;
+  color: #0E61AC;
   letter-spacing: 1px;
 }
 .header-left .subtitle {
   font-size: 13px;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 4px;
 }
 .back-link {
-  color: #58a6ff;
+  color: #0E61AC;
   text-decoration: none;
   font-size: 14px;
   padding: 6px 14px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
   transition: background 0.2s;
 }
-.back-link:hover { background: #1f2937; }
+.back-link:hover { background: #FFF7EB; }
 .main-container {
   display: flex;
   gap: 16px;
@@ -55,7 +55,7 @@ body {
 }
 .canvas-wrapper {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
@@ -70,17 +70,17 @@ body {
 }
 .panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 16px;
 }
 .panel h3 {
   font-size: 15px;
   font-weight: 600;
-  color: #f0f6fc;
+  color: #0E61AC;
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #21262d;
+  border-bottom: 1px solid #FFFFFF;
 }
 .stat-grid {
   display: grid;
@@ -88,20 +88,20 @@ body {
   gap: 8px;
 }
 .stat-item {
-  background: #0d1117;
+  background: #FAF2E0;
   border-radius: 6px;
   padding: 10px 12px;
 }
 .stat-item .label {
   font-size: 11px;
-  color: #8b949e;
+  color: #5A6370;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 .stat-item .value {
   font-size: 20px;
   font-weight: 700;
-  color: #58a6ff;
+  color: #0E61AC;
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
@@ -110,11 +110,11 @@ body {
 }
 .stat-item .unit {
   font-size: 11px;
-  color: #8b949e;
+  color: #5A6370;
   font-weight: 400;
 }
 .msd-canvas-wrap {
-  background: #0d1117;
+  background: #FAF2E0;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -132,7 +132,7 @@ body {
   margin-bottom: 4px;
 }
 .control-group label .val {
-  color: #58a6ff;
+  color: #0E61AC;
   font-weight: 600;
   font-size: 13px;
   min-width: 50px;
@@ -143,7 +143,7 @@ body {
   width: 100%;
   height: 6px;
   border-radius: 3px;
-  background: #21262d;
+  background: #FFFFFF;
   outline: none;
   cursor: pointer;
 }
@@ -152,9 +152,9 @@ body {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #58a6ff;
+  background: #0E61AC;
   cursor: pointer;
-  border: 2px solid #0d1117;
+  border: 2px solid #FAF2E0;
 }
 .btn-row {
   display: flex;
@@ -163,16 +163,16 @@ body {
 }
 .btn {
   padding: 8px 16px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
-  background: #21262d;
+  background: #FFFFFF;
   color: #c9d1d9;
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.btn:hover { background: #30363d; }
+.btn:hover { background: #D4C9B8; }
 .btn.accent {
   background: #1f6feb;
   border-color: #1f6feb;
@@ -348,9 +348,9 @@ const DT = 1.0;                  // 每步时间间隔 (任意单位)
 
 /* ===== 花粉粒专属颜色 ===== */
 const GRAIN_COLORS = [
-  '#58a6ff', '#f78166', '#7ee787', '#d2a8ff', '#ffa657',
+  '#0E61AC', '#2A7CC7', '#7ee787', '#0E61AC', '#2A7CC7',
   '#56d364', '#db6d28', '#a5d6ff', '#ff7b72', '#79c0ff',
-  '#f2cc60', '#bc8cff', '#f778ba', '#8b949e', '#3fb950',
+  '#f2cc60', '#bc8cff', '#f778ba', '#5A6370', '#0E61AC',
   '#e5534b', '#a371f7', '#68b5fc', '#e3b341', '#cb8cff',
   '#ff9bce', '#7fd962', '#f0883e', '#96d0ff', '#ffa198',
   '#d9b84b', '#c297ff', '#ff77a8', '#85c1ff', '#c9d1d9'
@@ -473,7 +473,7 @@ function renderSimulation() {
   const W = SIM_W, H = SIM_H;
 
   /* 清屏 */
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, W, H);
 
   /* 绘制淡色网格 (模拟显微镜载物台) */
@@ -494,7 +494,7 @@ function renderSimulation() {
   }
 
   /* 绘制中心十字标记 (显微镜准星) */
-  ctx.strokeStyle = '#21262d';
+  ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(CX - 20, CY); ctx.lineTo(CX + 20, CY);
@@ -555,7 +555,7 @@ function renderSimulation() {
   }
 
   /* 画布边界提示文字 */
-  ctx.fillStyle = '#30363d';
+  ctx.fillStyle = '#D4C9B8';
   ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.fillText('花粉粒随机游走 — 自由空间 (无边界)', 10, SIM_H - 10);
 }
@@ -570,7 +570,7 @@ function renderMSDPlot() {
   const ph = H - pad.top - pad.bottom;
 
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, W, H);
 
   /* 绘图区域 */
@@ -594,7 +594,7 @@ function renderMSDPlot() {
   const yStep = maxR2 / nYTicks;
   ctx.strokeStyle = '#1a2233';
   ctx.lineWidth = 0.5;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
@@ -626,14 +626,14 @@ function renderMSDPlot() {
   }
 
   /* 坐标轴 */
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.lineTo(x1, y1);
   ctx.stroke();
 
   /* 轴标签 */
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.textAlign = 'center';
   ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.fillText('时间 t', x0 + pw / 2, H - 4);
@@ -645,7 +645,7 @@ function renderMSDPlot() {
 
   /* 理论扩散曲线 ⟨r²⟩ = 4Dt (虚线) */
   const D = getDiffusionCoefficient();
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([5, 3]);
   ctx.beginPath();
@@ -662,7 +662,7 @@ function renderMSDPlot() {
 
   /* 模拟数据曲线 */
   if (msdHistory.length > 1) {
-    ctx.strokeStyle = '#58a6ff';
+    ctx.strokeStyle = '#0E61AC';
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i < msdHistory.length; i++) {
@@ -678,14 +678,14 @@ function renderMSDPlot() {
   /* 图例 */
   ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   const lx = x0 + 8, ly = y0 + 4;
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText('— 理论 4Dt', lx + 14, ly + 12);
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillRect(lx, ly + 6, 10, 2);
 
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('— 模拟 ⟨r²⟩', lx + 14, ly + 28);
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillRect(lx, ly + 22, 10, 2);
 }
 

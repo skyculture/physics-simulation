@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>质谱仪 - 量子与核物理</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#FFF7EB; --border:#D4C9B8; --text:#1A1A1A; --accent:#0E61AC; --accent2:#0E61AC; --accent3:#2A7CC7; --accent4:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
   .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
   .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
-  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .header-left .subtitle { font-size:0.82rem; color:#5A6370; margin-top:2px; }
   .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
-  .back-link:hover { background:#1f2937; }
+  .back-link:hover { background:#FFF7EB; }
   .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
   .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
-  canvas { display:block; border-radius:4px; background:#0d1117; }
+  canvas { display:block; border-radius:4px; background:#FAF2E0; }
   .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
   .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
   .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
@@ -23,12 +23,12 @@
   .control-row label { font-size:0.82rem; color:var(--text); white-space:nowrap; }
   .control-row input[type="range"] { flex:1; accent-color:var(--accent4); }
   .control-row .val { font-size:0.78rem; color:var(--accent4); min-width:36px; text-align:right; font-weight:600; }
-  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; width:100%; margin-top:4px; }
-  .btn:hover { background:#30363d; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; width:100%; margin-top:4px; }
+  .btn:hover { background:#D4C9B8; }
   .btn.primary { border-color:var(--accent4); color:var(--accent4); }
   .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
   .stat-item:last-child { border-bottom:none; }
-  .stat-label { color:#8b949e; }
+  .stat-label { color:#5A6370; }
   .stat-value { color:var(--accent4); font-weight:600; }
   @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
 </style>
@@ -63,9 +63,9 @@
     </div>
     <div class="panel-box">
       <h3>📊 离子信息</h3>
-      <div id="ionInfo" style="font-size:0.78rem;color:#8b949e;">点击"注入离子"开始分析</div>
+      <div id="ionInfo" style="font-size:0.78rem;color:#5A6370;">点击"注入离子"开始分析</div>
     </div>
-    <div class="panel-box" style="font-size:0.75rem;color:#8b949e;line-height:1.6;">
+    <div class="panel-box" style="font-size:0.75rem;color:#5A6370;line-height:1.6;">
       <strong style="color:var(--accent4);">物理原理：</strong><br>
       r = mv/(qB) = √(2mV)/(qB²)<br>
       不同 m/q 的离子沿不同半径偏转，在检测器上形成分离的峰。
@@ -85,35 +85,35 @@
   let trails=[];
 
   const ionTypes=[
-    {name:'¹H⁺',mass:1.67e-27,charge:1.6e-19,color:'#3fb950',label:'氢'},
-    {name:'²H⁺',mass:3.34e-27,charge:1.6e-19,color:'#58a6ff',label:'氘'},
-    {name:'⁴He²⁺',mass:6.68e-27,charge:3.2e-19,color:'#f78166',label:'氦'},
-    {name:'¹²C⁺',mass:2.0e-26,charge:1.6e-19,color:'#d2a8ff',label:'碳'},
-    {name:'¹⁴N⁺',mass:2.34e-26,charge:1.6e-19,color:'#ffa657',label:'氮'},
+    {name:'¹H⁺',mass:1.67e-27,charge:1.6e-19,color:'#0E61AC',label:'氢'},
+    {name:'²H⁺',mass:3.34e-27,charge:1.6e-19,color:'#0E61AC',label:'氘'},
+    {name:'⁴He²⁺',mass:6.68e-27,charge:3.2e-19,color:'#2A7CC7',label:'氦'},
+    {name:'¹²C⁺',mass:2.0e-26,charge:1.6e-19,color:'#0E61AC',label:'碳'},
+    {name:'¹⁴N⁺',mass:2.34e-26,charge:1.6e-19,color:'#2A7CC7',label:'氮'},
     {name:'¹⁶O⁺',mass:2.67e-26,charge:1.6e-19,color:'#ff6b6b',label:'氧'},
   ];
 
   function drawInstrument(){
-    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 
-    ctx.strokeStyle='#8b949e';ctx.lineWidth=2;ctx.fillStyle='#21262d';
+    ctx.strokeStyle='#5A6370';ctx.lineWidth=2;ctx.fillStyle='#FFFFFF';
     const srcX=60,srcY=H/2;
     ctx.fillRect(srcX-12,srcY-20,24,40);ctx.strokeRect(srcX-12,srcY-20,24,40);
     ctx.fillStyle='#fff';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('离子源',srcX,srcY+32);
 
-    ctx.strokeStyle='#30363d';ctx.lineWidth=2;ctx.setLineDash([5,3]);
+    ctx.strokeStyle='#D4C9B8';ctx.lineWidth=2;ctx.setLineDash([5,3]);
     ctx.beginPath();ctx.moveTo(srcX+12,srcY);ctx.lineTo(W*0.35,srcY);ctx.stroke();ctx.setLineDash([]);
 
-    ctx.strokeStyle='#ffa657';ctx.lineWidth=3;
+    ctx.strokeStyle='#2A7CC7';ctx.lineWidth=3;
     ctx.beginPath();ctx.arc(W*0.35,srcY,20,Math.PI*1.4,Math.PI*1.6);ctx.stroke();
 
     const sepX=W*0.55,sepY=srcY;
-    ctx.fillStyle='rgba(88,166,255,0.2)';ctx.fillRect(sepX-15,sepY-60,30,120);
-    ctx.strokeStyle='#58a6ff';ctx.lineWidth=2;ctx.strokeRect(sepX-15,sepY-60,30,120);
+    ctx.fillStyle='rgba(14,97,172,0.2)';ctx.fillRect(sepX-15,sepY-60,30,120);
+    ctx.strokeStyle='#0E61AC';ctx.lineWidth=2;ctx.strokeRect(sepX-15,sepY-60,30,120);
     ctx.fillStyle='#fff';ctx.font='9px sans-serif';ctx.textAlign='center';
     ctx.fillText('B 场',sepX,sepY-66);ctx.fillText('区域',sepX,sepY+76);
 
-    ctx.strokeStyle='rgba(247,129,102,0.5)';ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(42,124,199,0.5)';ctx.lineWidth=1;
     for(let y=sepY-50;y<sepY+50;y+=20){
       ctx.beginPath();ctx.moveTo(sepX-25,y);ctx.lineTo(sepX+25,y);ctx.stroke();
       ctx.beginPath();ctx.arc(sepX-25,y,3,0,Math.PI*2);ctx.stroke();
@@ -121,8 +121,8 @@
     }
 
     const detX=W*0.92,detY=srcY;
-    ctx.fillStyle='#30363d';ctx.fillRect(detX,detY-80,10,160);
-    ctx.strokeStyle='#8b949e';ctx.lineWidth=2;ctx.strokeRect(detX,detY-80,10,160);
+    ctx.fillStyle='#D4C9B8';ctx.fillRect(detX,detY-80,10,160);
+    ctx.strokeStyle='#5A6370';ctx.lineWidth=2;ctx.strokeRect(detX,detY-80,10,160);
     ctx.fillStyle='#fff';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText('检测器',detX+5,detY-86);
 
     detectorHits.forEach(h=>{

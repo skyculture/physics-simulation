@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>带电粒子在磁场中的运动 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; overflow:hidden; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; min-height:0; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; min-height:0; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; align-items:center; }
   .ctrl-group { display:flex; align-items:center; gap:6px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; white-space:nowrap; }
+  .ctrl-group label { color:#5A6370; white-space:nowrap; }
   .ctrl-group input[type="range"] { width:110px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:55px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 5px; color:var(--text); font-size:0.9em; text-align:center; }
-  button { background:var(--accent); color:#0d1117; border:none; border-radius:4px; padding:4px 14px; cursor:pointer; font-size:0.76em; font-weight:600; }
+  button { background:var(--accent); color:#FAF2E0; border:none; border-radius:4px; padding:4px 14px; cursor:pointer; font-size:0.76em; font-weight:600; }
   button:hover { opacity:0.85; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.6; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.6; }
 </style>
 </head>
 <body>
@@ -122,7 +122,7 @@ function drawArrow(x1, y1, x2, y2, color, lw) {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   var p = getParams();
@@ -138,7 +138,7 @@ function draw() {
 
   var cx = canvas.width / 2, cy = canvas.height / 2;
 
-  ctx.strokeStyle = 'rgba(88,166,255,0.06)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.06)';
   ctx.lineWidth = 1;
   for (var gi = -30; gi <= 30; gi++) {
     var sx = cx + gi * SCALE;
@@ -151,7 +151,7 @@ function draw() {
     }
   }
 
-  ctx.fillStyle = 'rgba(88,166,255,0.12)';
+  ctx.fillStyle = 'rgba(14,97,172,0.12)';
   var bStep = Math.max(2, Math.round(2 * SCALE / 50));
   for (var bx = -20; bx <= 20; bx += bStep) {
     for (var by = -15; by <= 15; by += bStep) {
@@ -169,7 +169,7 @@ function draw() {
     var chunkSize = 30;
     for (var ci = 0; ci < trail.length - 1; ci += chunkSize) {
       var alpha = ((ci + chunkSize / 2) / trail.length) * 0.85;
-      ctx.strokeStyle = 'rgba(247,129,102,' + alpha.toFixed(3) + ')';
+      ctx.strokeStyle = 'rgba(42,124,199,' + alpha.toFixed(3) + ')';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       var pt0 = toScreen(trail[ci][0], trail[ci][1]);
@@ -192,7 +192,7 @@ function draw() {
       var centerPhysY = py - p.m * vx / (p.q * p.B);
       var cc = toScreen(centerPhysX, centerPhysY);
       var rPx = r * SCALE;
-      ctx.strokeStyle = 'rgba(88,166,255,0.25)';
+      ctx.strokeStyle = 'rgba(14,97,172,0.25)';
       ctx.lineWidth = 1;
       ctx.setLineDash([6, 4]);
       ctx.beginPath();
@@ -200,7 +200,7 @@ function draw() {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.fillStyle = 'rgba(88,166,255,0.3)';
+      ctx.fillStyle = 'rgba(14,97,172,0.3)';
       ctx.beginPath();
       ctx.arc(cc[0], cc[1], 3, 0, Math.PI * 2);
       ctx.fill();
@@ -208,8 +208,8 @@ function draw() {
   }
 
   var sp = toScreen(px, py);
-  ctx.fillStyle = '#f78166';
-  ctx.shadowColor = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
+  ctx.shadowColor = '#2A7CC7';
   ctx.shadowBlur = 15;
   ctx.beginPath();
   ctx.arc(sp[0], sp[1], 6, 0, Math.PI * 2);
@@ -221,7 +221,7 @@ function draw() {
     var vArrowLen = Math.min(40, 10 + speed * 6);
     var vax = sp[0] + (vx / speed) * vArrowLen;
     var vay = sp[1] - (vy / speed) * vArrowLen;
-    drawArrow(sp[0], sp[1], vax, vay, '#3fb950', 2);
+    drawArrow(sp[0], sp[1], vax, vay, '#0E61AC', 2);
   }
 
   if (absq > 0.01 && p.B > 0.01) {
@@ -232,7 +232,7 @@ function draw() {
       var fArrowLen = Math.min(35, 8 + Fmag * 5);
       var fax = sp[0] + (Fx / Fmag) * fArrowLen;
       var fay = sp[1] - (Fy / Fmag) * fArrowLen;
-      drawArrow(sp[0], sp[1], fax, fay, '#58a6ff', 2);
+      drawArrow(sp[0], sp[1], fax, fay, '#0E61AC', 2);
     }
   }
 
@@ -245,7 +245,7 @@ function draw() {
 
   ctx.font = '12px "Segoe UI",sans-serif';
   var iy = canvas.height - 12;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.fillText('回旋半径 r = ' + (rVal === Infinity ? '∞' : rVal.toFixed(3)), 15, iy - 32);
   ctx.fillText('速率 |v| = ' + currentSpeed2.toFixed(4), 15, iy - 16);
   ctx.fillText('动能 KE = ' + KE.toFixed(4), 15, iy);
@@ -259,21 +259,21 @@ function draw() {
   ctx.fillText('磁场 B = ' + p.B.toFixed(1) + ' (⊙ 出屏)', 500, iy);
 
   var lx = canvas.width - 145, ly = 18;
-  drawArrow(lx, ly, lx + 25, ly, '#3fb950', 2);
-  ctx.fillStyle = '#3fb950';
+  drawArrow(lx, ly, lx + 25, ly, '#0E61AC', 2);
+  ctx.fillStyle = '#0E61AC';
   ctx.font = '11px "Segoe UI",sans-serif';
   ctx.fillText('速度 v', lx + 30, ly + 4);
 
-  drawArrow(lx, ly + 18, lx + 25, ly + 18, '#58a6ff', 2);
-  ctx.fillStyle = '#58a6ff';
+  drawArrow(lx, ly + 18, lx + 25, ly + 18, '#0E61AC', 2);
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('洛伦兹力 F', lx + 30, ly + 22);
 
   ctx.setLineDash([5, 4]);
-  ctx.strokeStyle = 'rgba(88,166,255,0.4)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.4)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(lx, ly + 36); ctx.lineTo(lx + 25, ly + 36); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = 'rgba(88,166,255,0.6)';
+  ctx.fillStyle = 'rgba(14,97,172,0.6)';
   ctx.fillText('理论轨道', lx + 30, ly + 40);
 
   animationId = requestAnimationFrame(draw);

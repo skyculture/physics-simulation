@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>牛顿第二定律探究实验室 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; align-items:center; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; white-space:nowrap; }
+  .ctrl-group label { color:#5A6370; white-space:nowrap; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
   .ctrl-group button { padding:5px 14px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); cursor:pointer; font-size:1em; }
   .ctrl-group button:hover { background:var(--border); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -114,7 +114,7 @@ function draw() {
     a = calcAccel(m, F, angle);
   }
 
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   var startX = canvas.width * 0.1;
@@ -138,14 +138,14 @@ function draw() {
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(endX, endY);
   ctx.stroke();
 
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(startX, startY);
@@ -153,7 +153,7 @@ function draw() {
   ctx.stroke();
 
   if (startY - endY > 5) {
-    ctx.strokeStyle = '#30363d';
+    ctx.strokeStyle = '#D4C9B8';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(endX, endY);
@@ -163,7 +163,7 @@ function draw() {
 
   if (startY - endY > 20) {
     var ra = 12;
-    ctx.strokeStyle = '#8b949e';
+    ctx.strokeStyle = '#5A6370';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(endX - ra, startY);
@@ -173,14 +173,14 @@ function draw() {
   }
 
   if (angle > 0.01) {
-    ctx.strokeStyle = '#8b949e';
+    ctx.strokeStyle = '#5A6370';
     ctx.lineWidth = 1;
     var arcR = Math.min(50, slopeCanvasLen * 0.12);
     ctx.beginPath();
     ctx.arc(startX, startY, arcR, -angle, 0, false);
     ctx.stroke();
     var midA = -angle / 2;
-    ctx.fillStyle = '#8b949e';
+    ctx.fillStyle = '#5A6370';
     ctx.font = '12px sans-serif';
     ctx.fillText(angleDeg + '°', startX + (arcR + 8) * Math.cos(midA), startY + (arcR + 8) * Math.sin(midA) + 4);
   }
@@ -196,12 +196,12 @@ function draw() {
   ctx.save();
   ctx.translate(centerX, centerY);
   ctx.rotate(-angle);
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
   ctx.strokeStyle = '#79c0ff';
   ctx.lineWidth = 1.5;
   ctx.strokeRect(-boxW / 2, -boxH / 2, boxW, boxH);
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -217,8 +217,8 @@ function draw() {
   var fLen = F * forceScale;
   var fFromX = centerX + (boxW / 2 + 4) * upX;
   var fFromY = centerY + (boxW / 2 + 4) * upY;
-  drawArrow(fFromX, fFromY, fFromX + fLen * upX, fFromY + fLen * upY, '#f78166', 2.5);
-  ctx.fillStyle = '#f78166';
+  drawArrow(fFromX, fFromY, fFromX + fLen * upX, fFromY + fLen * upY, '#2A7CC7', 2.5);
+  ctx.fillStyle = '#2A7CC7';
   ctx.font = 'bold 12px sans-serif';
   ctx.fillText('F', fFromX + fLen * upX + 6, fFromY + fLen * upY - 6);
 
@@ -248,20 +248,20 @@ function draw() {
   ctx.fillText('重力沿斜面分量 mgsinθ = ' + gravComp.toFixed(2) + ' N (沿斜面向下)', infoX, infoY + lh * 2);
   ctx.fillStyle = '#c9d1d9';
   ctx.fillText('合力 F_net = ' + netForce.toFixed(2) + ' N', infoX, infoY + lh * 3);
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('加速度 a = ' + a.toFixed(3) + ' m/s²', infoX, infoY + lh * 4);
   ctx.fillText('速度 v = ' + v.toFixed(3) + ' m/s', infoX, infoY + lh * 5);
   ctx.fillText('位移 s = ' + s.toFixed(3) + ' m', infoX, infoY + lh * 6);
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.fillText('时间 t = ' + simTime.toFixed(2) + ' s', infoX, infoY + lh * 7);
 
   if (s <= 0.001 && v <= 0.001 && a < 0) {
-    ctx.fillStyle = '#f78166';
+    ctx.fillStyle = '#2A7CC7';
     ctx.font = '12px sans-serif';
     ctx.fillText('⚠ 合力沿斜面向下，物体受地面约束保持静止', infoX, infoY + lh * 8);
   }
 
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 13px sans-serif';
   var formulaY = canvas.height * 0.96;
   ctx.fillText('a = (F - mgsinθ)/m = (' + F + ' - ' + m + '×9.8×sin' + angleDeg + '°)/' + m + ' = ' + a.toFixed(3) + ' m/s²', canvas.width * 0.2, formulaY);

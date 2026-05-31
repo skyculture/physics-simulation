@@ -6,38 +6,38 @@
 <title>核钟VUV激光器 - 物理数值仿真平台</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+body{background:#FAF2E0;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
 .container{width:100%;max-width:1100px}
-.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #30363d;border-radius:12px}
-.header h1{font-size:2rem;font-weight:700;color:#3fb950;letter-spacing:.05em;margin-bottom:8px}
-.header .subtitle{font-size:.95rem;color:#8b949e;line-height:1.6}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #D4C9B8;border-radius:12px}
+.header h1{font-size:2rem;font-weight:700;color:#0E61AC;letter-spacing:.05em;margin-bottom:8px}
+.header .subtitle{font-size:.95rem;color:#5A6370;line-height:1.6}
 .canvas-row{display:flex;gap:16px;margin-bottom:20px}
 @media(max-width:860px){.canvas-row{flex-direction:column}}
-.panel{flex:1;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
-.panel h2{font-size:.95rem;font-weight:600;color:#8b949e;margin-bottom:8px;text-align:center}
-.panel canvas{width:100%;height:auto;border-radius:6px;background:#0d1117}
-.controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+.panel{flex:1;background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel h2{font-size:.95rem;font-weight:600;color:#5A6370;margin-bottom:8px;text-align:center}
+.panel canvas{width:100%;height:auto;border-radius:6px;background:#FAF2E0}
+.controls{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
 @media(max-width:640px){.controls{grid-template-columns:1fr}}
 .control-group{display:flex;flex-direction:column;gap:6px}
 .control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
-.control-group label .val{font-size:.8rem;color:#3fb950;font-weight:700;min-width:80px;text-align:right}
-input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#30363d;outline:none;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+.control-group label .val{font-size:.8rem;color:#0E61AC;font-weight:700;min-width:80px;text-align:right}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#D4C9B8;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
 input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
-input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#3fb950;border:2px solid #161b22;cursor:pointer}
-.info-bar{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer}
+.info-bar{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
 .info-item{display:flex;align-items:baseline;gap:6px}
-.info-item .info-label{color:#8b949e}
-.info-item .info-value{color:#3fb950;font-weight:700;font-size:1rem}
+.info-item .info-label{color:#5A6370}
+.info-item .info-value{color:#0E61AC;font-weight:700;font-size:1rem}
 .btn-row{display:flex;gap:12px;justify-content:center}
-.btn{padding:10px 28px;border:1px solid #30363d;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.btn{padding:10px 28px;border:1px solid #D4C9B8;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
 .btn-start{background:#238636;color:#fff;border-color:#2ea043}
 .btn-start:hover{background:#2ea043}
 .btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
 .btn-pause:hover{background:#bb8009}
-.btn-reset{background:#21262d;color:#c9d1d9;border-color:#30363d}
-.btn-reset:hover{background:#30363d}
-.legend-note{text-align:center;font-size:.78rem;color:#8b949e;margin-top:12px;line-height:1.5}
+.btn-reset{background:#FFFFFF;color:#c9d1d9;border-color:#D4C9B8}
+.btn-reset:hover{background:#D4C9B8}
+.legend-note{text-align:center;font-size:.78rem;color:#5A6370;margin-top:12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -181,16 +181,16 @@ btnReset.addEventListener('click',function(){
 function drawSchematic(){
   var W=canvasSchematic.width,H=canvasSchematic.height;
   ctxS.clearRect(0,0,W,H);
-  ctxS.fillStyle='#0d1117';ctxS.fillRect(0,0,W,H);
+  ctxS.fillStyle='#FAF2E0';ctxS.fillRect(0,0,W,H);
   var ph=computePhysics();
   var cy=H*0.55;
   var leftX=W*0.1;
   var rightX=W*0.72;
   var mirrorH=70;
 
-  ctxS.fillStyle='#58a6ff';
+  ctxS.fillStyle='#0E61AC';
   ctxS.fillRect(leftX,cy-mirrorH/2,6,mirrorH);
-  ctxS.strokeStyle='#58a6ff';ctxS.lineWidth=2;
+  ctxS.strokeStyle='#0E61AC';ctxS.lineWidth=2;
   ctxS.strokeRect(leftX,cy-mirrorH/2,6,mirrorH);
   ctxS.fillStyle='#c9d1d9';ctxS.font='10px sans-serif';ctxS.textAlign='center';
   ctxS.fillText('全反镜',leftX+3,cy+mirrorH/2+14);
@@ -207,11 +207,11 @@ function drawSchematic(){
   var medLeft=leftX+8;
   var medRight=rightX-2;
   var pumpLevel=pump/100;
-  ctxS.fillStyle='rgba(63,185,80,'+(0.08+pumpLevel*0.2)+')';
+  ctxS.fillStyle='rgba(14,97,172,'+(0.08+pumpLevel*0.2)+')';
   ctxS.fillRect(medLeft,cy-25,medRight-medLeft,50);
-  ctxS.strokeStyle='#3fb950';ctxS.lineWidth=1.5;
+  ctxS.strokeStyle='#0E61AC';ctxS.lineWidth=1.5;
   ctxS.strokeRect(medLeft,cy-25,medRight-medLeft,50);
-  ctxS.fillStyle='#3fb950';ctxS.font='11px sans-serif';ctxS.textAlign='center';
+  ctxS.fillStyle='#0E61AC';ctxS.font='11px sans-serif';ctxS.textAlign='center';
   ctxS.fillText('²²⁹Th 增益介质 (CaF₂ 晶体)',(medLeft+medRight)/2,cy+4);
 
   if(ph.laserOn){
@@ -233,7 +233,7 @@ function drawSchematic(){
     ctxS.beginPath();ctxS.arc(medLeft+p.x*(medRight-medLeft),cy+p.y,3,0,Math.PI*2);ctxS.fill();
   }
 
-  ctxS.fillStyle='#ffa657';ctxS.font='10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillStyle='#2A7CC7';ctxS.font='10px sans-serif';ctxS.textAlign='center';
   ctxS.fillText('泵浦 ↑',(medLeft+medRight)/2,cy-35);
   var pumpCount=Math.max(2,Math.round((medRight-medLeft)/35));
   for(var i=0;i<pumpCount;i++){
@@ -251,12 +251,12 @@ function drawSchematic(){
 
   ctxS.fillStyle='#161b22';
   ctxS.fillRect(elLeft-5,elTop-15,elRight-elLeft+10,elBot-elTop+30);
-  ctxS.strokeStyle='#30363d';ctxS.lineWidth=1;
+  ctxS.strokeStyle='#D4C9B8';ctxS.lineWidth=1;
   ctxS.strokeRect(elLeft-5,elTop-15,elRight-elLeft+10,elBot-elTop+30);
 
-  ctxS.strokeStyle='#58a6ff';ctxS.lineWidth=3;
+  ctxS.strokeStyle='#0E61AC';ctxS.lineWidth=3;
   ctxS.beginPath();ctxS.moveTo(elLeft+10,elBot-10);ctxS.lineTo(elLeft+elRight*0.5,elBot-10);ctxS.stroke();
-  ctxS.fillStyle='#58a6ff';ctxS.font='11px sans-serif';ctxS.textAlign='left';
+  ctxS.fillStyle='#0E61AC';ctxS.font='11px sans-serif';ctxS.textAlign='left';
   ctxS.fillText('基态 ²²⁹Th',elLeft+elRight*0.5+8,elBot-6);
 
   ctxS.strokeStyle='#b482ff';ctxS.lineWidth=3;
@@ -265,14 +265,14 @@ function drawSchematic(){
   ctxS.fillText('同核异构态',elLeft+elRight*0.5+8,elTop+14);
 
   var arrowX=elLeft+elRight*0.3;
-  ctxS.strokeStyle='#3fb950';ctxS.lineWidth=2;
+  ctxS.strokeStyle='#0E61AC';ctxS.lineWidth=2;
   ctxS.beginPath();ctxS.moveTo(arrowX,elBot-14);ctxS.lineTo(arrowX,elTop+14);ctxS.stroke();
   ctxS.beginPath();ctxS.moveTo(arrowX-4,elTop+20);ctxS.lineTo(arrowX,elTop+14);ctxS.lineTo(arrowX+4,elTop+20);ctxS.stroke();
-  ctxS.fillStyle='#3fb950';ctxS.font='bold 10px sans-serif';ctxS.textAlign='center';
+  ctxS.fillStyle='#0E61AC';ctxS.font='bold 10px sans-serif';ctxS.textAlign='center';
   ctxS.fillText('8.355 eV',arrowX+35,elMid+4);
   ctxS.fillText('148.382 nm',arrowX+35,elMid+18);
 
-  ctxS.fillStyle=ph.laserOn?'#3fb950':'#f85149';
+  ctxS.fillStyle=ph.laserOn?'#0E61AC':'#f85149';
   ctxS.font='bold 12px sans-serif';ctxS.textAlign='center';
   ctxS.fillText(ph.laserOn?'VUV激光运转':'未达阈值',W/2,H-12);
 }
@@ -280,15 +280,15 @@ function drawSchematic(){
 function drawLorentzian(){
   var W=canvasLorentz.width,H=canvasLorentz.height;
   ctxL.clearRect(0,0,W,H);
-  ctxL.fillStyle='#0d1117';ctxL.fillRect(0,0,W,H);
+  ctxL.fillStyle='#FAF2E0';ctxL.fillRect(0,0,W,H);
   var ph=computePhysics();
   var ml=70,mt=30,mr=30,mb=55;
   var pw=W-ml-mr,ph2=H-mt-mb;
 
-  ctxL.strokeStyle='#30363d';ctxL.lineWidth=1;
+  ctxL.strokeStyle='#D4C9B8';ctxL.lineWidth=1;
   ctxL.beginPath();ctxL.moveTo(ml,mt);ctxL.lineTo(ml,H-mb);ctxL.lineTo(W-mr,H-mb);ctxL.stroke();
 
-  ctxL.fillStyle='#8b949e';ctxL.font='10px sans-serif';
+  ctxL.fillStyle='#5A6370';ctxL.font='10px sans-serif';
   ctxL.textAlign='center';
   ctxL.fillText('频率偏移 (Δν)',ml+pw/2,H-mb+35);
   ctxL.save();
@@ -304,8 +304,8 @@ function drawLorentzian(){
 
   var maxFreq=halfSpan;
   var numTicks=6;
-  ctxL.strokeStyle='#30363d';ctxL.lineWidth=1;
-  ctxL.fillStyle='#8b949e';ctxL.font='9px sans-serif';ctxL.textAlign='center';
+  ctxL.strokeStyle='#D4C9B8';ctxL.lineWidth=1;
+  ctxL.fillStyle='#5A6370';ctxL.font='9px sans-serif';ctxL.textAlign='center';
   for(var i=0;i<=numTicks;i++){
     var frac=i/numTicks;
     var x=ml+frac*pw;
@@ -323,9 +323,9 @@ function drawLorentzian(){
   for(var i=0;i<=numYTicks;i++){
     var frac=i/numYTicks;
     var y=H-mb-frac*ph2;
-    ctxL.strokeStyle='#30363d';ctxL.lineWidth=1;
+    ctxL.strokeStyle='#D4C9B8';ctxL.lineWidth=1;
     ctxL.beginPath();ctxL.moveTo(ml,y);ctxL.lineTo(ml-5,y);ctxL.stroke();
-    ctxL.fillStyle='#8b949e';ctxL.font='9px sans-serif';ctxL.textAlign='right';
+    ctxL.fillStyle='#5A6370';ctxL.font='9px sans-serif';ctxL.textAlign='right';
     ctxL.fillText(frac.toFixed(1),ml-8,y+3);
   }
 
@@ -379,14 +379,14 @@ function drawLorentzian(){
     ctxL.strokeStyle='rgba(255,166,87,0.6)';ctxL.lineWidth=1;ctxL.setLineDash([4,3]);
     ctxL.beginPath();ctxL.moveTo(ml,fwhmY);ctxL.lineTo(W-mr,fwhmY);ctxL.stroke();
     ctxL.setLineDash([]);
-    ctxL.fillStyle='#ffa657';ctxL.font='9px sans-serif';ctxL.textAlign='left';
+    ctxL.fillStyle='#2A7CC7';ctxL.font='9px sans-serif';ctxL.textAlign='left';
     ctxL.fillText('FWHM = '+formatLinewidth(lw),ml+5,fwhmY-5);
 
     var centerPeak=H-mb-intensity*ph2;
-    ctxL.strokeStyle='rgba(63,185,80,0.5)';ctxL.lineWidth=1;ctxL.setLineDash([3,3]);
+    ctxL.strokeStyle='rgba(14,97,172,0.5)';ctxL.lineWidth=1;ctxL.setLineDash([3,3]);
     ctxL.beginPath();ctxL.moveTo(ml+pw/2,centerPeak);ctxL.lineTo(ml+pw/2,H-mb);ctxL.stroke();
     ctxL.setLineDash([]);
-    ctxL.fillStyle='#3fb950';ctxL.font='9px sans-serif';ctxL.textAlign='center';
+    ctxL.fillStyle='#0E61AC';ctxL.font='9px sans-serif';ctxL.textAlign='center';
     ctxL.fillText('ν₀ = 2.0216 PHz',ml+pw/2,H-mb+48);
 
     var peakLabel='峰值: '+(intensity*100).toFixed(0)+'%';
@@ -397,7 +397,7 @@ function drawLorentzian(){
     ctxL.fillText('泵浦未达阈值，无激光输出',ml+pw/2,mt+ph2/2);
   }
 
-  ctxL.fillStyle='#8b949e';ctxL.font='9px sans-serif';ctxL.textAlign='left';
+  ctxL.fillStyle='#5A6370';ctxL.font='9px sans-serif';ctxL.textAlign='left';
   ctxL.fillText('腔线宽: '+formatLinewidth(ph.cavityLinewidth),ml+5,mt+15);
   ctxL.fillText('多普勒展宽: '+formatLinewidth(ph.dopplerWidth),ml+5,mt+28);
   ctxL.fillText('有效线宽: '+formatLinewidth(ph.effectiveLinewidth),ml+5,mt+41);

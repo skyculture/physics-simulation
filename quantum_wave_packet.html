@@ -6,13 +6,13 @@
 <title>量子波包演化仿真 - 一维薛定谔方程数值求解</title>
 <style>
   :root {
-    --bg: #0d1117;
+    --bg: #FAF2E0;
     --panel: #161b22;
-    --border: #30363d;
+    --border: #D4C9B8;
     --text: #c9d1d9;
-    --accent: #58a6ff;
-    --accent2: #3fb950;
-    --accent3: #f78166;
+    --accent: #0E61AC;
+    --accent2: #0E61AC;
+    --accent3: #2A7CC7;
     --slider: #484f58;
     --hover: #1f6feb;
   }
@@ -34,12 +34,12 @@
   header h1 {
     font-size: 1.6em;
     font-weight: 600;
-    color: #f0f6fc;
+    color: #0E61AC;
     letter-spacing: 0.02em;
   }
   header .subtitle {
     font-size: 0.88em;
-    color: #8b949e;
+    color: #5A6370;
     margin-top: 4px;
   }
   .main-container {
@@ -62,7 +62,7 @@
   }
   .info-bar {
     position: absolute; top: 8px; left: 12px;
-    font-size: 0.78em; color: #8b949e;
+    font-size: 0.78em; color: #5A6370;
     pointer-events: none;
     display: flex; gap: 18px;
     background: rgba(13,17,23,0.75);
@@ -84,7 +84,7 @@
   }
   .control-panel h3 {
     font-size: 0.95em;
-    color: #f0f6fc;
+    color: #0E61AC;
     margin-bottom: 2px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
@@ -92,7 +92,7 @@
   .ctrl-group { display: flex; flex-direction: column; gap: 3px; }
   .ctrl-group label {
     font-size: 0.8em;
-    color: #8b949e;
+    color: #5A6370;
     display: flex; justify-content: space-between;
   }
   .ctrl-group label .val { color: var(--accent); }
@@ -130,7 +130,7 @@
     padding: 8px 0;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: #21262d;
+    background: #FFFFFF;
     color: var(--text);
     font-size: 0.82em;
     cursor: pointer;
@@ -138,16 +138,16 @@
     text-align: center;
     font-weight: 500;
   }
-  .btn:hover { background: #30363d; }
+  .btn:hover { background: #D4C9B8; }
   .btn.primary { border-color: var(--accent); color: var(--accent); }
   .btn.primary:hover { background: var(--hover); color: #fff; }
   .btn.warn { border-color: var(--accent3); color: var(--accent3); }
 
-  .legend { font-size: 0.72em; color: #8b949e; line-height: 1.7; }
+  .legend { font-size: 0.72em; color: #5A6370; line-height: 1.7; }
   .legend span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
-  .legend .l1 { background: #58a6ff; }
-  .legend .l2 { background: #3fb95044; }
-  .legend .l3 { background: #f78166; }
+  .legend .l1 { background: #0E61AC; }
+  .legend .l2 { background: #0E61AC44; }
+  .legend .l3 { background: #2A7CC7; }
 
   footer {
     font-size: 0.73em; color: #484f58;
@@ -654,8 +654,8 @@ function draw() {
   ctx.lineTo(marginLeft + plotW, topBase);
   ctx.closePath();
   const grad = ctx.createLinearGradient(0, topY0, 0, topBase);
-  grad.addColorStop(0, 'rgba(88,166,255,0.55)');
-  grad.addColorStop(1, 'rgba(88,166,255,0.05)');
+  grad.addColorStop(0, 'rgba(14,97,172,0.55)');
+  grad.addColorStop(1, 'rgba(14,97,172,0.05)');
   ctx.fillStyle = grad;
   ctx.fill();
 
@@ -667,7 +667,7 @@ function draw() {
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   }
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 1.8 * dpr;
   ctx.stroke();
 
@@ -683,7 +683,7 @@ function draw() {
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   }
-  ctx.strokeStyle = 'rgba(247,129,102,0.7)';
+  ctx.strokeStyle = 'rgba(42,124,199,0.7)';
   ctx.lineWidth = 1.2 * dpr;
   ctx.setLineDash([4 * dpr, 4 * dpr]);
   ctx.stroke();
@@ -703,7 +703,7 @@ function draw() {
   }
   ctx.lineTo(marginLeft + plotW, botMid);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(63,185,80,0.18)';
+  ctx.fillStyle = 'rgba(14,97,172,0.18)';
   ctx.fill();
 
   // V(x) 曲线
@@ -714,12 +714,12 @@ function draw() {
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   }
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 1.6 * dpr;
   ctx.stroke();
 
   // --- 坐标轴 ---
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1 * dpr;
   // 上区零线
   ctx.beginPath();
@@ -745,7 +745,7 @@ function draw() {
   ctx.stroke();
 
   // --- 轴标签 ---
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${11 * dpr}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   // x 轴刻度标签

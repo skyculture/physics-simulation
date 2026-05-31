@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>引力弹弓 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -120,7 +120,7 @@ function draw() {
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   const planetScreen = { x: cx, y: cy };
   const planetR = Math.max(R_PLANET * scale, S * 0.08);
   ctx.beginPath();
@@ -135,7 +135,7 @@ function draw() {
   ctx.arc(cx, cy, planetR * 1.5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(210,168,255,0.3)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.3)';
   ctx.lineWidth = S * 0.002;
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
@@ -144,7 +144,7 @@ function draw() {
   ctx.setLineDash([]);
 
   if (trail.length > 1) {
-    ctx.strokeStyle = showSlingshot ? 'rgba(59,185,80,0.6)' : 'rgba(88,166,255,0.6)';
+    ctx.strokeStyle = showSlingshot ? 'rgba(59,185,80,0.6)' : 'rgba(14,97,172,0.6)';
     ctx.lineWidth = S * 0.003;
     ctx.beginPath();
     const p0 = { x: cx + trail[0].x * scale, y: cy - trail[0].y * scale };
@@ -157,14 +157,14 @@ function draw() {
   }
 
   const shipScreen = { x: cx + ship.x * scale, y: cy - ship.y * scale };
-  ctx.fillStyle = showSlingshot ? '#3fb950' : '#58a6ff';
+  ctx.fillStyle = showSlingshot ? '#0E61AC' : '#0E61AC';
   ctx.beginPath();
   ctx.arc(shipScreen.x, shipScreen.y, S * 0.015, 0, Math.PI * 2);
   ctx.fill();
 
   const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy) / 1000;
   const angle = Math.atan2(-ship.vy, ship.vx);
-  ctx.strokeStyle = showSlingshot ? '#3fb950' : '#58a6ff';
+  ctx.strokeStyle = showSlingshot ? '#0E61AC' : '#0E61AC';
   ctx.lineWidth = S * 0.003;
   ctx.beginPath();
   ctx.moveTo(shipScreen.x, shipScreen.y);
@@ -173,24 +173,24 @@ function draw() {
 
   const fs = S * 0.025;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.textAlign = 'left';
   const infoX = S * 0.03, infoY = fs + 5;
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`行星质量: ${document.getElementById('planetMass').value} M⊕`, infoX, infoY);
   ctx.fillText(`初始速度: ${document.getElementById('shipSpeed').value} km/s`, infoX, infoY + fs * 1.3);
   ctx.fillText(`瞄准距离: ${document.getElementById('aimDist').value} R⊕`, infoX, infoY + fs * 2.6);
 
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText(`当前速度: ${speed.toFixed(2)} km/s`, infoX, infoY + fs * 3.9);
 
   const deltaV = speed - parseFloat(document.getElementById('shipSpeed').value);
-  ctx.fillStyle = deltaV > 0.5 ? '#3fb950' : deltaV < -0.5 ? '#f78166' : '#8b949e';
+  ctx.fillStyle = deltaV > 0.5 ? '#0E61AC' : deltaV < -0.5 ? '#2A7CC7' : '#5A6370';
   ctx.fillText(`速度变化: ${deltaV.toFixed(2)} km/s`, infoX, infoY + fs * 5.2);
 
   if (showSlingshot) {
-    ctx.fillStyle = '#3fb950';
+    ctx.fillStyle = '#0E61AC';
     ctx.font = `bold ${fs}px sans-serif`;
     ctx.fillText('引力弹弓加速中!', infoX, infoY + fs * 6.8);
   }

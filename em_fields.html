@@ -8,7 +8,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   display: flex;
@@ -27,12 +27,12 @@ body {
 .header h1 {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #58a6ff;
+  color: #0E61AC;
   letter-spacing: 2px;
 }
 .header .subtitle {
   font-size: 0.9rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 2px;
 }
 
@@ -49,7 +49,7 @@ body {
 /* ========== 画布面板 ========== */
 .canvas-panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 10px;
   padding: 8px;
   position: relative;
@@ -63,7 +63,7 @@ canvas {
 /* ========== 侧边控制面板 ========== */
 .control-panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 10px;
   padding: 16px;
   display: flex;
@@ -74,16 +74,16 @@ canvas {
 }
 
 .panel-section {
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 12px;
-  background: #0d1117;
+  background: #FAF2E0;
 }
 .panel-section h3 {
   font-size: 0.95rem;
-  color: #58a6ff;
+  color: #0E61AC;
   margin-bottom: 8px;
-  border-bottom: 1px solid #21262d;
+  border-bottom: 1px solid #FFFFFF;
   padding-bottom: 6px;
 }
 
@@ -94,9 +94,9 @@ canvas {
   gap: 6px;
 }
 .btn {
-  background: #21262d;
+  background: #FFFFFF;
   color: #c9d1d9;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   padding: 7px 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -105,8 +105,8 @@ canvas {
   transition: background 0.2s, border-color 0.2s;
   white-space: nowrap;
 }
-.btn:hover { background: #30363d; border-color: #58a6ff; }
-.btn.active { background: #1f6feb; border-color: #58a6ff; color: #fff; }
+.btn:hover { background: #D4C9B8; border-color: #0E61AC; }
+.btn.active { background: #1f6feb; border-color: #0E61AC; color: #fff; }
 .btn.danger { border-color: #f85149; color: #f85149; }
 .btn.danger:hover { background: #3d1f1f; }
 
@@ -116,20 +116,20 @@ canvas {
   display: flex;
   justify-content: space-between;
   font-size: 0.78rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-bottom: 2px;
 }
-.slider-group label span { color: #58a6ff; font-weight: 600; }
+.slider-group label span { color: #0E61AC; font-weight: 600; }
 .slider-group input[type="range"] {
   width: 100%;
-  accent-color: #58a6ff;
+  accent-color: #0E61AC;
 }
 
 /* 预设按钮 */
 .preset-btn {
-  background: #21262d;
-  color: #8b949e;
-  border: 1px solid #30363d;
+  background: #FFFFFF;
+  color: #5A6370;
+  border: 1px solid #D4C9B8;
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
@@ -137,7 +137,7 @@ canvas {
   font-family: inherit;
   transition: all 0.2s;
 }
-.preset-btn:hover { color: #58a6ff; border-color: #58a6ff; }
+.preset-btn:hover { color: #0E61AC; border-color: #0E61AC; }
 
 /* 电荷列表 */
 .charge-item {
@@ -146,17 +146,17 @@ canvas {
   align-items: center;
   padding: 4px 8px;
   border-radius: 4px;
-  background: #21262d;
+  background: #FFFFFF;
   margin-bottom: 4px;
   font-size: 0.8rem;
   border: 1px solid transparent;
   cursor: pointer;
   transition: border-color 0.2s;
 }
-.charge-item:hover { border-color: #58a6ff; }
-.charge-item.selected { border-color: #58a6ff; background: #1a2332; }
+.charge-item:hover { border-color: #0E61AC; }
+.charge-item.selected { border-color: #0E61AC; background: #1a2332; }
 .charge-item .pos { color: #f85149; }
-.charge-item .neg { color: #58a6ff; }
+.charge-item .neg { color: #0E61AC; }
 .charge-item .delete-charge {
   color: #f85149;
   cursor: pointer;
@@ -171,12 +171,12 @@ canvas {
   text-align: center;
 }
 .footer-link a {
-  color: #8b949e;
+  color: #5A6370;
   text-decoration: none;
   font-size: 0.82rem;
   transition: color 0.2s;
 }
-.footer-link a:hover { color: #58a6ff; }
+.footer-link a:hover { color: #0E61AC; }
 
 /* 提示信息 */
 .info-bar {
@@ -186,12 +186,12 @@ canvas {
   margin-bottom: 2px;
 }
 .info-tag {
-  background: #21262d;
-  border: 1px solid #30363d;
+  background: #FFFFFF;
+  border: 1px solid #D4C9B8;
   border-radius: 4px;
   padding: 2px 8px;
   font-size: 0.72rem;
-  color: #8b949e;
+  color: #5A6370;
 }
 
 @media (max-width: 800px) {
@@ -256,14 +256,14 @@ canvas {
       <h3>➕ 添加电荷</h3>
       <div class="btn-row">
         <button class="btn" id="btn-add-pos" style="color:#f85149;">＋ 正电荷</button>
-        <button class="btn" id="btn-add-neg" style="color:#58a6ff;">− 负电荷</button>
+        <button class="btn" id="btn-add-neg" style="color:#0E61AC;">− 负电荷</button>
       </div>
     </div>
 
     <!-- 选中电荷属性 -->
     <div class="panel-section">
       <h3>📋 选中电荷属性</h3>
-      <div id="charge-info" style="font-size:0.82rem; color:#8b949e;">点击一个电荷来选中它</div>
+      <div id="charge-info" style="font-size:0.82rem; color:#5A6370;">点击一个电荷来选中它</div>
       <div class="slider-group" style="margin-top:8px;">
         <label>电荷量 <span id="mag-val">1.0 μC</span></label>
         <input type="range" id="mag-slider" min="0.1" max="5" step="0.1" value="1">
@@ -276,7 +276,7 @@ canvas {
     <!-- 电荷列表 -->
     <div class="panel-section">
       <h3>📊 电荷列表 (<span id="charge-count">0</span>)</h3>
-      <div id="charge-list" style="max-height:140px; overflow-y:auto; font-size:0.78rem; color:#8b949e;">
+      <div id="charge-list" style="max-height:140px; overflow-y:auto; font-size:0.78rem; color:#5A6370;">
         暂无电荷
       </div>
     </div>
@@ -861,7 +861,7 @@ function render() {
 function drawGrid() {
   const bounds = getVisibleWorldBounds();
   const scale = getUnifiedScale();
-  ctx.strokeStyle = '#21262d';
+  ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 0.5;
 
   // 垂直网格线
@@ -883,7 +883,7 @@ function drawGrid() {
   }
 
   // 坐标轴加粗
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 1;
   const cxPx = canvas.width / 2;
   const cyPx = canvas.height / 2;
@@ -1073,7 +1073,7 @@ function updateChargeUI() {
 
   // 更新电荷列表
   if (charges.length === 0) {
-    chargeList.innerHTML = '<span style="color:#8b949e;">暂无电荷</span>';
+    chargeList.innerHTML = '<span style="color:#5A6370;">暂无电荷</span>';
   } else {
     chargeList.innerHTML = charges.map(c => {
       const cls = c.q > 0 ? 'pos' : 'neg';
@@ -1104,7 +1104,7 @@ function updateSelectedChargeInfo() {
   const sc = getSelectedCharge();
   if (sc) {
     chargeInfo.innerHTML = `
-      <span style="color:${sc.q > 0 ? '#f85149' : '#58a6ff'}; font-weight:600;">
+      <span style="color:${sc.q > 0 ? '#f85149' : '#0E61AC'}; font-weight:600;">
         ${sc.q > 0 ? '正电荷' : '负电荷'}
       </span>
       &nbsp;Q = ${sc.q > 0 ? '+' : ''}${sc.q.toFixed(1)} μC<br>

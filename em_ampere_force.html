@@ -4,14 +4,14 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>安培力 - 物理数值仿真平台</title>
 <style>
-html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+html,body{margin:0;padding:0;height:100%;background:#FAF2E0;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
 #app{height:100%;display:flex;flex-direction:column}
 main{flex:1;display:flex;overflow:hidden}#canvasWrap{flex:1;position:relative}canvas{display:block;width:100%;height:100%}
-#sidebar{width:300px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
-.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}.sec:last-child{border-bottom:none}
-h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+#sidebar{width:300px;background:#161b22;border-left:1px solid #D4C9B8;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D4C9B8}.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 .row{display:flex;align-items:center;gap:10px;margin:8px 0}.row label{flex:0 0 100px;font-size:13px}
-.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#FAF2E0;border:1px solid #D4C9B8;color:#c9d1d9;padding:6px 8px;border-radius:6px}
 </style></head>
 <body><div id="app">
 
@@ -34,24 +34,24 @@ function draw(){
 if(!inited){resize();inited=true;}
 const W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H){requestAnimationFrame(draw);return}
 const I=+p1.value,B=+p2.value,L=+p3.value,thDeg=+p4.value,th=thDeg/180*Math.PI;
-ctx.clearRect(0,0,W,H);ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 const margin=60,cx=(margin+W-margin)/2,cy=(margin+H-margin)/2,scale=Math.min(W,H)/5;
 // B field arrows (into page, vertical)
-ctx.strokeStyle='rgba(88,166,255,0.3)';ctx.lineWidth=1;
+ctx.strokeStyle='rgba(14,97,172,0.3)';ctx.lineWidth=1;
 for(let i=-5;i<=5;i++){for(let j=-3;j<=3;j++){
 const xx=cx+i*scale*0.5,yy=cy+j*scale*0.6;
 ctx.beginPath();ctx.moveTo(xx,yy-10);ctx.lineTo(xx,yy+10);ctx.stroke();
-ctx.beginPath();ctx.moveTo(xx-3,yy-6);ctx.lineTo(xx,yy-10);ctx.lineTo(xx+3,yy-6);ctx.fillStyle='rgba(88,166,255,0.3)';ctx.fill();
+ctx.beginPath();ctx.moveTo(xx-3,yy-6);ctx.lineTo(xx,yy-10);ctx.lineTo(xx+3,yy-6);ctx.fillStyle='rgba(14,97,172,0.3)';ctx.fill();
 }}
 // wire
 const wireLen=L*scale;
 ctx.save();ctx.translate(cx,cy);ctx.rotate(th);
-ctx.fillStyle='#f78166';ctx.fillRect(-wireLen/2,-4,wireLen,8);
+ctx.fillStyle='#2A7CC7';ctx.fillRect(-wireLen/2,-4,wireLen,8);
 ctx.strokeStyle='#c9d1d9';ctx.lineWidth=2;ctx.strokeRect(-wireLen/2,-4,wireLen,8);
 // current direction arrow
 const sign=I>0?1:-1;
-ctx.strokeStyle='#3fb950';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-wireLen/2+30,0);ctx.lineTo(wireLen/2-30,0);ctx.stroke();
-ctx.beginPath();ctx.moveTo(wireLen/2-40,-6);ctx.lineTo(wireLen/2-30,0);ctx.lineTo(wireLen/2-40,6);ctx.fillStyle='#3fb950';ctx.fill();
+ctx.strokeStyle='#0E61AC';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-wireLen/2+30,0);ctx.lineTo(wireLen/2-30,0);ctx.stroke();
+ctx.beginPath();ctx.moveTo(wireLen/2-40,-6);ctx.lineTo(wireLen/2-30,0);ctx.lineTo(wireLen/2-40,6);ctx.fillStyle='#0E61AC';ctx.fill();
 ctx.restore();
 // force vector F = IL × B = ILB sinθ
 const Fmag=Math.abs(I)*L*B*Math.sin(th);
@@ -59,7 +59,7 @@ const Fy=-I*B*L*Math.cos(th)*0.5; // simplified direction
 ctx.strokeStyle='#f85149';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx,cy-Fmag*scale*0.3);ctx.stroke();
 ctx.beginPath();ctx.moveTo(cx-8,cy-Fmag*scale*0.3+10);ctx.lineTo(cx,cy-Fmag*scale*0.3);ctx.lineTo(cx+8,cy-Fmag*scale*0.3+10);ctx.fillStyle='#f85149';ctx.fill();
 // info
-ctx.fillStyle='#8b949e';ctx.font='14px system-ui';
+ctx.fillStyle='#5A6370';ctx.font='14px system-ui';
 ctx.fillText(`安培力 F = ILB·sinθ = ${Fmag.toFixed(3)} N | θ = ${thDeg}°`,margin,H-margin-20);
 requestAnimationFrame(draw);
 }requestAnimationFrame(draw);

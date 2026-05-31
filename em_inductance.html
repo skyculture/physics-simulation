@@ -4,14 +4,14 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>电感 - 物理数值仿真平台</title>
 <style>
-html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+html,body{margin:0;padding:0;height:100%;background:#FAF2E0;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
 #app{height:100%;display:flex;flex-direction:column}
 main{flex:1;display:flex;overflow:hidden}#canvasWrap{flex:1;position:relative}canvas{display:block;width:100%;height:100%}
-#sidebar{width:300px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
-.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}.sec:last-child{border-bottom:none}
-h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+#sidebar{width:300px;background:#161b22;border-left:1px solid #D4C9B8;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D4C9B8}.sec:last-child{border-bottom:none}
+h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 .row{display:flex;align-items:center;gap:10px;margin:8px 0}.row label{flex:0 0 100px;font-size:13px}
-.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+.row input[type=range]{flex:1}.row input[type=number]{width:70px;background:#FAF2E0;border:1px solid #D4C9B8;color:#c9d1d9;padding:6px 8px;border-radius:6px}
 </style></head>
 <body><div id="app">
 
@@ -36,7 +36,7 @@ const W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H){requestAnimationFram
 const L=+p1.value,R=+p2.value,V=+p3.value;
 t+=0.016;
 const margin=60,top=margin,bottom=H-margin,left=margin,right=W-margin;
-ctx.clearRect(0,0,W,H);ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 // RL circuit equation: L di/dt + Ri = V
 // di/dt = (V - Ri)/L
 di=(V-R*i)/L;i+=di*0.016;
@@ -44,11 +44,11 @@ history.push(i);
 if(history.length>500)history.shift();
 // plot
 const cx=left+(right-left)/2,cy=top+(bottom-top)/2;
-ctx.strokeStyle='#21262d';ctx.lineWidth=1;
+ctx.strokeStyle='#FFFFFF';ctx.lineWidth=1;
 for(let k=0;k<=10;k++){ctx.beginPath();ctx.moveTo(left,top+(bottom-top)/10*k);ctx.lineTo(right,top+(bottom-top)/10*k);ctx.stroke();}
 for(let k=0;k<=5;k++){ctx.beginPath();ctx.moveTo(left+(right-left)/5*k,top);ctx.lineTo(left+(right-left)/5*k,bottom);ctx.stroke();}
 // i curve
-ctx.strokeStyle='#3fb950';ctx.lineWidth=2;ctx.beginPath();
+ctx.strokeStyle='#0E61AC';ctx.lineWidth=2;ctx.beginPath();
 const imax=Math.max(0.1,V/R*1.2);
 for(let k=0;k<history.length;k++){
 const x=left+(right-left)*k/500,y=bottom-(history[k]/imax)*(bottom-top-20);
@@ -56,13 +56,13 @@ if(k===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
 }
 ctx.stroke();
 // steady state line
-ctx.strokeStyle='rgba(88,166,255,0.4)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
+ctx.strokeStyle='rgba(14,97,172,0.4)';ctx.setLineDash([4,4]);ctx.lineWidth=1;
 const ssy=bottom-(V/R/imax)*(bottom-top-20);
 ctx.beginPath();ctx.moveTo(left,ssy);ctx.lineTo(right,ssy);ctx.stroke();ctx.setLineDash([]);
 // labels
-ctx.fillStyle='#8b949e';ctx.font='14px system-ui';
+ctx.fillStyle='#5A6370';ctx.font='14px system-ui';
 ctx.fillText(`i(t) = ${i.toFixed(3)} A | 稳态 i_∞ = ${(V/R).toFixed(2)} A | τ = ${(L/R).toFixed(2)} s`,left,bottom+30);
-ctx.fillStyle='#58a6ff';ctx.fillText(`i (A)`,left-5,top+10);
+ctx.fillStyle='#0E61AC';ctx.fillText(`i (A)`,left-5,top+10);
 ctx.fillText(`t (s)`,right-30,bottom+30);
 requestAnimationFrame(draw);
 }requestAnimationFrame(draw);

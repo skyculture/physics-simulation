@@ -6,13 +6,13 @@
 <title>带电粒子在电磁场中运动 - 洛伦兹力仿真</title>
 <style>
   :root {
-    --bg: #0d1117;
+    --bg: #FAF2E0;
     --panel: #161b22;
-    --border: #30363d;
+    --border: #D4C9B8;
     --text: #c9d1d9;
-    --accent: #58a6ff;
-    --accent2: #3fb950;
-    --accent3: #f78166;
+    --accent: #0E61AC;
+    --accent2: #0E61AC;
+    --accent3: #2A7CC7;
     --slider: #484f58;
     --hover: #1f6feb;
   }
@@ -34,12 +34,12 @@
   header h1 {
     font-size: 1.6em;
     font-weight: 600;
-    color: #f0f6fc;
+    color: #0E61AC;
     letter-spacing: 0.02em;
   }
   header .subtitle {
     font-size: 0.88em;
-    color: #8b949e;
+    color: #5A6370;
     margin-top: 4px;
   }
   .main-container {
@@ -62,7 +62,7 @@
   }
   .info-bar {
     position: absolute; top: 8px; left: 12px;
-    font-size: 0.78em; color: #8b949e;
+    font-size: 0.78em; color: #5A6370;
     pointer-events: none;
     display: flex; gap: 18px; flex-wrap: wrap;
     background: rgba(13,17,23,0.75);
@@ -87,7 +87,7 @@
   .control-panel h3 {
     font-size: 0.9em;
     font-weight: 600;
-    color: #f0f6fc;
+    color: #0E61AC;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
   }
@@ -98,7 +98,7 @@
   }
   .param-group label {
     font-size: 0.78em;
-    color: #8b949e;
+    color: #5A6370;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -142,19 +142,19 @@
   }
   button:hover {
     border-color: var(--accent);
-    background: #1f2937;
+    background: #FFF7EB;
   }
   button.active-btn {
-    background: rgba(88,166,255,0.15);
+    background: rgba(14,97,172,0.15);
     border-color: var(--accent);
     color: var(--accent);
   }
   button.preset-btn {
-    background: rgba(63,185,80,0.08);
-    border-color: rgba(63,185,80,0.3);
+    background: rgba(14,97,172,0.08);
+    border-color: rgba(14,97,172,0.3);
   }
   button.preset-btn:hover {
-    background: rgba(63,185,80,0.18);
+    background: rgba(14,97,172,0.18);
     border-color: var(--accent2);
   }
   .display-grid {
@@ -163,8 +163,8 @@
     gap: 4px 12px;
     font-size: 0.75em;
   }
-  .display-grid .dlabel { color: #8b949e; }
-  .display-grid .dval { color: #f0f6fc; font-weight: 600; text-align: right; }
+  .display-grid .dlabel { color: #5A6370; }
+  .display-grid .dval { color: #0E61AC; font-weight: 600; text-align: right; }
   .back-link {
     display: inline-block;
     font-size: 0.78em;
@@ -438,8 +438,8 @@
       const arrowTipX = arrowSX + eNormX * arrowLen;
       const arrowTipY = arrowSY - eNormY * arrowLen;
 
-      ctx.strokeStyle = '#f78166';
-      ctx.fillStyle = '#f78166';
+      ctx.strokeStyle = '#2A7CC7';
+      ctx.fillStyle = '#2A7CC7';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(arrowSX, arrowSY);
@@ -472,7 +472,7 @@
       const bSY = toScreenY(0) + 35;
       const bR = 14;
 
-      ctx.strokeStyle = '#d2a8ff';
+      ctx.strokeStyle = '#0E61AC';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(bSX, bSY, bR, 0, Math.PI * 2);
@@ -480,13 +480,13 @@
 
       if (params.Bz > 0) {
         /* B 垂直屏幕向外: ⊙ (圆圈加点) */
-        ctx.fillStyle = '#d2a8ff';
+        ctx.fillStyle = '#0E61AC';
         ctx.beginPath();
         ctx.arc(bSX, bSY, 4, 0, Math.PI * 2);
         ctx.fill();
       } else {
         /* B 垂直屏幕向内: ⊗ (圆圈加叉) */
-        ctx.strokeStyle = '#d2a8ff';
+        ctx.strokeStyle = '#0E61AC';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(bSX - 5, bSY - 5);
@@ -497,7 +497,7 @@
       }
 
       ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
-      ctx.fillStyle = '#d2a8ff';
+      ctx.fillStyle = '#0E61AC';
       ctx.fillText('B', bSX + bR + 6, bSY + 4);
     }
 
@@ -505,7 +505,7 @@
     if (trajectory.length > 1) {
       for (let i = 1; i < trajectory.length; i++) {
         const alpha = i / trajectory.length;
-        ctx.strokeStyle = `rgba(88,166,255,${alpha * 0.6})`;
+        ctx.strokeStyle = `rgba(14,97,172,${alpha * 0.6})`;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(toScreenX(trajectory[i-1][0]), toScreenY(trajectory[i-1][1]));
@@ -521,26 +521,26 @@
 
     /* 发光 */
     const glow = ctx.createRadialGradient(px, py, pr*0.3, px, py, pr*2.5);
-    glow.addColorStop(0, 'rgba(88,166,255,0.6)');
-    glow.addColorStop(0.5, 'rgba(88,166,255,0.15)');
-    glow.addColorStop(1, 'rgba(88,166,255,0)');
+    glow.addColorStop(0, 'rgba(14,97,172,0.6)');
+    glow.addColorStop(0.5, 'rgba(14,97,172,0.15)');
+    glow.addColorStop(1, 'rgba(14,97,172,0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
     ctx.arc(px, py, pr*2.5, 0, Math.PI*2);
     ctx.fill();
 
     /* 粒子主体 */
-    const particleColor = params.q >= 0 ? '#f78166' : '#58a6ff';
+    const particleColor = params.q >= 0 ? '#2A7CC7' : '#0E61AC';
     ctx.fillStyle = particleColor;
     ctx.beginPath();
     ctx.arc(px, py, pr, 0, Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = '#f0f6fc';
+    ctx.strokeStyle = '#0E61AC';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
     /* 电荷符号 */
-    ctx.fillStyle = '#0d1117';
+    ctx.fillStyle = '#FAF2E0';
     ctx.font = 'bold 10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -555,7 +555,7 @@
       const tipX = px + vNormX * vecLen;
       const tipY = py - vNormY * vecLen;
 
-      ctx.strokeStyle = '#3fb950';
+      ctx.strokeStyle = '#0E61AC';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(px, py);
@@ -564,7 +564,7 @@
 
       const vAngle = Math.atan2(-vNormY, vNormX);
       const tipSz = 8;
-      ctx.fillStyle = '#3fb950';
+      ctx.fillStyle = '#0E61AC';
       ctx.beginPath();
       ctx.moveTo(tipX, tipY);
       ctx.lineTo(

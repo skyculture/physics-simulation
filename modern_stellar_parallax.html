@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>星际测距 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -64,21 +64,21 @@ function draw() {
   ctx.fillRect(0, 0, w, h);
 
   for (const star of bgStars) {
-    ctx.fillStyle = `rgba(210,168,255,${star.a})`;
+    ctx.fillStyle = `rgba(14,97,172,${star.a})`;
     ctx.beginPath();
     ctx.arc(star.x * w, star.y * h, star.r * S, 0, Math.PI * 2);
     ctx.fill();
   }
 
   const baselineHalf = S * 0.3;
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = S * 0.004;
   ctx.beginPath();
   ctx.moveTo(cx - baselineHalf, cy);
   ctx.lineTo(cx + baselineHalf, cy);
   ctx.stroke();
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   const fs = S * 0.025;
   ctx.font = `${fs}px sans-serif`;
   ctx.textAlign = 'center';
@@ -89,43 +89,43 @@ function draw() {
     const earthX = cx + Math.sin(earthAngle) * baselineHalf;
     const earthY = cy;
 
-    ctx.strokeStyle = 'rgba(88,166,255,0.2)';
+    ctx.strokeStyle = 'rgba(14,97,172,0.2)';
     ctx.lineWidth = S * 0.002;
     ctx.beginPath();
     ctx.arc(cx, cy, baselineHalf, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.beginPath();
     ctx.arc(earthX, earthY, S * 0.025, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#0d1117';
+    ctx.fillStyle = '#FAF2E0';
     ctx.font = `${fs * 0.7}px sans-serif`;
     ctx.fillText('地球', earthX, earthY + S * 0.005);
   } else {
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.beginPath();
     ctx.arc(cx - baselineHalf, cy, S * 0.025, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
     ctx.arc(cx + baselineHalf, cy, S * 0.025, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#0d1117';
+    ctx.fillStyle = '#FAF2E0';
     ctx.font = `${fs * 0.7}px sans-serif`;
     ctx.fillText('E₁', cx - baselineHalf, cy + S * 0.005);
     ctx.fillText('E₂', cx + baselineHalf, cy + S * 0.005);
   }
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(cx, cy, S * 0.035, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.font = `${fs}px sans-serif`;
   ctx.fillText('☀', cx, cy + S * 0.01);
 
   const starY = cy - S * 0.35;
-  ctx.strokeStyle = 'rgba(210,168,255,0.6)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.6)';
   ctx.lineWidth = S * 0.003;
   ctx.beginPath();
   if (isAnimating) {
@@ -139,11 +139,11 @@ function draw() {
   }
   ctx.stroke();
 
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.beginPath();
   ctx.arc(cx, starY, S * 0.025, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.font = `${fs * 0.7}px sans-serif`;
   ctx.fillText('★', cx, starY + S * 0.005);
 
@@ -164,12 +164,12 @@ function draw() {
   }
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = `${S * 0.028}px sans-serif`;
   const infoX = S * 0.03, infoY = S * 0.05;
   ctx.fillText(`距离 d = ${distance} pc`, infoX, infoY);
   ctx.fillText(`基线 = ${orbitRadius * 2} AU`, infoX, infoY + fs * 1.5);
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`视差角 θ = ${parallaxAngle.toFixed(3)} 角秒`, infoX, infoY + fs * 3);
   ctx.fillText(`距离 = ${(distance * 3.26).toFixed(2)} 光年`, infoX, infoY + fs * 4.5);
 

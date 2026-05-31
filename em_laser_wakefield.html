@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>激光尾波加速 - 物理数值仿真平台</title>
 <style>
-html,body{margin:0;padding:0;height:100%;background:#0d1117;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+html,body{margin:0;padding:0;height:100%;background:#FAF2E0;color:#c9d1d9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
 #app{height:100%;display:flex;flex-direction:column}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #30363d}
-#back{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
-#back:hover{background:#30363d}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#161b22;border-bottom:1px solid #D4C9B8}
+#back{background:#FFFFFF;border:1px solid #D4C9B8;color:#c9d1d9;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:14px}
+#back:hover{background:#D4C9B8}
 header h1{margin:0;font-size:18px;font-weight:600}
-#info{margin-left:auto;color:#8b949e;font-size:13px}
+#info{margin-left:auto;color:#5A6370;font-size:13px}
 main{flex:1;display:flex;overflow:hidden}
 #canvasWrap{flex:1;position:relative}
 canvas{display:block;width:100%;height:100%}
-#sidebar{width:280px;background:#161b22;border-left:1px solid #30363d;padding:14px;overflow:auto}
-.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #30363d}
+#sidebar{width:280px;background:#161b22;border-left:1px solid #D4C9B8;padding:14px;overflow:auto}
+.sec{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D4C9B8}
 .sec:last-child{border-bottom:none}
-h3{margin:0 0 8px 0;font-size:14px;color:#58a6ff}
+h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 .row{display:flex;align-items:center;gap:10px;margin:8px 0}
 .row label{flex:0 0 120px;font-size:13px}
 .row input[type=range]{flex:1}
-.row input[type=number]{width:70px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:6px 8px;border-radius:6px}
+.row input[type=number]{width:70px;background:#FAF2E0;border:1px solid #D4C9B8;color:#c9d1d9;padding:6px 8px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -65,19 +65,19 @@ ctx.clearRect(0,0,W,H);
 const I=+p1.value,n=+p2.value;
 t+=0.01;
 const margin=40,top=margin,bottom=H-margin,left=margin,right=W-margin;
-ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 // plasma wave
-ctx.strokeStyle='#21262d';for(let i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(left,top+(bottom-top)/10*i);ctx.lineTo(right,top+(bottom-top)/10*i);ctx.stroke();}
-ctx.beginPath();ctx.strokeStyle='#58a6ff';ctx.lineWidth=2;
+ctx.strokeStyle='#FFFFFF';for(let i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(left,top+(bottom-top)/10*i);ctx.lineTo(right,top+(bottom-top)/10*i);ctx.stroke();}
+ctx.beginPath();ctx.strokeStyle='#0E61AC';ctx.lineWidth=2;
 for(let x=0;x<=1;x+=0.002){const y=0.5+0.2*Math.sin(2*Math.PI*5*(x-t*0.5));ctx.lineTo(left+(right-left)*x,top+(bottom-top)*y)}
 ctx.stroke();
 // laser pulse
-ctx.fillStyle='#f78166';ctx.globalAlpha=0.3;
+ctx.fillStyle='#2A7CC7';ctx.globalAlpha=0.3;
 const laserX=t*0.3%1;
 ctx.beginPath();ctx.ellipse(left+(right-left)*laserX,(top+bottom)/2,(right-left)*0.05,(bottom-top)*0.3,0,0,Math.PI*2);ctx.fill();
 ctx.globalAlpha=1;
 // particles
-ctx.fillStyle='#3fb950';
+ctx.fillStyle='#0E61AC';
 for(const p of parts){
 const E=I*Math.sin(2*Math.PI*5*(p.x-t*0.5));
 p.vx+=E*0.0005*n;

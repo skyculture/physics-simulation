@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>量子计算 - 量子与核物理</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#FFF7EB; --border:#D4C9B8; --text:#1A1A1A; --accent:#0E61AC; --accent2:#0E61AC; --accent3:#2A7CC7; --accent4:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
   .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
   .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
-  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .header-left .subtitle { font-size:0.82rem; color:#5A6370; margin-top:2px; }
   .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
-  .back-link:hover { background:#1f2937; }
+  .back-link:hover { background:#FFF7EB; }
   .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
   .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
-  canvas { display:block; border-radius:4px; background:#0d1117; }
+  canvas { display:block; border-radius:4px; background:#FAF2E0; }
   .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
   .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
   .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
@@ -24,15 +24,15 @@
   .control-row input[type="range"] { flex:1; accent-color:var(--accent4); }
   .control-row .val { font-size:0.78rem; color:var(--accent4); min-width:36px; text-align:right; font-weight:600; }
   .gate-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:8px; }
-  .gate-btn { padding:8px 4px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.8rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; text-align:center; }
-  .gate-btn:hover { background:#30363d; border-color:var(--accent4); }
+  .gate-btn { padding:8px 4px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.8rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; text-align:center; }
+  .gate-btn:hover { background:#D4C9B8; border-color:var(--accent4); }
   .gate-btn.applied { background:#1f6feb33; border-color:var(--accent4); color:var(--accent4); }
-  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
-  .btn:hover { background:#30363d; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
+  .btn:hover { background:#D4C9B8; }
   .btn.primary { border-color:var(--accent4); color:var(--accent4); }
   .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
   .stat-item:last-child { border-bottom:none; }
-  .stat-label { color:#8b949e; }
+  .stat-label { color:#5A6370; }
   .stat-value { color:var(--accent4); font-weight:600; }
   @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
 </style>
@@ -138,16 +138,16 @@
   function toComplex(v){if(typeof v==='object')return v;return{re:v,im:0};}
 
   function drawBlochSphere(cx,cy,r){
-    ctx.strokeStyle='#30363d';ctx.lineWidth=1.5;
+    ctx.strokeStyle='#D4C9B8';ctx.lineWidth=1.5;
     ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
 
     ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(cx,cy,r,r*0.35,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
 
-    ctx.strokeStyle='#30363d';ctx.lineWidth=1;
+    ctx.strokeStyle='#D4C9B8';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke();
 
-    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#5A6370';ctx.font='10px sans-serif';ctx.textAlign='center';
     ctx.fillText('|0⟩',cx,cy-r-8);ctx.fillText('|1⟩',cx,cy+r+14);
     ctx.fillText('|+⟩',cx+r+10,cy+4);ctx.fillText('|−⟩',cx-r-10,cy+4);
 
@@ -162,9 +162,9 @@
     const z=Math.cos(theta);
     const sx=cx+x*r,sy=cy-z*r;
 
-    ctx.fillStyle='rgba(247,129,102,0.3)';ctx.beginPath();ctx.arc(sx,sy,6,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#f78166';ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='#f78166';ctx.lineWidth=1.5;
+    ctx.fillStyle='rgba(42,124,199,0.3)';ctx.beginPath();ctx.arc(sx,sy,6,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#2A7CC7';ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#2A7CC7';ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(sx,sy);ctx.stroke();
 
     document.getElementById('statBlochTheta').textContent=(theta*180/Math.PI).toFixed(1)+'°';
@@ -179,13 +179,13 @@
     const barW=60,barMax=h*0.6,barY=cy+h*0.25;
     const barX0=cx-w*0.3,barX1=cx+w*0.3-barW;
 
-    ctx.fillStyle='#30363d';ctx.fillRect(barX0,barY,barW,barMax);
-    ctx.fillStyle='rgba(88,166,255,0.7)';ctx.fillRect(barX0,barY+barMax*(1-p0),barW,barMax*p0);
-    ctx.strokeStyle='#30363d';ctx.strokeRect(barX0,barY,barW,barMax);
+    ctx.fillStyle='#D4C9B8';ctx.fillRect(barX0,barY,barW,barMax);
+    ctx.fillStyle='rgba(14,97,172,0.7)';ctx.fillRect(barX0,barY+barMax*(1-p0),barW,barMax*p0);
+    ctx.strokeStyle='#D4C9B8';ctx.strokeRect(barX0,barY,barW,barMax);
 
-    ctx.fillStyle='#30363d';ctx.fillRect(barX1,barY,barW,barMax);
-    ctx.fillStyle='rgba(63,185,80,0.7)';ctx.fillRect(barX1,barY+barMax*(1-p1),barW,barMax*p1);
-    ctx.strokeStyle='#30363d';ctx.strokeRect(barX1,barY,barW,barMax);
+    ctx.fillStyle='#D4C9B8';ctx.fillRect(barX1,barY,barW,barMax);
+    ctx.fillStyle='rgba(14,97,172,0.7)';ctx.fillRect(barX1,barY+barMax*(1-p1),barW,barMax*p1);
+    ctx.strokeStyle='#D4C9B8';ctx.strokeRect(barX1,barY,barW,barMax);
 
     ctx.fillStyle='#c9d1d9';ctx.font='11px sans-serif';ctx.textAlign='center';
     ctx.fillText('|0⟩',barX0+barW/2,barY+barMax+16);
@@ -196,7 +196,7 @@
 
   function draw(){
     ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 
     const blochCx=W*0.32,blochCy=H*0.45,blochR=140;
     drawBlochSphere(blochCx,blochCy,blochR);
@@ -204,10 +204,10 @@
     const probCx=W*0.72,probCy=H*0.45;
     drawProbBars(probCx,probCy,W*0.3,H*0.7);
 
-    ctx.strokeStyle='#30363d';ctx.lineWidth=1;
+    ctx.strokeStyle='#D4C9B8';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(W*0.55,40);ctx.lineTo(W*0.55,H-40);ctx.stroke();
 
-    ctx.fillStyle='#8b949e';ctx.font='11px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#5A6370';ctx.font='11px sans-serif';ctx.textAlign='center';
     ctx.fillText('Bloch 球表示',blochCx,30);
     ctx.fillText('测量概率',probCx,30);
 

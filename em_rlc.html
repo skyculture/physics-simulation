@@ -8,7 +8,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
@@ -33,12 +33,12 @@ header {
 header h1 {
   font-size: 1.7rem;
   font-weight: 700;
-  color: #58a6ff;
+  color: #0E61AC;
   letter-spacing: 0.04em;
 }
 header .subtitle {
   font-size: 0.9rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 2px;
 }
 
@@ -66,7 +66,7 @@ header .subtitle {
 
 .panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 12px;
 }
@@ -91,12 +91,12 @@ header .subtitle {
   justify-content: space-between;
   align-items: center;
   padding: 4px 8px;
-  background: #0d1117;
+  background: #FAF2E0;
   border-radius: 4px;
-  border: 1px solid #21262d;
+  border: 1px solid #FFFFFF;
 }
-.info-item .label { color: #8b949e; }
-.info-item .value { color: #58a6ff; font-weight: 600; font-family: 'Consolas', 'Courier New', monospace; }
+.info-item .label { color: #5A6370; }
+.info-item .value { color: #0E61AC; font-weight: 600; font-family: 'Consolas', 'Courier New', monospace; }
 
 .controls {
   display: flex;
@@ -112,7 +112,7 @@ header .subtitle {
 .control-row label {
   width: 36px;
   text-align: right;
-  color: #58a6ff;
+  color: #0E61AC;
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -120,7 +120,7 @@ header .subtitle {
   flex: 1;
   -webkit-appearance: none;
   height: 6px;
-  background: #30363d;
+  background: #D4C9B8;
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -129,14 +129,14 @@ header .subtitle {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  background: #58a6ff;
+  background: #0E61AC;
   border-radius: 50%;
   cursor: pointer;
   border: none;
 }
 .control-row .unit {
   width: 36px;
-  color: #8b949e;
+  color: #5A6370;
   flex-shrink: 0;
   font-size: 0.8rem;
   text-align: left;
@@ -157,9 +157,9 @@ header .subtitle {
 .btn-row button {
   flex: 1;
   padding: 8px 0;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
-  background: #21262d;
+  background: #FFFFFF;
   color: #c9d1d9;
   font-size: 0.9rem;
   cursor: pointer;
@@ -167,18 +167,18 @@ header .subtitle {
   transition: background 0.15s, border-color 0.15s;
 }
 .btn-row button:hover {
-  background: #30363d;
-  border-color: #58a6ff;
+  background: #D4C9B8;
+  border-color: #0E61AC;
 }
 .btn-row button.active-btn {
   background: #1f6feb;
-  border-color: #58a6ff;
+  border-color: #0E61AC;
   color: #fff;
 }
 
 .plot-title {
   font-size: 0.8rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-bottom: 4px;
   padding-left: 4px;
 }
@@ -570,7 +570,7 @@ function drawCircuit(ctx, w, h) {
     ctx.beginPath();
     ctx.moveTo(px[0], py[0]);
     for (let i = 1; i < px.length; i++) ctx.lineTo(px[i], py[i]);
-    ctx.strokeStyle = '#8b949e';
+    ctx.strokeStyle = '#5A6370';
     ctx.lineWidth = 2.5;
     ctx.stroke();
   }
@@ -714,7 +714,7 @@ function drawCircuit(ctx, w, h) {
   function drawDot(x, y) {
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, 2 * Math.PI);
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.fill();
   }
   drawDot(TLX, TLY);
@@ -745,9 +745,9 @@ function drawElectrons(ctx, simTime) {
 
     // 光晕
     const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, r * 2.5);
-    grad.addColorStop(0, `rgba(88,166,255,${alpha})`);
-    grad.addColorStop(0.4, `rgba(88,166,255,${alpha * 0.6})`);
-    grad.addColorStop(1, 'rgba(88,166,255,0)');
+    grad.addColorStop(0, `rgba(14,97,172,${alpha})`);
+    grad.addColorStop(0.4, `rgba(14,97,172,${alpha * 0.6})`);
+    grad.addColorStop(1, 'rgba(14,97,172,0)');
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, r * 2.5, 0, 2 * Math.PI);
     ctx.fillStyle = grad;
@@ -789,7 +789,7 @@ function updateElectrons(dt, simTime) {
 /* ---------- 图表通用辅助 ---------- */
 function drawAxes(ctx, x, y, w, h, xLabel, yLabel, xMin, xMax, yMin, yMax, xTicks, yTicks) {
   // 网格
-  ctx.strokeStyle = '#21262d';
+  ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 0.5;
   for (let i = 0; i < xTicks.length; i++) {
     const px = x + ((xTicks[i] - xMin) / (xMax - xMin)) * w;
@@ -807,7 +807,7 @@ function drawAxes(ctx, x, y, w, h, xLabel, yLabel, xMin, xMax, yMin, yMax, xTick
   }
 
   // 轴线
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(x, y);
@@ -816,7 +816,7 @@ function drawAxes(ctx, x, y, w, h, xLabel, yLabel, xMin, xMax, yMin, yMax, xTick
   ctx.stroke();
 
   // 刻度标签
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
@@ -883,8 +883,8 @@ function drawVoltagePlot(ctx, w, h, simTime) {
 
   // 图例
   const legends = [
-    { label: 'V_R', color: '#58a6ff' },
-    { label: 'V_L', color: '#3fb950' },
+    { label: 'V_R', color: '#0E61AC' },
+    { label: 'V_L', color: '#0E61AC' },
     { label: 'V_C', color: '#f85149' },
   ];
   ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
@@ -917,13 +917,13 @@ function drawVoltagePlot(ctx, w, h, simTime) {
     ctx.stroke();
   }
 
-  drawCurve('vR', '#58a6ff');
-  drawCurve('vL', '#3fb950');
+  drawCurve('vR', '#0E61AC');
+  drawCurve('vL', '#0E61AC');
   drawCurve('vC', '#f85149');
 
   // 零线
   const zy = y0 + ph / 2;
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 0.8;
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
@@ -1001,7 +1001,7 @@ function drawImpedancePlot(ctx, w, h) {
 
     ctx.beginPath();
     ctx.arc(fCurX, zCurY, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 1;
@@ -1026,7 +1026,7 @@ function drawPhasePlot(ctx, w, h) {
 
   // 零线
   const zy = y0 + ph / 2;
-  ctx.strokeStyle = '#30363d';
+  ctx.strokeStyle = '#D4C9B8';
   ctx.lineWidth = 0.8;
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
@@ -1087,7 +1087,7 @@ function drawPhasePlot(ctx, w, h) {
 
     ctx.beginPath();
     ctx.arc(fCurX, phiCurY, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = '#0E61AC';
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 1;

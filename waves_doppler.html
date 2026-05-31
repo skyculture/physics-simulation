@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>多普勒效应 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; cursor:crosshair; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; cursor:crosshair; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -68,7 +68,7 @@ function draw() {
   const freq = parseFloat(document.getElementById('srcFreq').value);
   const c = S * 0.15;
 
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, w, h);
 
   sourceVx = speed * c * Math.cos(angle);
@@ -98,18 +98,18 @@ function draw() {
       continue;
     }
 
-    ctx.strokeStyle = `rgba(210,168,255,${alpha * 0.6})`;
+    ctx.strokeStyle = `rgba(14,97,172,${alpha * 0.6})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(wave.x, wave.y, radius, 0, Math.PI * 2);
     ctx.stroke();
   }
 
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(sourceX, sourceY, S * 0.025, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = '#ffa657';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(sourceX, sourceY, S * 0.025, 0, Math.PI * 2);
@@ -117,7 +117,7 @@ function draw() {
 
   if (speed > 0.01) {
     const arrowLen = S * 0.08;
-    ctx.strokeStyle = '#ffa657';
+    ctx.strokeStyle = '#2A7CC7';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(sourceX, sourceY);
@@ -125,7 +125,7 @@ function draw() {
     ctx.stroke();
     const ax = sourceX + Math.cos(angle) * arrowLen;
     const ay = sourceY + Math.sin(angle) * arrowLen;
-    ctx.fillStyle = '#ffa657';
+    ctx.fillStyle = '#2A7CC7';
     ctx.beginPath();
     ctx.moveTo(ax, ay);
     ctx.lineTo(ax - Math.cos(angle - 0.4) * S * 0.02, ay - Math.sin(angle - 0.4) * S * 0.02);
@@ -136,7 +136,7 @@ function draw() {
 
   const fs = S * 0.03;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.textAlign = 'center';
   ctx.fillText('声源', sourceX, sourceY - S * 0.04);
   ctx.textAlign = 'left';
@@ -181,13 +181,13 @@ function draw() {
     ctx.fillText(`f'=${fObs.toFixed(2)}Hz`, obs.x, obs.y + S * 0.06);
 
     if (fRatio > 1.02) {
-      ctx.fillStyle = '#3fb950';
+      ctx.fillStyle = '#0E61AC';
       ctx.fillText('↑蓝移', obs.x, obs.y + S * 0.09);
     } else if (fRatio < 0.98) {
-      ctx.fillStyle = '#f78166';
+      ctx.fillStyle = '#2A7CC7';
       ctx.fillText('↓红移', obs.x, obs.y + S * 0.09);
     } else {
-      ctx.fillStyle = '#8b949e';
+      ctx.fillStyle = '#5A6370';
       ctx.fillText('≈不变', obs.x, obs.y + S * 0.09);
     }
     ctx.textAlign = 'left';
@@ -202,12 +202,12 @@ function draw() {
     ctx.setLineDash([]);
   }
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${fs}px sans-serif`;
   ctx.fillText(`v = ${speed.toFixed(2)}c`, w * 0.02, fs + 5);
   ctx.fillText(`方向 = ${parseFloat(document.getElementById('srcAngle').value).toFixed(0)}°`, w * 0.02, fs * 2 + 5);
   ctx.fillText(`f₀ = ${freq.toFixed(1)} Hz`, w * 0.02, fs * 3 + 5);
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${fs * 0.8}px sans-serif`;
   ctx.fillText('点击画布添加观察者', w * 0.02, fs * 4 + 5);
 
@@ -216,18 +216,18 @@ function draw() {
   const barW = S * 0.3;
   const barH = S * 0.04;
   const grad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
-  grad.addColorStop(0, '#f78166');
-  grad.addColorStop(0.5, '#d2a8ff');
-  grad.addColorStop(1, '#58a6ff');
+  grad.addColorStop(0, '#2A7CC7');
+  grad.addColorStop(0.5, '#0E61AC');
+  grad.addColorStop(1, '#0E61AC');
   ctx.fillStyle = grad;
   ctx.fillRect(barX, barY, barW, barH);
-  ctx.strokeStyle = '#8b949e';
+  ctx.strokeStyle = '#5A6370';
   ctx.lineWidth = 1;
   ctx.strokeRect(barX, barY, barW, barH);
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.font = `${fs * 0.7}px sans-serif`;
   ctx.fillText('红移(低频)', barX, barY - 3);
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('蓝移(高频)', barX + barW - S * 0.1, barY - 3);
 
   t += 0.016;

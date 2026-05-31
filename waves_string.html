@@ -12,7 +12,7 @@
 }
 
 body {
-    background: #0d1117;
+    background: #FAF2E0;
     color: #c9d1d9;
     font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     min-height: 100vh;
@@ -35,37 +35,37 @@ body {
 .header h1 {
     font-size: 28px;
     font-weight: 600;
-    color: #58a6ff;
+    color: #0E61AC;
     letter-spacing: 2px;
 }
 
 .header .subtitle {
     font-size: 14px;
-    color: #8b949e;
+    color: #5A6370;
     margin-top: 4px;
 }
 
 .back-link {
     display: inline-block;
     margin-top: 8px;
-    color: #58a6ff;
+    color: #0E61AC;
     text-decoration: none;
     font-size: 13px;
     padding: 4px 12px;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 6px;
     transition: background 0.2s, border-color 0.2s;
 }
 
 .back-link:hover {
-    background: #1f2937;
-    border-color: #58a6ff;
+    background: #FFF7EB;
+    border-color: #0E61AC;
 }
 
 /* ========== 面板 ========== */
 .panel {
     background: #161b22;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
@@ -74,7 +74,7 @@ body {
 .panel-title {
     font-size: 14px;
     font-weight: 600;
-    color: #8b949e;
+    color: #5A6370;
     margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -94,14 +94,14 @@ canvas {
 }
 
 #stringCanvas {
-    background: #0d1117;
-    border: 1px solid #30363d;
+    background: #FAF2E0;
+    border: 1px solid #D4C9B8;
     border-radius: 6px;
 }
 
 #fftCanvas {
-    background: #0d1117;
-    border: 1px solid #30363d;
+    background: #FAF2E0;
+    border: 1px solid #D4C9B8;
     border-radius: 6px;
 }
 
@@ -123,14 +123,14 @@ canvas {
 
 .control-group label {
     font-size: 12px;
-    color: #8b949e;
+    color: #5A6370;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .control-group label span.val {
-    color: #58a6ff;
+    color: #0E61AC;
     font-weight: 600;
 }
 
@@ -139,7 +139,7 @@ canvas {
     width: 100%;
     height: 6px;
     border-radius: 3px;
-    background: #21262d;
+    background: #FFFFFF;
     outline: none;
     cursor: pointer;
 }
@@ -149,7 +149,7 @@ canvas {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #58a6ff;
+    background: #0E61AC;
     cursor: pointer;
     border: 2px solid #161b22;
 }
@@ -164,9 +164,9 @@ canvas {
 
 .btn {
     padding: 8px 18px;
-    border: 1px solid #30363d;
+    border: 1px solid #D4C9B8;
     border-radius: 6px;
-    background: #21262d;
+    background: #FFFFFF;
     color: #c9d1d9;
     cursor: pointer;
     font-size: 13px;
@@ -176,8 +176,8 @@ canvas {
 }
 
 .btn:hover {
-    background: #30363d;
-    border-color: #58a6ff;
+    background: #D4C9B8;
+    border-color: #0E61AC;
 }
 
 .btn.primary {
@@ -212,20 +212,20 @@ canvas {
 .info-item {
     text-align: center;
     padding: 8px;
-    background: #0d1117;
+    background: #FAF2E0;
     border-radius: 4px;
-    border: 1px solid #21262d;
+    border: 1px solid #FFFFFF;
 }
 
 .info-item .info-label {
     font-size: 11px;
-    color: #8b949e;
+    color: #5A6370;
 }
 
 .info-item .info-value {
     font-size: 16px;
     font-weight: 600;
-    color: #58a6ff;
+    color: #0E61AC;
 }
 
 /* ========== 图例 ========== */
@@ -234,7 +234,7 @@ canvas {
     flex-wrap: wrap;
     gap: 12px;
     font-size: 12px;
-    color: #8b949e;
+    color: #5A6370;
 }
 
 .legend-item {
@@ -274,10 +274,10 @@ canvas {
             <canvas id="stringCanvas"></canvas>
         </div>
         <div class="legend" style="margin-top:8px;">
-            <div class="legend-item"><span class="legend-dot" style="background:#58a6ff;"></span> 当前弦形</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#0E61AC;"></span> 当前弦形</div>
             <div class="legend-item"><span class="legend-dot" style="background:rgba(255,123,114,0.5);"></span> n=1 基频</div>
-            <div class="legend-item"><span class="legend-dot" style="background:rgba(63,185,80,0.5);"></span> n=2</div>
-            <div class="legend-item"><span class="legend-dot" style="background:rgba(210,168,255,0.5);"></span> n=3</div>
+            <div class="legend-item"><span class="legend-dot" style="background:rgba(14,97,172,0.5);"></span> n=2</div>
+            <div class="legend-item"><span class="legend-dot" style="background:rgba(14,97,172,0.5);"></span> n=3</div>
             <div class="legend-item"><span class="legend-dot" style="background:rgba(255,166,87,0.5);"></span> n=4</div>
         </div>
     </div>
@@ -747,7 +747,7 @@ canvas {
         const scaleY = (plotH / 2) / maxDisplay;
 
         // --- 网格 ---
-        ctx.strokeStyle = '#21262d';
+        ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 0.5;
         for (let gy = marginY; gy <= H - marginY; gy += plotH / 8) {
             ctx.beginPath();
@@ -772,7 +772,7 @@ canvas {
 
         // --- 平衡位置虚线 ---
         ctx.setLineDash([4, 6]);
-        ctx.strokeStyle = '#30363d';
+        ctx.strokeStyle = '#D4C9B8';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(marginX, midY);
@@ -781,7 +781,7 @@ canvas {
         ctx.setLineDash([]);
 
         // --- 轴标签 ---
-        ctx.fillStyle = '#8b949e';
+        ctx.fillStyle = '#5A6370';
         ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('x = 0', marginX, H - marginY + 18);
@@ -802,8 +802,8 @@ canvas {
         const modeAmplitude = 0.28;
         const modeColors = [
             'rgba(255,123,114,0.45)',  // n=1 红色调
-            'rgba(63,185,80,0.45)',    // n=2 绿色调
-            'rgba(210,168,255,0.45)',  // n=3 紫色调
+            'rgba(14,97,172,0.45)',    // n=2 绿色调
+            'rgba(14,97,172,0.45)',  // n=3 紫色调
             'rgba(255,166,87,0.45)'    // n=4 橙色调
         ];
 
@@ -835,9 +835,9 @@ canvas {
         }
 
         // --- 当前弦的实际形状 ---
-        ctx.strokeStyle = '#58a6ff';
+        ctx.strokeStyle = '#0E61AC';
         ctx.lineWidth = 2.5;
-        ctx.shadowColor = '#58a6ff';
+        ctx.shadowColor = '#0E61AC';
         ctx.shadowBlur = 8;
         ctx.beginPath();
         for (let i = 0; i < N; i++) {
@@ -852,7 +852,7 @@ canvas {
         ctx.shadowBlur = 0;
 
         // --- 两端固定点 ---
-        ctx.fillStyle = '#58a6ff';
+        ctx.fillStyle = '#0E61AC';
         ctx.beginPath();
         ctx.arc(marginX, midY, 5, 0, Math.PI * 2);
         ctx.fill();
@@ -898,7 +898,7 @@ canvas {
         const fMax = Math.max(f1 * 8, 5);
 
         // --- 网格 ---
-        ctx.strokeStyle = '#21262d';
+        ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 0.5;
         for (let gy = marginY; gy <= H - marginY; gy += plotH / 4) {
             ctx.beginPath();
@@ -922,7 +922,7 @@ canvas {
             if (fn <= fMax) {
                 const fx = marginX + (fn / fMax) * plotW;
                 ctx.setLineDash([3, 4]);
-                ctx.strokeStyle = 'rgba(88,166,255,0.25)';
+                ctx.strokeStyle = 'rgba(14,97,172,0.25)';
                 ctx.lineWidth = 0.8;
                 ctx.beginPath();
                 ctx.moveTo(fx, marginY);
@@ -930,7 +930,7 @@ canvas {
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                ctx.fillStyle = '#58a6ff';
+                ctx.fillStyle = '#0E61AC';
                 ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText('f' + n + '=' + fn.toFixed(1), fx, H - 4);
@@ -938,7 +938,7 @@ canvas {
         }
 
         // --- x 轴标签 ---
-        ctx.fillStyle = '#8b949e';
+        ctx.fillStyle = '#5A6370';
         ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
         ctx.textAlign = 'center';
         for (let f = 0; f <= fMax; f += Math.ceil(fMax / 6)) {
@@ -971,7 +971,7 @@ canvas {
                 const barH = (spectrumMagnitudes[i] / maxMag) * plotH;
                 const y = H - marginY - barH;
 
-                ctx.fillStyle = 'rgba(88,166,255,0.7)';
+                ctx.fillStyle = 'rgba(14,97,172,0.7)';
                 ctx.fillRect(fx - barWidth / 2, y, barWidth, barH);
             }
         } else {

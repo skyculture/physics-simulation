@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>超导约瑟夫森结 - 量子与核物理</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --accent2:#3fb950; --accent3:#f78166; --accent4:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#FFF7EB; --border:#D4C9B8; --text:#1A1A1A; --accent:#0E61AC; --accent2:#0E61AC; --accent3:#2A7CC7; --accent4:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; }
   .header { width:100%; max-width:1100px; display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 24px; }
   .header-left h1 { font-size:1.4rem; font-weight:700; color:var(--accent4); line-height:1.2; }
-  .header-left .subtitle { font-size:0.82rem; color:#8b949e; margin-top:2px; }
+  .header-left .subtitle { font-size:0.82rem; color:#5A6370; margin-top:2px; }
   .back-link { color:var(--accent); text-decoration:none; font-size:0.95rem; padding:6px 14px; border:1px solid var(--border); border-radius:6px; transition:background 0.2s; }
-  .back-link:hover { background:#1f2937; }
+  .back-link:hover { background:#FFF7EB; }
   .main-container { width:100%; max-width:1100px; display:flex; gap:12px; flex:1; }
   .canvas-panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:center; flex:1; }
-  canvas { display:block; border-radius:4px; background:#0d1117; }
+  canvas { display:block; border-radius:4px; background:#FAF2E0; }
   .side-panel { width:300px; min-width:300px; display:flex; flex-direction:column; gap:10px; }
   .panel-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
   .panel-box h3 { font-size:0.9rem; color:var(--accent4); margin-bottom:10px; font-weight:600; }
@@ -24,12 +24,12 @@
   .control-row input[type="range"] { flex:1; accent-color:var(--accent4); }
   .control-row .val { font-size:0.78rem; color:var(--accent4); min-width:36px; text-align:right; font-weight:600; }
   .btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#21262d; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
-  .btn:hover { background:#30363d; }
+  .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
+  .btn:hover { background:#D4C9B8; }
   .btn.primary { border-color:var(--accent4); color:var(--accent4); }
   .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
   .stat-item:last-child { border-bottom:none; }
-  .stat-label { color:#8b949e; }
+  .stat-label { color:#5A6370; }
   .stat-value { color:var(--accent4); font-weight:600; }
   @media (max-width:900px) { .main-container { flex-direction:column; } .side-panel { width:100%; min-width:unset; } }
 </style>
@@ -95,13 +95,13 @@
   let isRunning=true,animId=null;
 
   function draw(){
-    ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#FAF2E0';ctx.fillRect(0,0,W,H);
 
     const cx=W/2,cy=H*0.25;
-    ctx.fillStyle='#58a6ff';ctx.fillRect(cx-100,cy-12,90,24);
+    ctx.fillStyle='#0E61AC';ctx.fillRect(cx-100,cy-12,90,24);
     ctx.fillRect(cx+10,cy-12,90,24);
-    ctx.fillStyle='rgba(247,129,102,0.6)';ctx.fillRect(cx-10,cy-8,20,16);
-    ctx.strokeStyle='#30363d';ctx.lineWidth=2;
+    ctx.fillStyle='rgba(42,124,199,0.6)';ctx.fillRect(cx-10,cy-8,20,16);
+    ctx.strokeStyle='#D4C9B8';ctx.lineWidth=2;
     ctx.strokeRect(cx-100,cy-12,90,24);ctx.strokeRect(cx+10,cy-12,90,24);
     ctx.strokeRect(cx-10,cy-8,20,16);
 
@@ -109,7 +109,7 @@
     ctx.fillText('超导体1',cx-55,cy+3);ctx.fillText('超导体2',cx+55,cy+3);
     ctx.fillText('绝缘层',cx,cy+3);
 
-    ctx.strokeStyle='#d2a8ff';ctx.lineWidth=1.5;ctx.setLineDash([2,2]);
+    ctx.strokeStyle='#0E61AC';ctx.lineWidth=1.5;ctx.setLineDash([2,2]);
     ctx.beginPath();
     for(let i=0;i<5;i++){
       const y=cy-6+i*3;
@@ -119,7 +119,7 @@
 
     const waveAmp=mode==='dc'?Math.sin(phase)*Ic*8:Math.sin(phase)*Ic*6;
     if(mode==='ac'){
-      ctx.strokeStyle='#3fb950';ctx.lineWidth=2;
+      ctx.strokeStyle='#0E61AC';ctx.lineWidth=2;
       ctx.beginPath();ctx.moveTo(cx-60,cy+40);
       for(let i=0;i<=100;i++){
         const t=i/100*Math.PI*4;
@@ -127,22 +127,22 @@
         ctx.lineTo(cx-60+i*1.2,y);
       }
       ctx.stroke();
-      ctx.fillStyle='#3fb950';ctx.font='9px sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#0E61AC';ctx.font='9px sans-serif';ctx.textAlign='center';
       ctx.fillText('AC 约瑟夫森振荡',cx,cy+68);
     }
 
-    ctx.strokeStyle='#8b949e';ctx.lineWidth=1.5;
+    ctx.strokeStyle='#5A6370';ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(cx-105,cy-12);ctx.lineTo(cx-140,cy-12);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx+105,cy-12);ctx.lineTo(cx+140,cy-12);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx-105,cy+12);ctx.lineTo(cx-140,cy+12);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx+105,cy+12);ctx.lineTo(cx+140,cy+12);ctx.stroke();
 
-    ctx.fillStyle='#8b949e';ctx.font='9px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#5A6370';ctx.font='9px sans-serif';ctx.textAlign='center';
     ctx.fillText('I = I_c sin(Δφ)',cx,cy-24);
     ctx.fillText('S-I-S 结',cx,cy+22);
 
     const ivX=W*0.15,ivY=H*0.55,ivW=W*0.7,ivH=H*0.35;
-    ctx.strokeStyle='#30363d';ctx.lineWidth=1;
+    ctx.strokeStyle='#D4C9B8';ctx.lineWidth=1;
     ctx.strokeRect(ivX,ivY,ivW,ivH);
     ctx.beginPath();ctx.moveTo(ivX,ivY+ivH/2);ctx.lineTo(ivX+ivW,ivY+ivH/2);ctx.stroke();
     ctx.beginPath();ctx.moveTo(ivX+ivW*0.4,ivY);ctx.lineTo(ivX+ivW*0.4,ivY+ivH);ctx.stroke();
@@ -150,14 +150,14 @@
     ctx.beginPath();ctx.moveTo(ivX+ivW*0.4,ivY+ivH/2-Ic*ivH*0.08);ctx.lineTo(ivX+ivW*0.4,ivY+ivH/2+Ic*ivH*0.08);ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#5A6370';ctx.font='10px sans-serif';ctx.textAlign='center';
     ctx.fillText('V',ivX+ivW/2,ivY+ivH+14);
     ctx.fillText('I',ivX-10,ivY+ivH/2+4);
     ctx.fillText('I_c',ivX+ivW*0.4-10,ivY+ivH/2+14);
     ctx.fillText('I-V 特性曲线',ivX+ivW/2,ivY-6);
 
     if(ivCurve.length>1){
-      ctx.strokeStyle='#d2a8ff';ctx.lineWidth=2;ctx.beginPath();
+      ctx.strokeStyle='#0E61AC';ctx.lineWidth=2;ctx.beginPath();
       ctx.moveTo(ivX,ivY+ivH/2);
       for(let i=1;i<ivCurve.length;i++){
         const px=ivX+ivW*0.4*(1+ivCurve[i].v/5);

@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔋 锂电池仿真</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
   .header { text-align:center; margin-bottom:16px; }
-  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
-  .header p { font-size:0.8em; color:#8b949e; }
+  .header h1 { font-size:1.4em; color:#0E61AC; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#5A6370; }
   .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
   .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
   .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
   .control-group { display:flex; flex-direction:column; gap:4px; }
-  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group label { font-size:0.8em; color:#5A6370; }
   .control-group input[type="range"] { width:100%; }
   .control-group input[type="number"] { background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:4px 8px; color:var(--text); font-size:0.8em; width:100%; }
   .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
   .control-group button:hover { opacity:0.9; }
-  .info-panel { background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
+  .info-panel { background:rgba(14,97,172,0.1); border:1px solid rgba(14,97,172,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
   .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
-  .info-panel .label { color:#8b949e; }
+  .info-panel .label { color:#5A6370; }
   .info-panel .value { color:var(--accent); font-weight:600; }
   canvas { width:100%; border-radius:4px; }
 </style>
@@ -126,7 +126,7 @@ function draw() {
   }
   
   // 外部电路
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(leftX, topY);
@@ -138,7 +138,7 @@ function draw() {
   // 电阻符号
   const rX = midX - 25;
   const rY = topY - 30;
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.moveTo(rX, rY);
   ctx.lineTo(rX + 15, rY - 15);
@@ -148,17 +148,17 @@ function draw() {
   ctx.lineTo(rX + 15, rY + 15);
   ctx.lineTo(rX, rY);
   ctx.stroke();
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.font = '10px sans-serif';
   ctx.fillText('R', midX - 5, rY + 35);
   
   // 电流方向箭头
   if (mode === 'discharge') {
-    drawArrow(leftX + 20, topY - 35, leftX + 60, topY - 35, '#3fb950');
-    drawArrow(rightX + 60, topY - 25, rightX + 20, topY - 25, '#3fb950');
+    drawArrow(leftX + 20, topY - 35, leftX + 60, topY - 35, '#0E61AC');
+    drawArrow(rightX + 60, topY - 25, rightX + 20, topY - 25, '#0E61AC');
   } else {
-    drawArrow(leftX + 60, topY - 35, leftX + 20, topY - 35, '#f78166');
-    drawArrow(rightX + 20, topY - 25, rightX + 60, topY - 25, '#f78166');
+    drawArrow(leftX + 60, topY - 35, leftX + 20, topY - 35, '#2A7CC7');
+    drawArrow(rightX + 20, topY - 25, rightX + 60, topY - 25, '#2A7CC7');
   }
   
   // 电池状态条
@@ -166,12 +166,12 @@ function draw() {
   const barH = 10;
   const barX = midX - barW / 2;
   const barY = topY + cellH + 20;
-  ctx.fillStyle = '#30363d';
+  ctx.fillStyle = '#D4C9B8';
   ctx.fillRect(barX, barY, barW, barH);
-  const fillColor = soc > 50 ? '#3fb950' : soc > 20 ? '#ffa657' : '#f85149';
+  const fillColor = soc > 50 ? '#0E61AC' : soc > 20 ? '#2A7CC7' : '#f85149';
   ctx.fillStyle = fillColor;
   ctx.fillRect(barX, barY, barW * soc / 100, barH);
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.strokeRect(barX, barY, barW, barH);
   
   ctx.fillStyle = '#c9d1d9';

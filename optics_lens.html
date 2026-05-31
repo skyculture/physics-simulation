@@ -12,7 +12,7 @@
 }
 
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   display: flex;
@@ -35,24 +35,24 @@ body {
 .header h1 {
   font-size: 28px;
   font-weight: 700;
-  color: #f0f6fc;
+  color: #0E61AC;
   letter-spacing: 2px;
 }
 
 .header .subtitle {
   font-size: 14px;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 4px;
 }
 
 .header .subtitle span {
-  color: #58a6ff;
+  color: #0E61AC;
   font-family: 'Consolas', 'Courier New', monospace;
 }
 
 .canvas-wrapper {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 8px;
   margin-bottom: 16px;
@@ -63,7 +63,7 @@ canvas {
   width: 100%;
   height: auto;
   border-radius: 4px;
-  background: #0d1117;
+  background: #FAF2E0;
 }
 
 .panels {
@@ -74,7 +74,7 @@ canvas {
 
 .panel {
   background: #161b22;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 16px 20px;
   flex: 1;
@@ -84,10 +84,10 @@ canvas {
 .panel h3 {
   font-size: 15px;
   font-weight: 600;
-  color: #f0f6fc;
+  color: #0E61AC;
   margin-bottom: 14px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #30363d;
+  border-bottom: 1px solid #D4C9B8;
 }
 
 .control-group {
@@ -108,7 +108,7 @@ canvas {
 }
 
 .control-group label .val {
-  color: #58a6ff;
+  color: #0E61AC;
   font-weight: 600;
   font-family: 'Consolas', 'Courier New', monospace;
 }
@@ -118,7 +118,7 @@ canvas {
   width: 100%;
   height: 6px;
   border-radius: 3px;
-  background: #21262d;
+  background: #FFFFFF;
   outline: none;
   cursor: pointer;
 }
@@ -128,8 +128,8 @@ canvas {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #58a6ff;
-  border: 2px solid #0d1117;
+  background: #0E61AC;
+  border: 2px solid #FAF2E0;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -147,25 +147,25 @@ canvas {
 .btn {
   flex: 1;
   padding: 9px 0;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
-  background: #21262d;
+  background: #FFFFFF;
   color: #c9d1d9;
   font-family: inherit;
 }
 
 .btn:hover {
-  background: #30363d;
+  background: #D4C9B8;
 }
 
 .btn.primary {
   background: #238636;
   border-color: #2ea043;
-  color: #f0f6fc;
+  color: #0E61AC;
 }
 
 .btn.primary:hover {
@@ -175,7 +175,7 @@ canvas {
 .btn.warn {
   background: #9e6a03;
   border-color: #d29922;
-  color: #f0f6fc;
+  color: #0E61AC;
 }
 
 .btn.warn:hover {
@@ -185,7 +185,7 @@ canvas {
 .btn.danger {
   background: #da3633;
   border-color: #f85149;
-  color: #f0f6fc;
+  color: #0E61AC;
 }
 
 .btn.danger:hover {
@@ -203,20 +203,20 @@ canvas {
 }
 
 .info-item .info-label {
-  color: #8b949e;
+  color: #5A6370;
   font-size: 11px;
   display: block;
 }
 
 .info-item .info-value {
-  color: #f0f6fc;
+  color: #0E61AC;
   font-weight: 600;
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 15px;
 }
 
 .info-item .info-value.real {
-  color: #3fb950;
+  color: #0E61AC;
 }
 
 .info-item .info-value.virtual {
@@ -224,7 +224,7 @@ canvas {
 }
 
 .info-item .info-value.infinity {
-  color: #8b949e;
+  color: #5A6370;
   font-style: italic;
 }
 
@@ -238,7 +238,7 @@ canvas {
 
 .status-badge.real {
   background: rgba(63, 185, 80, 0.15);
-  color: #3fb950;
+  color: #0E61AC;
   border: 1px solid rgba(63, 185, 80, 0.3);
 }
 
@@ -250,7 +250,7 @@ canvas {
 
 .status-badge.none {
   background: rgba(139, 148, 158, 0.15);
-  color: #8b949e;
+  color: #5A6370;
   border: 1px solid rgba(139, 148, 158, 0.3);
 }
 
@@ -535,8 +535,8 @@ canvas {
     positions.forEach(pt => {
       if (pt.x < 10 || pt.x > W - 10) return;
 
-      ctx.strokeStyle = '#d2a8ff';
-      ctx.fillStyle = '#d2a8ff';
+      ctx.strokeStyle = '#0E61AC';
+      ctx.fillStyle = '#0E61AC';
       ctx.lineWidth = 2;
 
       ctx.beginPath();
@@ -667,7 +667,7 @@ canvas {
      * 步骤3: 绘制像(箭头)
      */
     if (isReal && imgTipX !== null && imgTipX < W - 10) {
-      drawArrow(imgTipX, imgTipY, '#3fb950', '实像');
+      drawArrow(imgTipX, imgTipY, '#0E61AC', '实像');
     } else if (isVirtual && imgTipX !== null && imgTipX > 10) {
       drawArrow(imgTipX, imgTipY, '#d29922', '虚像');
     }
@@ -729,7 +729,7 @@ canvas {
     const ray2ExitY = axisY + ray2Slope * (ray2ExitX - lensX);
 
     drawRay([
-      { x1: objTipX, y1: objTipY, x2: ray2ExitX, y2: ray2ExitY, color: '#3fb950', width: 1.8, arrow: true }
+      { x1: objTipX, y1: objTipY, x2: ray2ExitX, y2: ray2ExitY, color: '#0E61AC', width: 1.8, arrow: true }
     ], null, '光线② 过光心');
 
     /*
@@ -742,8 +742,8 @@ canvas {
     const ray3ExitX = Math.min(W - 12, Math.max(lensX + 20, imgTipX + 30));
 
     drawRay([
-      { x1: objTipX, y1: objTipY, x2: lensX, y2: ray3LensY, color: '#58a6ff', width: 1.8 },
-      { x1: lensX, y1: ray3LensY, x2: ray3ExitX, y2: ray3LensY, color: '#58a6ff', width: 1.8, arrow: true }
+      { x1: objTipX, y1: objTipY, x2: lensX, y2: ray3LensY, color: '#0E61AC', width: 1.8 },
+      { x1: lensX, y1: ray3LensY, x2: ray3ExitX, y2: ray3LensY, color: '#0E61AC', width: 1.8, arrow: true }
     ], null, '光线③ 过F→平行');
   }
 
@@ -779,9 +779,9 @@ canvas {
     const ray2ExitX = Math.min(W - 10, lensX + 250);
 
     drawRay([
-      { x1: objTipX, y1: objTipY, x2: ray2ExitX, y2: axisY + ray2Slope * (ray2ExitX - lensX), color: '#3fb950', width: 1.8, arrow: true }
+      { x1: objTipX, y1: objTipY, x2: ray2ExitX, y2: axisY + ray2Slope * (ray2ExitX - lensX), color: '#0E61AC', width: 1.8, arrow: true }
     ], [
-      { x1: lensX, y1: axisY, x2: imgTipX, y2: imgTipY, color: '#3fb950', width: 1.5 }
+      { x1: lensX, y1: axisY, x2: imgTipX, y2: imgTipY, color: '#0E61AC', width: 1.5 }
     ], '光线② 过光心');
 
     /*
@@ -795,10 +795,10 @@ canvas {
     const ray3ExitX = Math.min(W - 10, lensX + 250);
 
     drawRay([
-      { x1: objTipX, y1: objTipY, x2: lensX, y2: ray3LensY, color: '#58a6ff', width: 1.8 },
-      { x1: lensX, y1: ray3LensY, x2: ray3ExitX, y2: ray3LensY, color: '#58a6ff', width: 1.8, arrow: true }
+      { x1: objTipX, y1: objTipY, x2: lensX, y2: ray3LensY, color: '#0E61AC', width: 1.8 },
+      { x1: lensX, y1: ray3LensY, x2: ray3ExitX, y2: ray3LensY, color: '#0E61AC', width: 1.8, arrow: true }
     ], [
-      { x1: lensX, y1: ray3LensY, x2: imgTipX, y2: imgTipY, color: '#58a6ff', width: 1.5 }
+      { x1: lensX, y1: ray3LensY, x2: imgTipX, y2: imgTipY, color: '#0E61AC', width: 1.5 }
     ], '光线③ 过F→平行');
   }
 
@@ -823,7 +823,7 @@ canvas {
     const ray2ExitX = Math.min(W - 10, lensX + 250);
 
     drawRay([
-      { x1: objTipX, y1: objTipY, x2: ray2ExitX, y2: axisY + ray2Slope * (ray2ExitX - lensX), color: '#3fb950', width: 1.8, arrow: true }
+      { x1: objTipX, y1: objTipY, x2: ray2ExitX, y2: axisY + ray2Slope * (ray2ExitX - lensX), color: '#0E61AC', width: 1.8, arrow: true }
     ], null, '光线② 过光心');
 
     const ray3Slope = (axisY - objTipY) / (fX - objTipX);
@@ -831,13 +831,13 @@ canvas {
     const ray3ExitX = Math.min(W - 10, lensX + 250);
 
     drawRay([
-      { x1: objTipX, y1: objTipY, x2: lensX, y2: ray3LensY, color: '#58a6ff', width: 1.8 },
-      { x1: lensX, y1: ray3LensY, x2: ray3ExitX, y2: ray3LensY, color: '#58a6ff', width: 1.8, arrow: true }
+      { x1: objTipX, y1: objTipY, x2: lensX, y2: ray3LensY, color: '#0E61AC', width: 1.8 },
+      { x1: lensX, y1: ray3LensY, x2: ray3ExitX, y2: ray3LensY, color: '#0E61AC', width: 1.8, arrow: true }
     ], null, '光线③ 过F→平行');
 
     ctx.font = 'italic 14px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#8b949e';
+    ctx.fillStyle = '#5A6370';
     ctx.fillText('折射光线平行射出, 不成像', lensX + 160, axisY - 50);
   }
 

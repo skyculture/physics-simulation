@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>传送带与摩擦力 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -54,7 +54,7 @@ function reset() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const vBelt = parseFloat(document.getElementById('vBelt').value);
@@ -78,7 +78,7 @@ function draw() {
   const beltX = W * 0.1;
   const beltY = cy;
 
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillRect(beltX, beltY - beltH / 2, beltW, beltH);
 
   ctx.fillStyle = '#216e39';
@@ -92,10 +92,10 @@ function draw() {
   const objX = beltX + beltW * 0.3 + (vObj * 2 + timeOnBelt * vBelt * 0.5) % (beltW * 0.6);
   const objY = beltY - beltH / 2 - objH;
 
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillRect(objX - objW / 2, objY, objW, objH);
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.font = `${S * 0.025}px sans-serif`;
   ctx.fillText(`v=${vObj.toFixed(1)}`, objX - objW / 2 + S * 0.01, objY + objH * 0.65);
 
@@ -103,7 +103,7 @@ function draw() {
   const a = mu * g;
   const t_sync = vBelt / a;
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = `${S * 0.03}px sans-serif`;
   const fs = S * 0.03;
   ctx.fillText(`传送带速度 v_b = ${vBelt} m/s`, 10, fs + 5);
@@ -113,7 +113,7 @@ function draw() {
   ctx.fillText(`加速度 a = ${a.toFixed(2)} m/s²`, 10, fs * 5 + 5);
   ctx.fillText(`物体速度 v = ${vObj.toFixed(2)} m/s`, 10, fs * 6 + 5);
 
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = `bold ${S * 0.035}px sans-serif`;
   if(vObj >= vBelt) {
     ctx.fillText(`已同步! 同步时间: ${t_sync.toFixed(2)} s`, cx - S * 0.2, H - S * 0.05);

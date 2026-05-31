@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>相控阵雷达 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -48,7 +48,7 @@ function draw() {
   const arraySize = parseInt(document.getElementById('arraySize').value);
   const wavelength = parseFloat(document.getElementById('wavelength').value);
 
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, w, h);
 
   const spacing = S * 0.06;
@@ -63,12 +63,12 @@ function draw() {
       const phase = (2 * Math.PI * distFromCenter * Math.sin(beamAngle)) / wavelength;
       const intensity = 0.5 + 0.5 * Math.sin(t * 3 + phase);
 
-      ctx.fillStyle = `rgba(210,168,255,${0.3 + intensity * 0.5})`;
+      ctx.fillStyle = `rgba(14,97,172,${0.3 + intensity * 0.5})`;
       ctx.beginPath();
       ctx.arc(x, y, S * 0.015, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = `rgba(210,168,255,${0.3 + intensity * 0.3})`;
+      ctx.strokeStyle = `rgba(14,97,172,${0.3 + intensity * 0.3})`;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(x, y, S * 0.02, 0, Math.PI * 2);
@@ -83,7 +83,7 @@ function draw() {
     const intensity = Math.pow(dist, 8);
 
     if (intensity > 0.01) {
-      ctx.strokeStyle = `rgba(247,129,102,${intensity * 0.6})`;
+      ctx.strokeStyle = `rgba(42,124,199,${intensity * 0.6})`;
       ctx.lineWidth = intensity * 3 + 1;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -92,27 +92,27 @@ function draw() {
     }
   }
 
-  ctx.strokeStyle = '#3fb950';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(cx, cy);
   ctx.lineTo(cx + Math.cos(beamAngle) * beamLen, cy + Math.sin(beamAngle) * beamLen);
   ctx.stroke();
 
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.beginPath();
   ctx.arc(cx + Math.cos(beamAngle) * beamLen, cy + Math.sin(beamAngle) * beamLen, S * 0.02, 0, Math.PI * 2);
   ctx.fill();
 
   const fs = S * 0.032;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.fillText(`波束方向 = ${parseFloat(document.getElementById('beamAngle').value).toFixed(0)}°`, w * 0.02, fs + 5);
   ctx.fillText(`阵列 = ${arraySize}×${arraySize}`, w * 0.02, fs * 2 + 5);
   ctx.fillText(`波长 λ = ${wavelength}`, w * 0.02, fs * 3 + 5);
 
   const directivity = arraySize * arraySize * 4 * Math.PI / (wavelength * wavelength);
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText(`方向性 = ${directivity.toFixed(1)}`, w * 0.02, fs * 4 + 5);
 
   t += 0.02;

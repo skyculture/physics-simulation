@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>表面张力 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -44,7 +44,7 @@ function resize() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const gamma = parseFloat(document.getElementById('gamma').value);
@@ -57,10 +57,10 @@ function draw() {
 
   const cx = canvas.width / 2, cy = canvas.height / 2;
 
-  ctx.fillStyle = 'rgba(88,166,255,0.3)';
+  ctx.fillStyle = 'rgba(14,97,172,0.3)';
   ctx.fillRect(canvas.width * 0.1, canvas.height * 0.6, canvas.width * 0.8, canvas.height * 0.3);
 
-  ctx.fillStyle = 'rgba(88,166,255,0.5)';
+  ctx.fillStyle = 'rgba(14,97,172,0.5)';
   ctx.beginPath();
   ctx.moveTo(cx - 30, canvas.height * 0.6);
   ctx.lineTo(cx - 15, canvas.height * 0.6 - h * 50);
@@ -69,7 +69,7 @@ function draw() {
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(cx - 30, canvas.height * 0.6);
@@ -78,17 +78,17 @@ function draw() {
   ctx.lineTo(cx + 30, canvas.height * 0.6);
   ctx.stroke();
 
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(cx - 40, canvas.height * 0.6);
   ctx.lineTo(cx + 40, canvas.height * 0.6);
   ctx.stroke();
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.font = '10px sans-serif';
   ctx.fillText('h', cx + 35, canvas.height * 0.75);
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   for(let i = 0; i < 6; i++) {
     const px = cx + (i - 2.5) * 30;
     const py = canvas.height * 0.7;
@@ -97,18 +97,18 @@ function draw() {
     ctx.fill();
   }
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '12px sans-serif';
   ctx.fillText(`表面张力系数 γ = ${gamma.toFixed(4)} N/m`, 10, 20);
   ctx.fillText(`毛细管半径 r = ${(r * 1000).toFixed(1)} mm`, 10, 40);
   ctx.fillText(`液体密度 ρ = ${rho} kg/m³`, 10, 60);
   ctx.fillText(`接触角 θ = 0° (完全润湿)`, 10, 80);
 
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 14px sans-serif';
   ctx.fillText(`毛细上升高度 h = ${h.toFixed(3)} m = ${(h * 100).toFixed(1)} cm`, cx - 100, canvas.height - 20);
 
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = '12px sans-serif';
   ctx.fillText(`公式: h = 2γcosθ/(ρgr)`, 10, canvas.height - 10);
 

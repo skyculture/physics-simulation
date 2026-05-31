@@ -8,7 +8,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0d1117;
+  background: #FAF2E0;
   color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
@@ -18,20 +18,20 @@ body {
 .header {
   text-align: center;
   padding: 18px 20px 12px;
-  border-bottom: 1px solid #30363d;
+  border-bottom: 1px solid #D4C9B8;
   background: #161b22;
 }
 
 .header h1 {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #58a6ff;
+  color: #0E61AC;
   letter-spacing: 0.02em;
 }
 
 .header .subtitle {
   font-size: 0.85rem;
-  color: #8b949e;
+  color: #5A6370;
   margin-top: 4px;
 }
 
@@ -44,7 +44,7 @@ body {
 }
 
 .canvas-panel {
-  background: #0d1117;
+  background: #FAF2E0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,14 +53,14 @@ body {
 }
 
 canvas {
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
-  background: #0d1117;
+  background: #FAF2E0;
 }
 
 .control-panel {
   background: #161b22;
-  border-left: 1px solid #30363d;
+  border-left: 1px solid #D4C9B8;
   padding: 16px;
   overflow-y: auto;
   display: flex;
@@ -76,7 +76,7 @@ canvas {
 
 .control-group label {
   font-size: 0.8rem;
-  color: #8b949e;
+  color: #5A6370;
   font-weight: 500;
 }
 
@@ -88,14 +88,14 @@ canvas {
 
 .control-group input[type="range"] {
   flex: 1;
-  accent-color: #58a6ff;
+  accent-color: #0E61AC;
   height: 6px;
   cursor: pointer;
 }
 
 .control-group .value {
   font-size: 0.8rem;
-  color: #58a6ff;
+  color: #0E61AC;
   min-width: 42px;
   text-align: right;
   font-weight: 600;
@@ -130,7 +130,7 @@ canvas {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: #30363d;
+  background: #D4C9B8;
   border-radius: 24px;
   transition: 0.25s;
 }
@@ -140,7 +140,7 @@ canvas {
   position: absolute;
   height: 18px; width: 18px;
   left: 3px; bottom: 3px;
-  background: #8b949e;
+  background: #5A6370;
   border-radius: 50%;
   transition: 0.25s;
 }
@@ -162,9 +162,9 @@ canvas {
 
 .btn {
   padding: 7px 14px;
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   border-radius: 6px;
-  background: #21262d;
+  background: #FFFFFF;
   color: #c9d1d9;
   cursor: pointer;
   font-size: 0.8rem;
@@ -173,8 +173,8 @@ canvas {
 }
 
 .btn:hover {
-  background: #30363d;
-  border-color: #58a6ff;
+  background: #D4C9B8;
+  border-color: #0E61AC;
 }
 
 .btn.accent {
@@ -215,14 +215,14 @@ canvas {
 }
 
 .info-table th, .info-table td {
-  border: 1px solid #30363d;
+  border: 1px solid #D4C9B8;
   padding: 5px 7px;
   text-align: center;
 }
 
 .info-table th {
-  background: #21262d;
-  color: #8b949e;
+  background: #FFFFFF;
+  color: #5A6370;
   font-weight: 600;
   font-size: 0.7rem;
 }
@@ -232,20 +232,20 @@ canvas {
 }
 
 .info-table .match {
-  color: #3fb950;
+  color: #0E61AC;
   font-weight: 600;
 }
 
 .bottom-panel {
   background: #161b22;
-  border-top: 1px solid #30363d;
+  border-top: 1px solid #D4C9B8;
   padding: 10px 20px;
   display: flex;
   gap: 24px;
   align-items: flex-start;
   flex-wrap: wrap;
   font-size: 0.73rem;
-  color: #8b949e;
+  color: #5A6370;
 }
 
 .bottom-panel .law-box {
@@ -254,7 +254,7 @@ canvas {
 }
 
 .bottom-panel .law-box h4 {
-  color: #58a6ff;
+  color: #0E61AC;
   font-size: 0.78rem;
   margin-bottom: 3px;
 }
@@ -302,7 +302,7 @@ canvas {
     </div>
 
     <div class="control-group">
-      <label>行星初始距离 r₀ (AU) <span style="color:#8b949e;font-size:0.7rem;">—— 添加行星时使用</span></label>
+      <label>行星初始距离 r₀ (AU) <span style="color:#5A6370;font-size:0.7rem;">—— 添加行星时使用</span></label>
       <div class="row">
         <input type="range" id="distSlider" min="1" max="10" step="0.1" value="3.0">
         <span class="value" id="distValue">3.0</span>
@@ -310,7 +310,7 @@ canvas {
     </div>
 
     <div class="control-group">
-      <label>初始切向速度 v₀ (归一化单位) <span style="color:#8b949e;font-size:0.7rem;">—— 影响离心率</span></label>
+      <label>初始切向速度 v₀ (归一化单位) <span style="color:#5A6370;font-size:0.7rem;">—— 影响离心率</span></label>
       <div class="row">
         <input type="range" id="velSlider" min="0.1" max="5" step="0.01" value="0.58">
         <span class="value" id="velValue">0.58</span>
@@ -350,7 +350,7 @@ canvas {
 
     <div class="planet-legend" id="planetLegend"></div>
 
-    <div style="font-size:0.78rem;color:#8b949e;margin-top:4px;">
+    <div style="font-size:0.78rem;color:#5A6370;margin-top:4px;">
       开普勒第三定律验证: T² / a³ = 4π²/GM
     </div>
     <table class="info-table" id="keplerTable">
@@ -412,7 +412,7 @@ const G = 1.0;                       // 引力常数（归一化单位）
 const DT_BASE = 0.01;               // 基础时间步长
 const STEPS_PER_FRAME = 2;          // 每帧积分步数
 const PLANET_COLORS = [
-  '#58a6ff', '#f78166', '#3fb950', '#d2a8ff',
+  '#0E61AC', '#2A7CC7', '#0E61AC', '#0E61AC',
   '#f0883e', '#79c0ff', '#ff7b72', '#a5d6ff',
   '#7ee787', '#bc8cff'
 ];
@@ -859,7 +859,7 @@ function render() {
   const cy = canvasHeight / 2;
 
   // ---------- 绘制坐标轴参考线 ----------
-  ctx.strokeStyle = '#21262d';
+  ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 0.5;
   ctx.setLineDash([4, 8]);
   ctx.beginPath();
@@ -908,7 +908,7 @@ function render() {
 
       // 标注扇形面积
       if (ac.areaPeri > 0) {
-        ctx.fillStyle = '#58a6ff';
+        ctx.fillStyle = '#0E61AC';
         ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
         ctx.textAlign = 'center';
         const labelX = toCanvasX(planet.orbitPath[planet.perihelionIdx] ? planet.orbitPath[planet.perihelionIdx].x * 0.65 : 0);
@@ -916,7 +916,7 @@ function render() {
         ctx.fillText('面积=' + ac.areaPeri.toFixed(2), labelX, labelY);
       }
       if (ac.areaApo > 0) {
-        ctx.fillStyle = '#f78166';
+        ctx.fillStyle = '#2A7CC7';
         ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
         ctx.textAlign = 'center';
         const labelX = toCanvasX(planet.orbitPath[planet.aphelionIdx] ? planet.orbitPath[planet.aphelionIdx].x * 0.65 : 0);
@@ -975,7 +975,7 @@ function render() {
       ctx.globalAlpha = 0.6;
       ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = '#8b949e';
+      ctx.strokeStyle = '#5A6370';
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillStyle = '#c9d1d9';
@@ -1000,7 +1000,7 @@ function render() {
       ctx.beginPath();
       ctx.moveTo(px, py);
       ctx.lineTo(vxEnd, vyEnd);
-      ctx.strokeStyle = '#f0f6fc';
+      ctx.strokeStyle = '#0E61AC';
       ctx.lineWidth = 1.8;
       ctx.stroke();
 
@@ -1018,7 +1018,7 @@ function render() {
         vxEnd - arrowLen * Math.cos(angle + Math.PI / 6),
         vyEnd - arrowLen * Math.sin(angle + Math.PI / 6)
       );
-      ctx.strokeStyle = '#f0f6fc';
+      ctx.strokeStyle = '#0E61AC';
       ctx.lineWidth = 1.8;
       ctx.stroke();
     }
@@ -1071,7 +1071,7 @@ function render() {
     ctx.arc(px, py, 5, 0, Math.PI * 2);
     ctx.fillStyle = planet.color;
     ctx.fill();
-    ctx.strokeStyle = '#f0f6fc';
+    ctx.strokeStyle = '#0E61AC';
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -1125,9 +1125,9 @@ function updateKeplerTable() {
     const expected = planets[0].twoPiOverGM;
     const theoryRow = document.createElement('tr');
     theoryRow.innerHTML = `
-      <td style="color:#8b949e;">理论值</td>
-      <td colspan="3" style="color:#8b949e;">4π²/GM = ${expected.toFixed(4)}</td>
-      <td colspan="3" style="color:#8b949e;">所有行星 T²/a³ 应等于此值</td>
+      <td style="color:#5A6370;">理论值</td>
+      <td colspan="3" style="color:#5A6370;">4π²/GM = ${expected.toFixed(4)}</td>
+      <td colspan="3" style="color:#5A6370;">所有行星 T²/a³ 应等于此值</td>
     `;
     keplerTableBody.appendChild(theoryRow);
   }

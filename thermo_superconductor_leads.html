@@ -7,53 +7,53 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  background: #0d1117; color: #c9d1d9;
+  background: #FAF2E0; color: #c9d1d9;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px;
 }
 .header {
   width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center;
-  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 24px;
+  background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 14px 24px;
 }
-.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #ffa657; line-height: 1.2; }
-.header-left .subtitle { font-size: 0.82rem; color: #8b949e; margin-top: 2px; }
+.header-left h1 { font-size: 1.4rem; font-weight: 700; color: #2A7CC7; line-height: 1.2; }
+.header-left .subtitle { font-size: 0.82rem; color: #5A6370; margin-top: 2px; }
 .back-link {
-  color: #58a6ff; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
-  border: 1px solid #30363d; border-radius: 6px; transition: background 0.2s;
+  color: #0E61AC; text-decoration: none; font-size: 0.95rem; padding: 6px 14px;
+  border: 1px solid #D4C9B8; border-radius: 6px; transition: background 0.2s;
 }
-.back-link:hover { background: #1f2937; }
+.back-link:hover { background: #FFF7EB; }
 .main-container { width: 100%; max-width: 1100px; display: flex; gap: 12px; flex: 1; }
 .canvas-panel {
-  background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px;
+  background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 10px;
   display: flex; align-items: center; justify-content: center; flex: 1;
 }
-canvas#simCanvas { display: block; border-radius: 4px; background: #0d1117; }
+canvas#simCanvas { display: block; border-radius: 4px; background: #FAF2E0; }
 .side-panel { width: 300px; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
-.panel-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
-.panel-box h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.panel-box { background: #161b22; border: 1px solid #D4C9B8; border-radius: 8px; padding: 14px 16px; }
+.panel-box h3 { font-size: 0.9rem; color: #2A7CC7; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
 .control-row label { font-size: 0.82rem; color: #c9d1d9; white-space: nowrap; }
-.control-row input[type="range"] { flex: 1; accent-color: #ffa657; height: 4px; }
-.control-row .val { font-size: 0.78rem; color: #ffa657; min-width: 50px; text-align: right; font-weight: 600; }
+.control-row input[type="range"] { flex: 1; accent-color: #2A7CC7; height: 4px; }
+.control-row .val { font-size: 0.78rem; color: #2A7CC7; min-width: 50px; text-align: right; font-weight: 600; }
 .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .btn {
-  padding: 7px 12px; border: 1px solid #30363d; border-radius: 6px; background: #21262d;
+  padding: 7px 12px; border: 1px solid #D4C9B8; border-radius: 6px; background: #FFFFFF;
   color: #c9d1d9; cursor: pointer; font-size: 0.82rem; font-family: inherit;
   transition: background 0.15s, border-color 0.15s; flex: 1; text-align: center; min-width: 48px;
 }
-.btn:hover { background: #30363d; }
-.btn.active { background: #ffa65733; border-color: #ffa657; color: #ffa657; }
-.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; font-size: 0.82rem; }
+.btn:hover { background: #D4C9B8; }
+.btn.active { background: #2A7CC733; border-color: #2A7CC7; color: #2A7CC7; }
+.stat-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #D4C9B8; font-size: 0.82rem; }
 .stat-item:last-child { border-bottom: none; }
-.stat-label { color: #8b949e; }
-.stat-value { color: #ffa657; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-label { color: #5A6370; }
+.stat-value { color: #2A7CC7; font-weight: 600; font-variant-numeric: tabular-nums; }
 .check-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 0.82rem; cursor: pointer; }
-.check-row input[type="checkbox"] { accent-color: #ffa657; width: 15px; height: 15px; }
+.check-row input[type="checkbox"] { accent-color: #2A7CC7; width: 15px; height: 15px; }
 .diagram-panel {
-  width: 100%; max-width: 1100px; background: #161b22; border: 1px solid #30363d;
+  width: 100%; max-width: 1100px; background: #161b22; border: 1px solid #D4C9B8;
   border-radius: 8px; padding: 14px 20px;
 }
-.diagram-panel h3 { font-size: 0.9rem; color: #ffa657; margin-bottom: 6px; font-weight: 600; }
+.diagram-panel h3 { font-size: 0.9rem; color: #2A7CC7; margin-bottom: 6px; font-weight: 600; }
 canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
 @media (max-width: 900px) {
   .main-container { flex-direction: column; }
@@ -124,7 +124,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
     </div>
     <div class="panel-box">
       <h3>📖 物理说明</h3>
-      <div style="font-size:0.78rem;color:#8b949e;line-height:1.6;">
+      <div style="font-size:0.78rem;color:#5A6370;line-height:1.6;">
         超导电流引线利用超导体零电阻特性，<br>
         消除焦耳热，仅通过热传导向低温端<br>
         传递热量。铜引线既有热传导又有焦耳<br>
@@ -247,7 +247,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
     const scY = margin.top + 30;
     const cuY = scY + leadH + 60;
 
-    simCtx.fillStyle = '#8b949e';
+    simCtx.fillStyle = '#5A6370';
     simCtx.font = 'bold 12px sans-serif';
     simCtx.textAlign = 'center';
     simCtx.fillText('超导引线 (零电阻)', SIM_W / 2, scY - 8);
@@ -293,7 +293,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
     }
 
     const arrowY = scY + leadH / 2;
-    simCtx.strokeStyle = '#ffa657';
+    simCtx.strokeStyle = '#2A7CC7';
     simCtx.lineWidth = 2;
     simCtx.beginPath();
     simCtx.moveTo(margin.left + 20, arrowY);
@@ -304,7 +304,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
     simCtx.lineTo(margin.left + leadW - 30, arrowY - 5);
     simCtx.lineTo(margin.left + leadW - 30, arrowY + 5);
     simCtx.closePath();
-    simCtx.fillStyle = '#ffa657';
+    simCtx.fillStyle = '#2A7CC7';
     simCtx.fill();
     simCtx.font = '10px sans-serif';
     simCtx.textAlign = 'center';
@@ -312,7 +312,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
 
     if (showNormal) {
       const cuArrowY = cuY + leadH / 2;
-      simCtx.strokeStyle = '#ffa657';
+      simCtx.strokeStyle = '#2A7CC7';
       simCtx.lineWidth = 2;
       simCtx.beginPath();
       simCtx.moveTo(margin.left + 20, cuArrowY);
@@ -323,7 +323,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
       simCtx.lineTo(margin.left + leadW - 30, cuArrowY - 5);
       simCtx.lineTo(margin.left + leadW - 30, cuArrowY + 5);
       simCtx.closePath();
-      simCtx.fillStyle = '#ffa657';
+      simCtx.fillStyle = '#2A7CC7';
       simCtx.fill();
       simCtx.fillText(`I = ${currentI}A`, margin.left + leadW / 2, cuArrowY - 8);
     }
@@ -337,10 +337,10 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
       simCtx.fillStyle = tempToColor(t, tMin, tMax);
       simCtx.fillRect(colorbarX + x, colorbarY, 1, colorbarH);
     }
-    simCtx.strokeStyle = '#30363d';
+    simCtx.strokeStyle = '#D4C9B8';
     simCtx.lineWidth = 1;
     simCtx.strokeRect(colorbarX, colorbarY, colorbarW, colorbarH);
-    simCtx.fillStyle = '#8b949e';
+    simCtx.fillStyle = '#5A6370';
     simCtx.font = '9px sans-serif';
     simCtx.textAlign = 'left';
     simCtx.fillText(`${tMin.toFixed(0)}K`, colorbarX, colorbarY - 3);
@@ -360,7 +360,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
 
     profileCtx.clearRect(0, 0, W, H);
 
-    profileCtx.strokeStyle = '#30363d';
+    profileCtx.strokeStyle = '#D4C9B8';
     profileCtx.lineWidth = 1;
     profileCtx.beginPath();
     profileCtx.moveTo(margin.left, margin.top);
@@ -370,7 +370,7 @@ canvas#profileCanvas { display: block; width: 100%; border-radius: 4px; }
 
     const tMax = Math.max(tHot, ...cuTemp, ...scTemp) * 1.1;
 
-    profileCtx.fillStyle = '#8b949e';
+    profileCtx.fillStyle = '#5A6370';
     profileCtx.font = '10px sans-serif';
     profileCtx.textAlign = 'center';
     for (let i = 0; i <= 4; i++) {

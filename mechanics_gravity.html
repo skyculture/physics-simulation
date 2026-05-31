@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>万有引力 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -43,7 +43,7 @@ function resize() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   
   const M = parseFloat(document.getElementById('mass1').value);
@@ -55,13 +55,13 @@ function draw() {
   
   const cx = canvas.width/2, cy = canvas.height/2;
   
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   const bigRadius = Math.sqrt(M / 1e24) * 15;
   ctx.beginPath();
   ctx.arc(cx, cy, Math.min(bigRadius, canvas.height*0.25), 0, Math.PI*2);
   ctx.fill();
   
-  ctx.strokeStyle = 'rgba(88,166,255,0.3)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.3)';
   ctx.lineWidth = 1;
   for(let i=1;i<=4;i++) {
     ctx.beginPath();
@@ -75,12 +75,12 @@ function draw() {
   const moonX = cx + orbitR * Math.cos(angle);
   const moonY = cy + orbitR * Math.sin(angle) * 0.3;
   
-  ctx.fillStyle = '#58a6ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.beginPath();
   ctx.arc(moonX, moonY, Math.min(smallRadius, 10), 0, Math.PI*2);
   ctx.fill();
   
-  ctx.strokeStyle = 'rgba(88,166,255,0.5)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.5)';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([5,5]);
   ctx.beginPath();
@@ -88,13 +88,13 @@ function draw() {
   ctx.stroke();
   ctx.setLineDash([]);
   
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '12px sans-serif';
   ctx.fillText(`地球质量 M = ${(M/1e24).toFixed(2)} × 10²⁴ kg`, canvas.width*0.05, canvas.height*0.1);
   ctx.fillText(`月球质量 m = ${(m/1e22).toFixed(2)} × 10²² kg`, canvas.width*0.05, canvas.height*0.1+20);
   ctx.fillText(`距离 r = ${(r/1e8).toFixed(2)} × 10⁸ m`, canvas.width*0.05, canvas.height*0.1+40);
   
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 14px sans-serif';
   ctx.fillText(`引力 F = ${(F/1e20).toFixed(3)} × 10²⁰ N`, cx-80, canvas.height*0.9);
   

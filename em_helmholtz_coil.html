@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔶 亥姆霍兹线圈</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
   .header { text-align:center; margin-bottom:16px; }
-  .header h1 { font-size:1.4em; color:#f0f6fc; margin-bottom:4px; }
-  .header p { font-size:0.8em; color:#8b949e; }
+  .header h1 { font-size:1.4em; color:#0E61AC; margin-bottom:4px; }
+  .header p { font-size:0.8em; color:#5A6370; }
   .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
   .canvas-wrap { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px; }
   .controls { width:280px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px; }
   .control-group { display:flex; flex-direction:column; gap:4px; }
-  .control-group label { font-size:0.8em; color:#8b949e; }
+  .control-group label { font-size:0.8em; color:#5A6370; }
   .control-group input[type="range"] { width:100%; }
   .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
   .info-panel { background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
@@ -109,7 +109,7 @@ function draw() {
   ctx.fillText('⊗', cx + r + 15, cy + 50);
   
   // 轴线
-  ctx.strokeStyle = '#58a6ff';
+  ctx.strokeStyle = '#0E61AC';
   ctx.lineWidth = 1;
   ctx.setLineDash([5,5]);
   ctx.beginPath();
@@ -127,7 +127,7 @@ function draw() {
       const Bz = calculateBz(z / 100);
       const fieldRadius = Math.min(Bz * 8, 60);
       
-      ctx.strokeStyle = `rgba(88,166,255,${0.3 + Math.abs(Bz) / 10})`;
+      ctx.strokeStyle = `rgba(14,97,172,${0.3 + Math.abs(Bz) / 10})`;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(cx, cy + (z / (r * 1.5)) * (r * 1.2), fieldRadius * Math.cos(angle), 0, Math.PI * 2);
@@ -141,7 +141,7 @@ function draw() {
       const Bz = calculateBz(z);
       const arrowLength = Math.min(Math.abs(Bz) * 5, 15);
       
-      ctx.strokeStyle = Bz > 0 ? '#3fb950' : '#f78166';
+      ctx.strokeStyle = Bz > 0 ? '#0E61AC' : '#2A7CC7';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(cx - arrowLength, y);
@@ -165,7 +165,7 @@ function draw() {
   ctx.fill();
   
   // 标注
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '10px sans-serif';
   ctx.fillText('z 轴', cx + 30, cy + 110);
   ctx.fillText('线圈间距 = 线圈半径', cx - 60, cy + 130);

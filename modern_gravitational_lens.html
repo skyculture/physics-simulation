@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>引力透镜 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#d2a8ff; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.8em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:140px; accent-color:var(--accent); }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.78em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -49,20 +49,20 @@ function draw() {
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   for (let i = 0; i < 60; i++) {
     ctx.beginPath();
     ctx.arc(Math.random() * w, Math.random() * h, S * 0.003 + Math.random() * S * 0.003, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  ctx.fillStyle = '#f78166';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(cx, cy, S * 0.03, 0, Math.PI * 2);
   ctx.fill();
 
   const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * 0.15);
-  grad.addColorStop(0, 'rgba(210,168,255,0.3)');
+  grad.addColorStop(0, 'rgba(14,97,172,0.3)');
   grad.addColorStop(0.7, 'rgba(139,92,246,0.15)');
   grad.addColorStop(1, 'rgba(139,92,246,0)');
   ctx.fillStyle = grad;
@@ -77,12 +77,12 @@ function draw() {
   ctx.stroke();
 
   const sourceY = cy - S * 0.35;
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.beginPath();
   ctx.arc(cx, sourceY, S * 0.015, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(210,168,255,0.5)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.5)';
   ctx.lineWidth = S * 0.004;
   for (let i = -3; i <= 3; i++) {
     if (i === 0) continue;
@@ -98,7 +98,7 @@ function draw() {
     ctx.stroke();
   }
 
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   for (let i = -2; i <= 2; i++) {
     if (i === 0) {
       ctx.beginPath();
@@ -114,16 +114,16 @@ function draw() {
 
   const fs = S * 0.03;
   ctx.font = `${fs}px sans-serif`;
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.textAlign = 'left';
   ctx.fillText(`透镜质量: ${mass} ×10¹¹ M☉`, w * 0.02, fs + 5);
   ctx.fillText(`源距离: ${sourceDist} Gpc`, w * 0.02, fs * 2 + 5);
 
   const deflectionAngle = mass * 4 / sourceDist;
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.fillText(`偏转角: ${deflectionAngle.toFixed(2)} 角秒`, w * 0.02, fs * 3 + 5);
 
-  ctx.fillStyle = '#d2a8ff';
+  ctx.fillStyle = '#0E61AC';
   ctx.fillText('爱因斯坦环半径: 取决于质量和距离', w * 0.02, fs * 4 + 5);
 
   t += 0.02;

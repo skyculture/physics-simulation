@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>回旋加速器 - 物理数值仿真平台</title>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#c9d1d9; --accent:#58a6ff; --ac2:#3fb950; }
+  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; --ac2:#0E61AC; }
   * { box-sizing: border-box; margin:0; padding:0; }
   html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; }
   #container { display:flex; flex-direction:column; height:100%; }
   #content { flex:1; display:flex; flex-direction:column; padding:10px; gap:10px; }
-  #canvas { flex:1; background:#0d1117; border:1px solid var(--border); border-radius:8px; }
+  #canvas { flex:1; background:#FAF2E0; border:1px solid var(--border); border-radius:8px; }
   #controls { display:flex; flex-wrap:wrap; gap:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
   .ctrl-group { display:flex; align-items:center; gap:8px; font-size:0.76em; }
-  .ctrl-group label { color:#8b949e; }
+  .ctrl-group label { color:#5A6370; }
   .ctrl-group input[type="range"] { width:120px; accent-color:var(--accent); }
   .ctrl-group input[type="number"] { width:60px; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:3px 6px; color:var(--text); font-size:0.9em; }
-  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#8b949e; line-height:1.5; }
+  #info { padding:10px 12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; font-size:0.74em; color:#5A6370; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -98,7 +98,7 @@ function step() {
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1117';
+  ctx.fillStyle = '#FAF2E0';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const B = parseFloat(document.getElementById('bField').value);
@@ -113,22 +113,22 @@ function draw() {
     if(trail.length > MAX_TRAIL) trail.shift();
   }
 
-  ctx.strokeStyle = 'rgba(88,166,255,0.15)';
+  ctx.strokeStyle = 'rgba(14,97,172,0.15)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(88,166,255,0.05)';
+  ctx.fillStyle = 'rgba(14,97,172,0.05)';
   ctx.beginPath();
   ctx.arc(cx, cy, maxR, Math.PI / 2, Math.PI * 3 / 2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(247,129,102,0.05)';
+  ctx.fillStyle = 'rgba(42,124,199,0.05)';
   ctx.beginPath();
   ctx.arc(cx, cy, maxR, -Math.PI / 2, Math.PI / 2);
   ctx.fill();
 
-  ctx.strokeStyle = '#f78166';
+  ctx.strokeStyle = '#2A7CC7';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(cx, cy - maxR);
@@ -146,7 +146,7 @@ function draw() {
   if(trail.length > 1) {
     for(let i = 1; i < trail.length; i++) {
       const alpha = (i / trail.length) * 0.8;
-      ctx.strokeStyle = `rgba(88,166,255,${alpha.toFixed(2)})`;
+      ctx.strokeStyle = `rgba(14,97,172,${alpha.toFixed(2)})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(cx + trail[i-1].x * scale, cy - trail[i-1].y * scale);
@@ -157,12 +157,12 @@ function draw() {
 
   const sx = cx + px * scale;
   const sy = cy - py * scale;
-  ctx.fillStyle = '#ffa657';
+  ctx.fillStyle = '#2A7CC7';
   ctx.beginPath();
   ctx.arc(sx, sy, 5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#8b949e';
+  ctx.fillStyle = '#5A6370';
   ctx.font = '12px sans-serif';
   const omega = q * B / m;
   ctx.fillText(`回旋频率 ω = ${omega.toFixed(2)} rad/s`, 10, 20);
@@ -171,12 +171,12 @@ function draw() {
   ctx.fillText(`动能 KE = ${(0.5 * m * speed * speed).toFixed(1)}`, 10, 80);
   ctx.fillText(`加速次数: ${accelCount}`, 10, 100);
 
-  ctx.fillStyle = '#3fb950';
+  ctx.fillStyle = '#0E61AC';
   ctx.font = 'bold 13px sans-serif';
   ctx.fillText(`ω = qB/m = 常数 (与速度无关)`, 10, 125);
 
   if(rOrbit * scale > maxR * 0.95) {
-    ctx.fillStyle = '#f78166';
+    ctx.fillStyle = '#2A7CC7';
     ctx.font = 'bold 13px sans-serif';
     ctx.fillText('粒子已到达加速器边缘!', cx - 80, canvas.height - 20);
   }
