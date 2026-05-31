@@ -8,7 +8,7 @@
   :root { --bg:#FAF2E0; --panel:#FFF7EB; --border:#D4C9B8; --text:#1A1A1A; --accent:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
-  .header { text-align:center; margin-bottom:16px; }
+  .header { width:100%; max-width:1200px; margin:0 auto 16px; background:#FFF7EB; border:1px solid #D4C9B8; border-radius:8px; padding:14px 24px 12px; text-align:center; }
   .header h1 { font-size:1.4em; color:#0E61AC; margin-bottom:4px; }
   .header p { font-size:0.8em; color:#5A6370; }
   .main { display:flex; gap:16px; max-width:1200px; margin:0 auto; }
@@ -17,10 +17,16 @@
   .control-group { display:flex; flex-direction:column; gap:4px; }
   .control-group label { font-size:0.8em; color:#5A6370; }
   .control-group input[type="range"] { width:100%; }
-  .control-group button { padding:8px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; }
-  .info-panel { background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.2); border-radius:6px; padding:10px; font-size:0.75em; }
-  .info-panel .item { display:flex; justify-content:space-between; margin:4px 0; }
+  .control-group button { padding:7px 12px; border:1px solid #D4C9B8; border-radius:6px; background:#FFFFFF; color:#1A1A1A; cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; } .control-group button:hover { background:#FFF7EB; border-color:#0E61AC; } .control-group button.primary { background:#0E61AC; color:#fff; border-color:#0E61AC; }
+  .info-panel { background:#FFF7EB; border:1px solid #D4C9B8; border-radius:8px; padding:14px 16px; }
+  .info-panel .item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #D4C9B8; font-size:0.82rem; } .info-panel .item:last-child { border-bottom:none; } .info-panel .label { color:#5A6370; } .info-panel .value { color:#0E61AC; font-weight:600; font-variant-numeric:tabular-nums; }
   canvas { width:100%; border-radius:4px; }
+
+@media (max-width:900px) {
+  .main { flex-direction:column; }
+  .controls { width:100%; }
+  .canvas-wrap { min-height:300px; }
+}
 </style>
 </head>
 <body>
@@ -31,7 +37,7 @@
 </div>
 <div class="main">
   <div class="canvas-wrap">
-    <canvas id="canvas" width="600" height="400"></canvas>
+    <canvas id="canvas" ></canvas>
   </div>
   <div class="controls">
     <div class="control-group">
@@ -64,6 +70,16 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+let running = true, animId = null;
+
+const dpr = window.devicePixelRatio || 1;
+function resizeCanvas() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h) { canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
 let animationId;
 
 let B = 1.5;
@@ -275,5 +291,11 @@ document.getElementById('stopBtn').addEventListener('click', () => {
 
 draw();
 animate();
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); running = !running; if (running) animate(); }
+  if (e.code === 'KeyR') { e.preventDefault(); /* reset logic in reset() if available */ if (typeof reset === 'function') reset(); }
+});
+
 </script>
 </body>

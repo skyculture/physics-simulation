@@ -23,6 +23,12 @@ h3{margin:0 0 8px 0;font-size:14px;color:#0E61AC}
 .row label{flex:0 0 120px;font-size:13px}
 .row input[type=range]{flex:1}
 .row input[type=number]{width:70px;background:#FAF2E0;border:1px solid #D4C9B8;color:#1A1A1A;padding:6px 8px;border-radius:6px}
+
+@media (max-width:900px) {
+  .main { flex-direction:column; }
+  .controls { width:100%; }
+  .canvas-wrap { min-height:300px; }
+}
 </style>
 </head>
 <body>
