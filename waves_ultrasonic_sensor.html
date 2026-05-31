@@ -37,16 +37,26 @@ let t = 0;
 let pulse = null;
 let distance = 1;
 let echo = false;
+let w = 0, h = 0;
 
 function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (w && h) { canvas.width = w; canvas.height = h; }
+  const cw = canvas.clientWidth, ch = canvas.clientHeight;
+  if (cw && ch) {
+    w = cw; h = ch;
+    canvas.width = w; canvas.height = h;
+  }
+}
+
+function ensureSize() {
+  resize();
+  if (!w || !h) {
+    requestAnimationFrame(ensureSize);
+  }
 }
 
 function sendPulse() {
-  if (pulse) return;
-  const w = canvas.width;
-  const S = Math.min(w, canvas.height);
+  if (pulse || !w || !h) return;
+  const S = Math.min(w, h);
   const sensorX = w * 0.15;
   pulse = {
     x: sensorX + S * 0.04,
@@ -62,7 +72,7 @@ function reset() {
 }
 
 function draw() {
-  const w = canvas.width, h = canvas.height;
+  if (!w || !h) { animationId = requestAnimationFrame(draw); return; }
   const S = Math.min(w, h);
   const cx = w / 2, cy = h / 2;
   const targetDist = parseFloat(document.getElementById('distance').value);
@@ -82,7 +92,8 @@ function draw() {
   const sensorX = w * 0.15;
   ctx.fillStyle = '#2A7CC7';
   ctx.fillRect(sensorX - S * 0.04, cy - S * 0.04, S * 0.08, S * 0.08);
-  ctx.fillStyle = '#2A7CC7';
+  ctx.strokeStyle = '#0E61AC';
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(sensorX + S * 0.04, cy, S * 0.02, Math.PI * 0.5, Math.PI * 1.5);
   ctx.stroke();
@@ -126,7 +137,7 @@ function draw() {
   }
 
   if (echo) {
-    ctx.fillStyle = 'rgba(63,185,90,0.3)';
+    ctx.fillStyle = 'rgba(14,97,172,0.2)';
     ctx.fillRect(sensorX - S * 0.05, cy - S * 0.05, S * 0.1, S * 0.1);
   }
 
@@ -157,7 +168,7 @@ document.getElementById('soundSpeed').addEventListener('input', e => {
 document.getElementById('sendBtn').addEventListener('click', sendPulse);
 document.getElementById('resetBtn').addEventListener('click', reset);
 
-resize();
+ensureSize();
 window.addEventListener('resize', resize);
 draw();
 </script>
