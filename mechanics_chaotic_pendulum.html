@@ -248,6 +248,7 @@ resizeCanvas();
 window.addEventListener('resize', () => { resizeCanvas(); if (!isRunning) draw(); });
 reset();
 
+let _paused=false;
 document.addEventListener('keydown',(e)=>{
   if(e.code==='Space'){e.preventDefault();
     _paused=!_paused;

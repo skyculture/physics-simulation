@@ -51,21 +51,15 @@ function resizeCanvas(){
   _cw=cw;_ch=ch;
   canvas.width=cw*dpr;canvas.height=ch*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(!isRolling) drawScene(0, 0);
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
 let animationId = null;
 let physDist = 0, physVel = 0;
 let isRolling = false;
-let prevTime = 0;
 
-const SLOPE_LENGTH_M = 2.0;
-
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if(w && h) { canvas.width = w; canvas.height = h; }
-  if(!isRolling) drawScene(0, 0);
-}
+function drawScene(dt, v) {
 
 function reset() {
   physDist = 0; physVel = 0;
@@ -229,7 +223,7 @@ document.getElementById('releaseBtn').addEventListener('click', release);
 document.getElementById('resetBtn').addEventListener('click', reset);
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 
 let _paused=false;
 document.addEventListener('keydown',(e)=>{

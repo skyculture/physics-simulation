@@ -117,17 +117,6 @@ document.getElementById('L0').addEventListener('input', e => { document.getEleme
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 draw();
-
-let _paused=false;
-document.addEventListener('keydown',(e)=>{
-  if(e.code==='Space'){e.preventDefault();
-    _paused=!_paused;
-    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
-    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
-    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
-  }
-  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
-});
 </script>
 </body>
 </html>

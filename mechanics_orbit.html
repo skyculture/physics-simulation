@@ -1281,24 +1281,23 @@ btnReset.addEventListener('click', resetSimulation);
 btnAddPlanet.addEventListener('click', addPlanet);
 
 // ============================================================================
-// 处理窗口大小变化
+// DPR Canvas 初始化
 // ============================================================================
-function resizeCanvas() {
-  const panel = canvasPanel;
-  const rect = panel.getBoundingClientRect();
-  canvasWidth = Math.floor(rect.width) - 20;
-  canvasHeight = Math.floor(rect.height) - 20;
-  if (canvasWidth < 300) canvasWidth = 300;
-  if (canvasHeight < 300) canvasHeight = 300;
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
+let _cw=600,_ch=400;
+const dpr=window.devicePixelRatio||1;
+function getW(){return canvas.clientWidth||_cw;}
+function getH(){return canvas.clientHeight||_ch;}
+function resizeCanvas(){
+  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
+  _cw=cw;_ch=ch;
+  canvasWidth=cw;canvasHeight=ch;
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
   computeScale();
   render();
 }
 
-window.addEventListener('resize', () => {
-  resizeCanvas();
-});
+window.addEventListener('resize', resizeCanvas);
 
 // ============================================================================
 // 键盘快捷键
@@ -1329,18 +1328,6 @@ window.addEventListener('keydown', (e) => {
 function init() {
   canvas = document.getElementById('orbitCanvas');
   ctx = canvas.getContext('2d');
-const dpr=window.devicePixelRatio||1;
-let _cw=600,_ch=400;
-function getW(){return canvas.clientWidth||_cw;}
-function getH(){return canvas.clientHeight||_ch;}
-function resizeCanvas(){
-  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
-  _cw=cw;_ch=ch;
-  canvas.width=cw*dpr;canvas.height=ch*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
 
   resizeCanvas();
   initDefaultPlanets();
@@ -1350,16 +1337,6 @@ window.addEventListener('resize',resizeCanvas);
 }
 
 init();
-
-document.addEventListener('keydown',(e)=>{
-  if(e.code==='Space'){e.preventDefault();
-    _paused=!_paused;
-    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
-    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
-    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
-  }
-  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
-});
 </script>
 </body>
 </html>

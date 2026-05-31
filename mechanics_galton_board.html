@@ -50,6 +50,8 @@ function resizeCanvas(){
   _cw=cw;_ch=ch;
   canvas.width=cw*dpr;canvas.height=ch*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  buildPegs();
+  render();
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
@@ -63,12 +65,7 @@ const GRAVITY = 800;
 const RESTITUTION = 0.3;
 const FRICTION = 0.8;
 
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if(w && h) { canvas.width = w; canvas.height = h; }
-  buildPegs();
-  render();
-}
+let ballRadius;
 
 function initSlots() {
   const rows = parseInt(document.getElementById('rows').value);
@@ -286,9 +283,10 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 resizeCanvas();
-window.addEventListener('resize', resize);
+window.addEventListener('resize', resizeCanvas);
 initSlots();
 
+let _paused=false;
 document.addEventListener('keydown',(e)=>{
   if(e.code==='Space'){e.preventDefault();
     _paused=!_paused;

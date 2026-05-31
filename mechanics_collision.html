@@ -562,8 +562,19 @@ canvas {
   let restitution   = 1.0;      // 恢复系数
 
   /* ---- 小球数据 ---- */
-  const W  = canvas.width;
-  const H  = canvas.height;
+  const dpr=window.devicePixelRatio||1;
+  let _cw=700,_ch=550;
+  function getW(){return canvas.clientWidth||_cw;}
+  function getH(){return canvas.clientHeight||_ch;}
+  function resizeCanvas(){
+    const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
+    _cw=cw;_ch=ch;
+    canvas.width=cw*dpr;canvas.height=ch*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  resizeCanvas();
+  window.addEventListener('resize',resizeCanvas);
 
   // 小球1
   let ball1 = {
@@ -834,8 +845,8 @@ canvas {
       ball.vx = Math.abs(ball.vx);
       bounced = true;
     }
-    if (ball.x + ball.radius > W) {
-      ball.x = W - ball.radius;
+    if (ball.x + ball.radius > getW()) {
+      ball.x = getW() - ball.radius;
       ball.vx = -Math.abs(ball.vx);
       bounced = true;
     }
@@ -844,8 +855,8 @@ canvas {
       ball.vy = Math.abs(ball.vy);
       bounced = true;
     }
-    if (ball.y + ball.radius > H) {
-      ball.y = H - ball.radius;
+    if (ball.y + ball.radius > getH()) {
+      ball.y = getH() - ball.radius;
       ball.vy = -Math.abs(ball.vy);
       bounced = true;
     }
@@ -907,6 +918,7 @@ canvas {
    * 绘制画布
    * ================================================================== */
   function draw() {
+    const W=getW(), H=getH();
     ctx.clearRect(0, 0, W, H);
 
     // 绘制网格背景
@@ -1231,16 +1243,6 @@ canvas {
   draw();
 
 })();
-
-document.addEventListener('keydown',(e)=>{
-  if(e.code==='Space'){e.preventDefault();
-    _paused=!_paused;
-    if(typeof isRunning!=='undefined'){isRunning=!_paused;if(isRunning&&typeof animate==='function')animate();else if(typeof cancelAnimationFrame==='function'&&typeof animationId!=='undefined')cancelAnimationFrame(animationId);}
-    else if(typeof running!=='undefined'){running=!_paused;if(running&&typeof animate==='function')animate();}
-    else if(typeof paused!=='undefined'){paused=_paused;if(!paused&&typeof animate==='function')animate();}
-  }
-  if(e.code==='KeyR'){e.preventDefault();if(typeof reset==='function')reset();}
-});
 </script>
 
 </body>

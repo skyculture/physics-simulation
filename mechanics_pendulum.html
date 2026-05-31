@@ -601,68 +601,71 @@ let simpleMeasuredPeriod = 0;
 
 const canvasSimple = document.getElementById('canvasSimple');
 const ctxSimple = canvasSimple.getContext('2d');
-const dpr=window.devicePixelRatio||1;
-let _cw=600,_ch=400;
-function getW(){return canvas.clientWidth||_cw;}
-function getH(){return canvas.clientHeight||_ch;}
-function resizeCanvas(){
-  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
-  _cw=cw;_ch=ch;
-  canvas.width=cw*dpr;canvas.height=ch*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+const dpr1=window.devicePixelRatio||1;
+let _cw1=600,_ch1=400;
+function getW1(){return canvasSimple.clientWidth||_cw1;}
+function getH1(){return canvasSimple.clientHeight||_ch1;}
+function resizeCanvas1(){
+  const cw=canvasSimple.clientWidth||_cw1,ch=canvasSimple.clientHeight||_ch1;
+  _cw1=cw;_ch1=ch;
+  canvasSimple.width=cw*dpr1;canvasSimple.height=ch*dpr1;
+  ctxSimple.setTransform(dpr1,0,0,dpr1,0,0);
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
+resizeCanvas1();
+window.addEventListener('resize',resizeCanvas1);
+
 const canvasSimpleGraph = document.getElementById('canvasSimpleGraph');
 const ctxSimpleGraph = canvasSimpleGraph.getContext('2d');
-const dpr=window.devicePixelRatio||1;
-let _cw=600,_ch=400;
-function getW(){return canvas.clientWidth||_cw;}
-function getH(){return canvas.clientHeight||_ch;}
-function resizeCanvas(){
-  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
-  _cw=cw;_ch=ch;
-  canvas.width=cw*dpr;canvas.height=ch*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+const dpr2=window.devicePixelRatio||1;
+let _cw2=600,_ch2=400;
+function getW2(){return canvasSimpleGraph.clientWidth||_cw2;}
+function getH2(){return canvasSimpleGraph.clientHeight||_ch2;}
+function resizeCanvas2(){
+  const cw=canvasSimpleGraph.clientWidth||_cw2,ch=canvasSimpleGraph.clientHeight||_ch2;
+  _cw2=cw;_ch2=ch;
+  canvasSimpleGraph.width=cw*dpr2;canvasSimpleGraph.height=ch*dpr2;
+  ctxSimpleGraph.setTransform(dpr2,0,0,dpr2,0,0);
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
+resizeCanvas2();
+window.addEventListener('resize',resizeCanvas2);
+
 const canvasDouble = document.getElementById('canvasDouble');
 const ctxDouble = canvasDouble.getContext('2d');
-const dpr=window.devicePixelRatio||1;
-let _cw=600,_ch=400;
-function getW(){return canvas.clientWidth||_cw;}
-function getH(){return canvas.clientHeight||_ch;}
-function resizeCanvas(){
-  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
-  _cw=cw;_ch=ch;
-  canvas.width=cw*dpr;canvas.height=ch*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+const dpr3=window.devicePixelRatio||1;
+let _cw3=600,_ch3=400;
+function getW3(){return canvasDouble.clientWidth||_cw3;}
+function getH3(){return canvasDouble.clientHeight||_ch3;}
+function resizeCanvas3(){
+  const cw=canvasDouble.clientWidth||_cw3,ch=canvasDouble.clientHeight||_ch3;
+  _cw3=cw;_ch3=ch;
+  canvasDouble.width=cw*dpr3;canvasDouble.height=ch*dpr3;
+  ctxDouble.setTransform(dpr3,0,0,dpr3,0,0);
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
+resizeCanvas3();
+window.addEventListener('resize',resizeCanvas3);
+
 const canvasDoubleGraph = document.getElementById('canvasDoubleGraph');
 const ctxDoubleGraph = canvasDoubleGraph.getContext('2d');
-const dpr=window.devicePixelRatio||1;
-let _cw=600,_ch=400;
-function getW(){return canvas.clientWidth||_cw;}
-function getH(){return canvas.clientHeight||_ch;}
-function resizeCanvas(){
-  const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
-  _cw=cw;_ch=ch;
-  canvas.width=cw*dpr;canvas.height=ch*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+const dpr4=window.devicePixelRatio||1;
+let _cw4=600,_ch4=400;
+function getW4(){return canvasDoubleGraph.clientWidth||_cw4;}
+function getH4(){return canvasDoubleGraph.clientHeight||_ch4;}
+function resizeCanvas4(){
+  const cw=canvasDoubleGraph.clientWidth||_cw4,ch=canvasDoubleGraph.clientHeight||_ch4;
+  _cw4=cw;_ch4=ch;
+  canvasDoubleGraph.width=cw*dpr4;canvasDoubleGraph.height=ch*dpr4;
+  ctxDoubleGraph.setTransform(dpr4,0,0,dpr4,0,0);
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
+resizeCanvas4();
+window.addEventListener('resize',resizeCanvas4);
 
 // ==================== 绘制函数 ====================
 
 /** 绘制单摆 */
 function drawSimplePendulum() {
   const ctx = ctxSimple;
-  const w = canvasSimple.width;
-  const h = canvasSimple.height;
+  const w = getW1();
+  const h = getH1();
   ctx.clearRect(0, 0, w, h);
 
   const pivotX = w / 2;
@@ -740,8 +743,8 @@ function drawSimplePendulum() {
 /** 绘制单摆角度-时间图 */
 function drawSimpleGraph() {
   const ctx = ctxSimpleGraph;
-  const w = canvasSimpleGraph.width;
-  const h = canvasSimpleGraph.height;
+  const w = getW2();
+  const h = getH2();
   ctx.clearRect(0, 0, w, h);
 
   const margin = { top: 15, right: 15, bottom: 28, left: 45 };
@@ -835,8 +838,8 @@ function drawSimpleGraph() {
 /** 绘制双摆 */
 function drawDoublePendulum() {
   const ctx = ctxDouble;
-  const w = canvasDouble.width;
-  const h = canvasDouble.height;
+  const w = getW3();
+  const h = getH3();
   ctx.clearRect(0, 0, w, h);
 
   const pivotX = w / 2;
@@ -939,8 +942,8 @@ function drawDoublePendulum() {
 /** 绘制双摆相图 (θ₁ vs θ₂) */
 function drawDoublePhase() {
   const ctx = ctxDoubleGraph;
-  const w = canvasDoubleGraph.width;
-  const h = canvasDoubleGraph.height;
+  const w = getW4();
+  const h = getH4();
   ctx.clearRect(0, 0, w, h);
 
   const margin = { top: 15, right: 15, bottom: 28, left: 40 };
@@ -1062,8 +1065,8 @@ function simulationStep() {
   simpleLastCrossSign = sign;
 
   // 记录双摆末端轨迹 (canvas坐标)
-  const w = canvasDouble.width;
-  const h = canvasDouble.height;
+  const w = getW3();
+  const h = getH3();
   const pivotX = w / 2;
   const pivotY = 35;
   const maxLenCanvas = h - pivotY - 40;
@@ -1265,6 +1268,7 @@ updateEnergyDisplay();
 // 启动渲染循环
 animId = requestAnimationFrame(renderFrame);
 
+let _paused=false;
 document.addEventListener('keydown',(e)=>{
   if(e.code==='Space'){e.preventDefault();
     _paused=!_paused;
