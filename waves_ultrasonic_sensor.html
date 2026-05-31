@@ -44,11 +44,10 @@ function getH(){return canvas.clientHeight||_ch;}
 function resizeCanvas(){
   const cw=canvas.clientWidth||_cw,ch=canvas.clientHeight||_ch;
   _cw=cw;_ch=ch;
+  w=cw; h=ch;
   canvas.width=cw*dpr;canvas.height=ch*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
 let animationId = null;
 let t = 0;
 let pulse = null;
@@ -56,20 +55,8 @@ let distance = 1;
 let echo = false;
 let w = 0, h = 0;
 
-function resize() {
-  const cw = canvas.clientWidth, ch = canvas.clientHeight;
-  if (cw && ch) {
-    w = cw; h = ch;
-    canvas.width = w; canvas.height = h;
-  }
-}
-
-function ensureSize() {
-  resizeCanvas();
-  if (!getW() || !getH()) {
-    requestAnimationFrame(ensureSize);
-  }
-}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 function sendPulse() {
   if (pulse || !w || !h) return;
@@ -185,8 +172,6 @@ document.getElementById('soundSpeed').addEventListener('input', e => {
 document.getElementById('sendBtn').addEventListener('click', sendPulse);
 document.getElementById('resetBtn').addEventListener('click', reset);
 
-ensureSize();
-window.addEventListener('resize', resizeCanvas);
 draw();
 
 let _paused=false;
