@@ -9,7 +9,7 @@
 
 body {
   background: #FAF2E0;
-  color: #c9d1d9;
+  color: #1A1A1A;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
   display: flex;
@@ -25,7 +25,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px 24px;
@@ -65,7 +65,7 @@ body {
 }
 
 .canvas-panel {
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 10px;
@@ -90,7 +90,7 @@ canvas#simCanvas {
 }
 
 .panel-box {
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px 16px;
@@ -115,7 +115,7 @@ canvas#simCanvas {
 
 .control-row label {
   font-size: 0.82rem;
-  color: #c9d1d9;
+  color: #1A1A1A;
   white-space: nowrap;
 }
 
@@ -145,7 +145,7 @@ canvas#simCanvas {
   border: 1px solid #D4C9B8;
   border-radius: 6px;
   background: #FFFFFF;
-  color: #c9d1d9;
+  color: #1A1A1A;
   cursor: pointer;
   font-size: 0.82rem;
   font-family: inherit;
@@ -156,7 +156,7 @@ canvas#simCanvas {
 }
 
 .btn:hover { background: #D4C9B8; }
-.btn.active { background: #1f6feb33; border-color: #0E61AC; color: #0E61AC; }
+.btn.active { background: #0E61AC33; border-color: #0E61AC; color: #0E61AC; }
 .btn.heat { border-color: #f8514966; }
 .btn.heat:hover { background: #f8514922; border-color: #f85149; color: #f85149; }
 .btn.cool { border-color: #79c0ff66; }
@@ -193,7 +193,7 @@ canvas#simCanvas {
 .histogram-panel {
   width: 100%;
   max-width: 1100px;
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 14px 20px;
@@ -1006,7 +1006,7 @@ canvas#histCanvas {
     histCtx.fillStyle = '#ffa500';
     histCtx.textAlign = 'left';
     histCtx.fillText('— M-B理论曲线 (2D)', margin.left + 6, margin.top + 14);
-    histCtx.fillStyle = '#c9d1d9';
+    histCtx.fillStyle = '#1A1A1A';
     histCtx.fillText('▇ 模拟速率分布', margin.left + 140, margin.top + 14);
   }
 

@@ -9,7 +9,7 @@
 
 body {
   background: #FAF2E0;
-  color: #c9d1d9;
+  color: #1A1A1A;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
   display: flex;
@@ -31,7 +31,7 @@ body {
   text-align: center;
   margin-bottom: 24px;
   padding: 28px 20px;
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 12px;
 }
@@ -60,7 +60,7 @@ body {
 
 .panel {
   flex: 1;
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 12px;
   padding: 12px;
@@ -84,7 +84,7 @@ body {
 
 /* ===== 控制面板 ===== */
 .controls {
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 12px;
   padding: 20px 24px;
@@ -105,7 +105,7 @@ body {
 .control-group label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #c9d1d9;
+  color: #1A1A1A;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -139,7 +139,7 @@ input[type="range"]::-webkit-slider-thumb {
   height: 20px;
   border-radius: 50%;
   background: #0E61AC;
-  border: 2px solid #161b22;
+  border: 2px solid #FFF7EB;
   cursor: pointer;
   transition: transform 0.1s;
 }
@@ -151,13 +151,13 @@ input[type="range"]::-moz-range-thumb {
   height: 20px;
   border-radius: 50%;
   background: #0E61AC;
-  border: 2px solid #161b22;
+  border: 2px solid #FFF7EB;
   cursor: pointer;
 }
 
 /* ===== 信息显示区 ===== */
 .info-bar {
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 12px;
   padding: 14px 24px;
@@ -212,7 +212,7 @@ input[type="range"]::-moz-range-thumb {
 .btn-pause:hover { background: #bb8009; }
 .btn-reset {
   background: #FFFFFF;
-  color: #c9d1d9;
+  color: #1A1A1A;
   border-color: #D4C9B8;
 }
 .btn-reset:hover { background: #D4C9B8; }
@@ -228,6 +228,11 @@ input[type="range"]::-moz-range-thumb {
 </style>
 </head>
 <body>
+<div class="back-bar" style="display:flex;align-items:center;padding:8px 16px;gap:8px;position:sticky;top:0;z-index:100;background:var(--panel,#FFF7EB);border-bottom:1px solid var(--border,#D4C9B8);">
+  <a href="index.html" style="color:var(--accent,#0E61AC);text-decoration:none;font-size:0.85rem;font-weight:600;padding:4px 10px;border:1px solid var(--border,#D4C9B8);border-radius:5px;transition:background 0.15s;" onmouseover="this.style.background='#FFF7EB'" onmouseout="this.style.background='transparent'">← 返回实验列表</a>
+</div>
+
+
 <div class="container">
 
   <!-- 标题 -->
@@ -736,7 +741,7 @@ function drawSource(ctx, coords) {
   ctx.fill();
 
   // 标签
-  ctx.fillStyle = '#c9d1d9';
+  ctx.fillStyle = '#1A1A1A';
   ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('光源', sx + sw/2, sy - sh/2 - 6);
@@ -836,7 +841,7 @@ function drawScreen(ctx, coords) {
   }
 
   // 标签
-  ctx.fillStyle = '#c9d1d9';
+  ctx.fillStyle = '#1A1A1A';
   ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('屏幕', sx + sw/2, sy - 10);
@@ -1120,13 +1125,13 @@ function drawPatternCanvas() {
       ctx.setLineDash([]);
 
       // 级次标签
-      ctx.fillStyle = '#c9d1d9';
+      ctx.fillStyle = '#1A1A1A';
       ctx.fillText(`m=${m}`, stripeLeft - 8, yPx + 4);
     }
   }
 
   // 条纹区域标签
-  ctx.fillStyle = '#c9d1d9';
+  ctx.fillStyle = '#1A1A1A';
   ctx.font = `${Math.round(W * 0.023)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('干涉条纹', stripeLeft + stripeWidth/2, stripeTop - 14);
@@ -1258,7 +1263,7 @@ function drawPatternCanvas() {
   ctx.fillText(`Δy = ${deltaY.toFixed(3)} mm`, graphLeft + graphWidth/2, graphBottom + 28);
 
   // 坐标轴标签
-  ctx.fillStyle = '#c9d1d9';
+  ctx.fillStyle = '#1A1A1A';
   ctx.font = `${Math.round(W * 0.022)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('屏幕位置 y (mm)', graphLeft + graphWidth/2, graphBottom + 46);
@@ -1269,7 +1274,7 @@ function drawPatternCanvas() {
   ctx.restore();
 
   // 图标题
-  ctx.fillStyle = '#c9d1d9';
+  ctx.fillStyle = '#1A1A1A';
   ctx.font = `${Math.round(W * 0.023)}px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('光强分布 I(y)', graphLeft + graphWidth/2, graphTop - 14);

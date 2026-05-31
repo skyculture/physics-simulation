@@ -9,7 +9,7 @@
 
 body {
   background: #FAF2E0;
-  color: #c9d1d9;
+  color: #1A1A1A;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   display: flex;
   flex-direction: column;
@@ -48,7 +48,7 @@ body {
 
 /* ========== 画布面板 ========== */
 .canvas-panel {
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 10px;
   padding: 8px;
@@ -62,7 +62,7 @@ canvas {
 
 /* ========== 侧边控制面板 ========== */
 .control-panel {
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 10px;
   padding: 16px;
@@ -95,7 +95,7 @@ canvas {
 }
 .btn {
   background: #FFFFFF;
-  color: #c9d1d9;
+  color: #1A1A1A;
   border: 1px solid #D4C9B8;
   padding: 7px 12px;
   border-radius: 6px;
@@ -106,7 +106,7 @@ canvas {
   white-space: nowrap;
 }
 .btn:hover { background: #D4C9B8; border-color: #0E61AC; }
-.btn.active { background: #1f6feb; border-color: #0E61AC; color: #fff; }
+.btn.active { background: #0E61AC; border-color: #0E61AC; color: #fff; }
 .btn.danger { border-color: #f85149; color: #f85149; }
 .btn.danger:hover { background: #3d1f1f; }
 
@@ -1016,7 +1016,7 @@ function drawCharges() {
     ctx.fillText(c.q > 0 ? '+' : '−', px, py);
 
     // 电荷量标注
-    ctx.fillStyle = '#c9d1d9';
+    ctx.fillStyle = '#1A1A1A';
     ctx.font = '10px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
     ctx.fillText(`${c.q > 0 ? '+' : ''}${c.q.toFixed(1)} μC`, px, py - radius - 8);
   }

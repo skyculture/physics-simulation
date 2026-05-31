@@ -9,7 +9,7 @@
 
 body {
   background: #FAF2E0;
-  color: #c9d1d9;
+  color: #1A1A1A;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
   display: flex;
@@ -65,7 +65,7 @@ header .subtitle {
 }
 
 .panel {
-  background: #161b22;
+  background: #FFF7EB;
   border: 1px solid #D4C9B8;
   border-radius: 8px;
   padding: 12px;
@@ -144,7 +144,7 @@ header .subtitle {
 .control-row .val-display {
   width: 58px;
   text-align: right;
-  color: #c9d1d9;
+  color: #1A1A1A;
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 0.83rem;
   flex-shrink: 0;
@@ -160,7 +160,7 @@ header .subtitle {
   border: 1px solid #D4C9B8;
   border-radius: 6px;
   background: #FFFFFF;
-  color: #c9d1d9;
+  color: #1A1A1A;
   font-size: 0.9rem;
   cursor: pointer;
   font-family: inherit;
@@ -171,7 +171,7 @@ header .subtitle {
   border-color: #0E61AC;
 }
 .btn-row button.active-btn {
-  background: #1f6feb;
+  background: #0E61AC;
   border-color: #0E61AC;
   color: #fff;
 }
@@ -191,6 +191,11 @@ header .subtitle {
 </style>
 </head>
 <body>
+<div class="back-bar" style="display:flex;align-items:center;padding:8px 16px;gap:8px;position:sticky;top:0;z-index:100;background:var(--panel,#FFF7EB);border-bottom:1px solid var(--border,#D4C9B8);">
+  <a href="index.html" style="color:var(--accent,#0E61AC);text-decoration:none;font-size:0.85rem;font-weight:600;padding:4px 10px;border:1px solid var(--border,#D4C9B8);border-radius:5px;transition:background 0.15s;" onmouseover="this.style.background='#FFF7EB'" onmouseout="this.style.background='transparent'">← 返回实验列表</a>
+</div>
+
+
 <div class="container">
 
   
@@ -628,7 +633,7 @@ function drawCircuit(ctx, w, h) {
     const dir = (i % 2 === 0) ? -1 : 1;
     ctx.lineTo(TRX + dir * zigW, y2);
   }
-  ctx.strokeStyle = '#c9d1d9';
+  ctx.strokeStyle = '#1A1A1A';
   ctx.lineWidth = 2.5;
   ctx.stroke();
 
@@ -652,7 +657,7 @@ function drawCircuit(ctx, w, h) {
     const aEnd   = up ? 0 : Math.PI;
     ctx.arc(cx, BLY, coilR, aStart, aEnd, !up);
   }
-  ctx.strokeStyle = '#c9d1d9';
+  ctx.strokeStyle = '#1A1A1A';
   ctx.lineWidth = 2.5;
   ctx.stroke();
 
@@ -670,7 +675,7 @@ function drawCircuit(ctx, w, h) {
   ctx.beginPath();
   ctx.moveTo(BLX - capPlateHalfW, cTopY);
   ctx.lineTo(BLX + capPlateHalfW, cTopY);
-  ctx.strokeStyle = '#c9d1d9';
+  ctx.strokeStyle = '#1A1A1A';
   ctx.lineWidth = 2.5;
   ctx.stroke();
   // 下板
@@ -833,7 +838,7 @@ function drawAxes(ctx, x, y, w, h, xLabel, yLabel, xMin, xMax, yMin, yMax, xTick
   }
 
   // 轴标签
-  ctx.fillStyle = '#c9d1d9';
+  ctx.fillStyle = '#1A1A1A';
   ctx.font = '11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(xLabel, x + w / 2, y + h + 22);
@@ -894,7 +899,7 @@ function drawVoltagePlot(ctx, w, h, simTime) {
   for (const leg of legends) {
     ctx.fillStyle = leg.color;
     ctx.fillRect(lx, y0 + 2, 12, 12);
-    ctx.fillStyle = '#c9d1d9';
+    ctx.fillStyle = '#1A1A1A';
     ctx.fillText(leg.label, lx + 16, y0 + 8);
     lx += 50;
   }

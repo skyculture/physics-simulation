@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔋 锂电池仿真</title>
 <style>
-  :root { --bg:#FAF2E0; --panel:#161b22; --border:#D4C9B8; --text:#c9d1d9; --accent:#0E61AC; }
+  :root { --bg:#FAF2E0; --panel:#FFF7EB; --border:#D4C9B8; --text:#1A1A1A; --accent:#0E61AC; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:16px; }
   .header { text-align:center; margin-bottom:16px; }
@@ -28,6 +28,11 @@
 </style>
 </head>
 <body>
+<div class="back-bar" style="display:flex;align-items:center;padding:8px 16px;gap:8px;position:sticky;top:0;z-index:100;background:var(--panel,#FFF7EB);border-bottom:1px solid var(--border,#D4C9B8);">
+  <a href="index.html" style="color:var(--accent,#0E61AC);text-decoration:none;font-size:0.85rem;font-weight:600;padding:4px 10px;border:1px solid var(--border,#D4C9B8);border-radius:5px;transition:background 0.15s;" onmouseover="this.style.background='#FFF7EB'" onmouseout="this.style.background='transparent'">← 返回实验列表</a>
+</div>
+
+
 <div class="header">
   <h1>🔋 锂电池工作原理仿真</h1>
   <p>模拟锂电池充电/放电过程中的离子迁移与电势变化</p>
@@ -75,7 +80,7 @@ let resistor = 100;
 let capacity = 2000;
 
 function draw() {
-  ctx.fillStyle = '#161b22';
+  ctx.fillStyle = '#FFF7EB';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
   const cellW = 80;
@@ -88,7 +93,7 @@ function draw() {
   // 负极 (阳极 - 石墨)
   ctx.fillStyle = '#4a5568';
   ctx.fillRect(leftX, topY, cellW, cellH);
-  ctx.fillStyle = '#2d3748';
+  ctx.fillStyle = '#F5F0E8';
   ctx.fillRect(leftX + 5, topY + 5, cellW - 10, cellH - 10);
   ctx.fillStyle = '#718096';
   ctx.font = '10px sans-serif';
@@ -174,7 +179,7 @@ function draw() {
   ctx.strokeStyle = '#0E61AC';
   ctx.strokeRect(barX, barY, barW, barH);
   
-  ctx.fillStyle = '#c9d1d9';
+  ctx.fillStyle = '#1A1A1A';
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(`${soc.toFixed(1)}%`, midX, barY + 25);

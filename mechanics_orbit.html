@@ -9,7 +9,7 @@
 
 body {
   background: #FAF2E0;
-  color: #c9d1d9;
+  color: #1A1A1A;
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
@@ -19,7 +19,7 @@ body {
   text-align: center;
   padding: 18px 20px 12px;
   border-bottom: 1px solid #D4C9B8;
-  background: #161b22;
+  background: #FFF7EB;
 }
 
 .header h1 {
@@ -59,7 +59,7 @@ canvas {
 }
 
 .control-panel {
-  background: #161b22;
+  background: #FFF7EB;
   border-left: 1px solid #D4C9B8;
   padding: 16px;
   overflow-y: auto;
@@ -110,7 +110,7 @@ canvas {
 
 .toggle-row span {
   font-size: 0.82rem;
-  color: #c9d1d9;
+  color: #1A1A1A;
 }
 
 .toggle-switch {
@@ -146,7 +146,7 @@ canvas {
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background: #1f6feb;
+  background: #0E61AC;
 }
 
 .toggle-switch input:checked + .toggle-slider::before {
@@ -165,7 +165,7 @@ canvas {
   border: 1px solid #D4C9B8;
   border-radius: 6px;
   background: #FFFFFF;
-  color: #c9d1d9;
+  color: #1A1A1A;
   cursor: pointer;
   font-size: 0.8rem;
   font-family: inherit;
@@ -178,8 +178,8 @@ canvas {
 }
 
 .btn.accent {
-  background: #1f6feb;
-  border-color: #1f6feb;
+  background: #0E61AC;
+  border-color: #0E61AC;
   color: #fff;
 }
 
@@ -228,7 +228,7 @@ canvas {
 }
 
 .info-table td {
-  color: #c9d1d9;
+  color: #1A1A1A;
 }
 
 .info-table .match {
@@ -237,7 +237,7 @@ canvas {
 }
 
 .bottom-panel {
-  background: #161b22;
+  background: #FFF7EB;
   border-top: 1px solid #D4C9B8;
   padding: 10px 20px;
   display: flex;
@@ -281,6 +281,11 @@ canvas {
 </style>
 </head>
 <body>
+<div class="back-bar" style="display:flex;align-items:center;padding:8px 16px;gap:8px;position:sticky;top:0;z-index:100;background:var(--panel,#FFF7EB);border-bottom:1px solid var(--border,#D4C9B8);">
+  <a href="index.html" style="color:var(--accent,#0E61AC);text-decoration:none;font-size:0.85rem;font-weight:600;padding:4px 10px;border:1px solid var(--border,#D4C9B8);border-radius:5px;transition:background 0.15s;" onmouseover="this.style.background='#FFF7EB'" onmouseout="this.style.background='transparent'">← 返回实验列表</a>
+</div>
+
+
 
 <div class="header">
   <h1>天体轨道与开普勒定律</h1>
@@ -959,7 +964,7 @@ function render() {
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = '#c9d1d9';
+      ctx.fillStyle = '#1A1A1A';
       ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('近日点', px + 8, py - 4);
@@ -978,7 +983,7 @@ function render() {
       ctx.strokeStyle = '#5A6370';
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = '#c9d1d9';
+      ctx.fillStyle = '#1A1A1A';
       ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('远日点', ax + 8, ay - 4);
@@ -1076,7 +1081,7 @@ function render() {
     ctx.stroke();
 
     // 行星名称
-    ctx.fillStyle = '#c9d1d9';
+    ctx.fillStyle = '#1A1A1A';
     ctx.font = '10px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(planet.name, px, py - 14);

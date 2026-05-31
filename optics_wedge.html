@@ -6,26 +6,26 @@
 <title>劈尖干涉 - 物理数值仿真平台</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#FAF2E0;color:#c9d1d9;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
+body{background:#FAF2E0;color:#1A1A1A;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;display:flex;justify-content:center;padding:24px 16px 40px}
 .container{width:100%;max-width:1100px}
-.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#161b22;border:1px solid #D4C9B8;border-radius:12px}
+.header{text-align:center;margin-bottom:24px;padding:28px 20px;background:#FFF7EB;border:1px solid #D4C9B8;border-radius:12px}
 .header h1{font-size:2rem;font-weight:700;color:#0E61AC;letter-spacing:.05em;margin-bottom:8px}
 .header .subtitle{font-size:.95rem;color:#5A6370;line-height:1.6}
 .canvas-row{display:flex;gap:16px;margin-bottom:20px}
 @media(max-width:860px){.canvas-row{flex-direction:column}}
-.panel{flex:1;background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
+.panel{flex:1;background:#FFF7EB;border:1px solid #D4C9B8;border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center}
 .panel h2{font-size:.95rem;font-weight:600;color:#5A6370;margin-bottom:8px;text-align:center}
 .panel canvas{width:100%;height:auto;border-radius:6px;background:#FAF2E0}
-.controls{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
+.controls{background:#FFF7EB;border:1px solid #D4C9B8;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px}
 @media(max-width:640px){.controls{grid-template-columns:1fr}}
 .control-group{display:flex;flex-direction:column;gap:6px}
-.control-group label{font-size:.85rem;font-weight:600;color:#c9d1d9;display:flex;justify-content:space-between;align-items:baseline}
+.control-group label{font-size:.85rem;font-weight:600;color:#1A1A1A;display:flex;justify-content:space-between;align-items:baseline}
 .control-group label .val{font-size:.8rem;color:#0E61AC;font-weight:700;min-width:80px;text-align:right}
 input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:#D4C9B8;outline:none;cursor:pointer}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer;transition:transform .1s}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #FFF7EB;cursor:pointer;transition:transform .1s}
 input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.15)}
-input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #161b22;cursor:pointer}
-.info-bar{background:#161b22;border:1px solid #D4C9B8;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#0E61AC;border:2px solid #FFF7EB;cursor:pointer}
+.info-bar{background:#FFF7EB;border:1px solid #D4C9B8;border-radius:12px;padding:14px 24px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;font-size:.9rem}
 .info-item{display:flex;align-items:baseline;gap:6px}
 .info-item .info-label{color:#5A6370}
 .info-item .info-value{color:#0E61AC;font-weight:700;font-size:1rem}
@@ -35,12 +35,17 @@ input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;b
 .btn-start:hover{background:#2ea043}
 .btn-pause{background:#9e6a03;color:#fff;border-color:#bb8009}
 .btn-pause:hover{background:#bb8009}
-.btn-reset{background:#FFFFFF;color:#c9d1d9;border-color:#D4C9B8}
+.btn-reset{background:#FFFFFF;color:#1A1A1A;border-color:#D4C9B8}
 .btn-reset:hover{background:#D4C9B8}
 .legend-note{text-align:center;font-size:.78rem;color:#5A6370;margin-top:12px;line-height:1.5}
 </style>
 </head>
 <body>
+<div class="back-bar" style="display:flex;align-items:center;padding:8px 16px;gap:8px;position:sticky;top:0;z-index:100;background:var(--panel,#FFF7EB);border-bottom:1px solid var(--border,#D4C9B8);">
+  <a href="index.html" style="color:var(--accent,#0E61AC);text-decoration:none;font-size:0.85rem;font-weight:600;padding:4px 10px;border:1px solid var(--border,#D4C9B8);border-radius:5px;transition:background 0.15s;" onmouseover="this.style.background='#FFF7EB'" onmouseout="this.style.background='transparent'">← 返回实验列表</a>
+</div>
+
+
 <div class="container">
   <div class="header">
     <h1>劈尖干涉</h1>
@@ -176,7 +181,7 @@ function drawWedge(){
   ctxW.fillStyle='#5A6370';
   ctxW.fillRect(ml,mt+ph-8-ph*0.3-6,pw,6);
 
-  ctxW.fillStyle='#c9d1d9';ctxW.font='10px sans-serif';ctxW.textAlign='center';
+  ctxW.fillStyle='#1A1A1A';ctxW.font='10px sans-serif';ctxW.textAlign='center';
   ctxW.fillText('下玻璃板',ml+pw/2,mt+ph+10);
   ctxW.fillText('上玻璃板',ml+pw/2,mt+ph-8-ph*0.3-12);
   ctxW.fillStyle='#0E61AC';ctxW.fillText('空气劈尖',ml+pw*0.3,mt+ph-25);
@@ -195,7 +200,7 @@ function drawWedge(){
   ctxW.strokeStyle='#2A7CC7';ctxW.lineWidth=1.5;
   ctxW.beginPath();ctxW.moveTo(ml,mt+ph-8);ctxW.lineTo(ml+pw,mt+ph-8);ctxW.stroke();
 
-  ctxW.fillStyle='#c9d1d9';ctxW.font='10px sans-serif';ctxW.textAlign='center';
+  ctxW.fillStyle='#1A1A1A';ctxW.font='10px sans-serif';ctxW.textAlign='center';
   ctxW.fillText('劈尖干涉条纹',W/2,H-8);
 }
 

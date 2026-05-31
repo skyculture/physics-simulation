@@ -26,9 +26,9 @@
   .gate-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:8px; }
   .gate-btn { padding:8px 4px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.8rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; text-align:center; }
   .gate-btn:hover { background:#D4C9B8; border-color:var(--accent4); }
-  .gate-btn.applied { background:#1f6feb33; border-color:var(--accent4); color:var(--accent4); }
+  .gate-btn.applied { background:#0E61AC33; border-color:var(--accent4); color:var(--accent4); }
   .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; flex:1; text-align:center; }
-  .btn:hover { background:#D4C9B8; }
+  .btn:hover { background:#E8E0D0; }
   .btn.primary { border-color:var(--accent4); color:var(--accent4); }
   .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
   .stat-item:last-child { border-bottom:none; }
@@ -38,6 +38,10 @@
 </style>
 </head>
 <body>
+<div class="back-bar" style="display:flex;align-items:center;padding:8px 16px;gap:8px;position:sticky;top:0;z-index:100;background:var(--panel,#FFF7EB);border-bottom:1px solid var(--border,#D4C9B8);">
+  <a href="index.html" style="color:var(--accent,#0E61AC);text-decoration:none;font-size:0.85rem;font-weight:600;padding:4px 10px;border:1px solid var(--border,#D4C9B8);border-radius:5px;transition:background 0.15s;" onmouseover="this.style.background='#FFF7EB'" onmouseout="this.style.background='transparent'">← 返回实验列表</a>
+</div>
+
 <div class="header">
   <div class="header-left">
     <h1>💻 量子计算 — 量子比特与量子门</h1>
@@ -187,7 +191,7 @@
     ctx.fillStyle='rgba(14,97,172,0.7)';ctx.fillRect(barX1,barY+barMax*(1-p1),barW,barMax*p1);
     ctx.strokeStyle='#D4C9B8';ctx.strokeRect(barX1,barY,barW,barMax);
 
-    ctx.fillStyle='#c9d1d9';ctx.font='11px sans-serif';ctx.textAlign='center';
+    ctx.fillStyle='#1A1A1A';ctx.font='11px sans-serif';ctx.textAlign='center';
     ctx.fillText('|0⟩',barX0+barW/2,barY+barMax+16);
     ctx.fillText('|1⟩',barX1+barW/2,barY+barMax+16);
     ctx.fillText((p0*100).toFixed(1)+'%',barX0+barW/2,barY-6);

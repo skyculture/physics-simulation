@@ -22,9 +22,9 @@
   .orbital-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:8px; }
   .orb-btn { padding:7px 4px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.75rem; font-family:inherit; transition:background 0.15s,border-color 0.15s; text-align:center; }
   .orb-btn:hover { background:#D4C9B8; border-color:var(--accent4); }
-  .orb-btn.active { background:#1f6feb33; border-color:var(--accent4); color:var(--accent4); font-weight:600; }
+  .orb-btn.active { background:#0E61AC33; border-color:var(--accent4); color:var(--accent4); font-weight:600; }
   .btn { padding:7px 12px; border:1px solid var(--border); border-radius:6px; background:#FFFFFF; color:var(--text); cursor:pointer; font-size:0.82rem; font-family:inherit; transition:background 0.15s; width:100%; margin-top:4px; text-align:center; }
-  .btn:hover { background:#D4C9B8; }
+  .btn:hover { background:#E8E0D0; }
   .btn.primary { border-color:var(--accent4); color:var(--accent4); }
   .stat-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
   .stat-item:last-child { border-bottom:none; }
@@ -34,6 +34,10 @@
 </style>
 </head>
 <body>
+<div class="back-bar" style="display:flex;align-items:center;padding:8px 16px;gap:8px;position:sticky;top:0;z-index:100;background:var(--panel,#FFF7EB);border-bottom:1px solid var(--border,#D4C9B8);">
+  <a href="index.html" style="color:var(--accent,#0E61AC);text-decoration:none;font-size:0.85rem;font-weight:600;padding:4px 10px;border:1px solid var(--border,#D4C9B8);border-radius:5px;transition:background 0.15s;" onmouseover="this.style.background='#FFF7EB'" onmouseout="this.style.background='transparent'">← 返回实验列表</a>
+</div>
+
 <div class="header">
   <div class="header-left">
     <h1>⚛️ 氢原子波函数 — 电子云可视化</h1>

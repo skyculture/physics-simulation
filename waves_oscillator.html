@@ -9,7 +9,7 @@
 
 body {
     background: #FAF2E0;
-    color: #c9d1d9;
+    color: #1A1A1A;
     font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     min-height: 100vh;
     padding: 16px;
@@ -20,7 +20,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background: #161b22;
+    background: #FFF7EB;
     border: 1px solid #D4C9B8;
     border-radius: 8px;
     margin-bottom: 16px;
@@ -49,7 +49,7 @@ body {
 .controls {
     width: 280px;
     flex-shrink: 0;
-    background: #161b22;
+    background: #FFF7EB;
     border: 1px solid #D4C9B8;
     border-radius: 8px;
     padding: 16px;
@@ -67,7 +67,7 @@ body {
     justify-content: space-between;
 }
 
-.control-group label span { color: #c9d1d9; font-weight: 600; }
+.control-group label span { color: #1A1A1A; font-weight: 600; }
 
 input[type="range"] {
     -webkit-appearance: none;
@@ -97,14 +97,14 @@ button {
     border: 1px solid #D4C9B8;
     border-radius: 6px;
     background: #FFFFFF;
-    color: #c9d1d9;
+    color: #1A1A1A;
     cursor: pointer;
     font-size: 0.85rem;
     transition: all 0.15s;
     font-family: inherit;
 }
 button:hover { background: #D4C9B8; }
-button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+button.primary { background: #0E61AC; border-color: #0E61AC; color: #fff; }
 button.primary:hover { background: #388bfd; }
 button.sweep { background: #6e40c9; border-color: #6e40c9; color: #fff; }
 button.sweep:hover { background: #7c4dff; }
@@ -128,7 +128,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .canvas-container {
     flex: 1;
     min-width: 500px;
-    background: #161b22;
+    background: #FFF7EB;
     border: 1px solid #D4C9B8;
     border-radius: 8px;
     padding: 8px;
@@ -148,7 +148,7 @@ canvas { display: block; max-width: 100%; }
 .plot-box {
     flex: 1;
     min-width: 420px;
-    background: #161b22;
+    background: #FFF7EB;
     border: 1px solid #D4C9B8;
     border-radius: 8px;
     padding: 8px;
@@ -711,7 +711,7 @@ canvas { display: block; max-width: 100%; }
 
         ctx.fillStyle = "#0E61AC";
         ctx.fillRect(legendX, legendY, 14, 3);
-        ctx.fillStyle = "#c9d1d9";
+        ctx.fillStyle = "#1A1A1A";
         ctx.fillText("弹簧 k", legendX + 20, legendY + 5);
 
         ctx.strokeStyle = "#0E61AC";
@@ -720,7 +720,7 @@ canvas { display: block; max-width: 100%; }
         ctx.moveTo(legendX, legendY + 18);
         ctx.lineTo(legendX + 14, legendY + 18);
         ctx.stroke();
-        ctx.fillStyle = "#c9d1d9";
+        ctx.fillStyle = "#1A1A1A";
         ctx.fillText("阻尼 b", legendX + 20, legendY + 22);
 
         ctx.strokeStyle = "#f0883e";
@@ -729,7 +729,7 @@ canvas { display: block; max-width: 100%; }
         ctx.moveTo(legendX, legendY + 36);
         ctx.lineTo(legendX + 14, legendY + 36);
         ctx.stroke();
-        ctx.fillStyle = "#c9d1d9";
+        ctx.fillStyle = "#1A1A1A";
         ctx.fillText("驱动力 F₀", legendX + 20, legendY + 40);
         ctx.lineWidth = 1;
     }
@@ -743,7 +743,7 @@ canvas { display: block; max-width: 100%; }
         const H   = plotTimeCanvas.height;
 
         ctx.clearRect(0, 0, W, H);
-        ctx.fillStyle = "#161b22";
+        ctx.fillStyle = "#FFF7EB";
         ctx.fillRect(0, 0, W, H);
 
         const margin = { left: 55, right: 20, top: 30, bottom: 40 };
@@ -846,7 +846,7 @@ canvas { display: block; max-width: 100%; }
         }
 
         /* 标题 */
-        ctx.fillStyle = "#c9d1d9";
+        ctx.fillStyle = "#1A1A1A";
         ctx.font = "13px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("位移 x(t) — 时间响应", margin.left + pw / 2, margin.top - 10);
@@ -861,7 +861,7 @@ canvas { display: block; max-width: 100%; }
         const H   = plotFreqCanvas.height;
 
         ctx.clearRect(0, 0, W, H);
-        ctx.fillStyle = "#161b22";
+        ctx.fillStyle = "#FFF7EB";
         ctx.fillRect(0, 0, W, H);
 
         const margin = { left: 60, right: 20, top: 30, bottom: 40 };
@@ -1005,7 +1005,7 @@ canvas { display: block; max-width: 100%; }
         }
 
         /* 标题 */
-        ctx.fillStyle = "#c9d1d9";
+        ctx.fillStyle = "#1A1A1A";
         ctx.font = "13px 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("稳态振幅 A(ω) — 共振曲线", margin.left + pw / 2, margin.top - 10);
